@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Servicios — Fortaleza Contact Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #0A1828;
+      --bg-mid:       #0d1e32;
+      --bg-deep:      #060f1a;
+      --teal:         #178582;
+      --teal-light:   #1fb0ac;
+      --teal-glow:    rgba(23,133,130,0.35);
+      --gold:         #BFA181;
+      --gold-light:   #d4b896;
+      --gold-dim:     rgba(191,161,129,0.55);
+      --white:        #ffffff;
+      --white-60:     rgba(255,255,255,0.6);
+      --white-30:     rgba(255,255,255,0.3);
+      --white-12:     rgba(255,255,255,0.12);
+      --white-06:     rgba(255,255,255,0.06);
+      --glass-bg:     rgba(10,24,40,0.72);
+      --glass-border: rgba(23,133,130,0.25);
+      --glass-blur:   blur(18px);
+      --serif:        'Cormorant Garamond', Georgia, serif;
+      --sans:         'Outfit', sans-serif;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background:  var(--bg);
+      color:       var(--white);
+      min-height:  100vh;
+      overflow-x:  hidden;
+    }
+
+    /* ── FONDO TEXTURA ────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 20%, rgba(23,133,130,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 20% 80%, rgba(191,161,129,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ──────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 32px;
+      padding: 0 44px;
+      height: 70px;
+      background: rgba(6,15,26,0.82);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-badge {
+      width: 40px; height: 40px;
+      border: 1.5px solid var(--teal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--teal-light);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .logo-badge::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border: 1px solid var(--teal-glow);
+    }
+
+    .logo-info { display: flex; flex-direction: column; gap: 3px; }
+
+    .logo-name {
+      font-family: var(--serif);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.5px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .logo-sub {
+      font-size: 9px;
+      color: var(--white-60);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .nav-spacer { flex: 1; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-links a {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--white-60);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color .2s;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .nav-links a.active,
+    .nav-links a:hover { color: var(--white); }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0; right: 0;
+      height: 1px;
+      background: var(--teal);
+      transform: scaleX(0);
+      transition: transform .25s;
+    }
+
+    .nav-links a.active::after,
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    /* ── MAIN ─────────────────────────────────────────── */
+    main {
+      position: relative;
+      z-index: 1;
+      padding-top: 70px;
+    }
+
+    /* ── HERO SERVICIOS ───────────────────────────────── */
+    .page-hero {
+      padding: 90px 44px 70px;
+      max-width: 760px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--teal-light);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 28px; height: 1px;
+      background: var(--teal);
+    }
+
+    .page-hero h1 {
+      font-family: var(--serif);
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 20px;
+    }
+
+    .page-hero h1 span { color: var(--gold); }
+
+    .page-hero p {
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white-60);
+      max-width: 560px;
+    }
+
+    /* ── DIVISOR ──────────────────────────────────────── */
+    .divider {
+      width: calc(100% - 88px);
+      margin: 0 44px;
+      height: 1px;
+      background: linear-gradient(to right, var(--teal-glow), transparent);
+    }
+
+    /* ── GRID SERVICIOS ───────────────────────────────── */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      padding: 60px 44px 100px;
+      background: var(--glass-border);
+    }
+
+    .service-card {
+      background: var(--bg);
+      padding: 44px 38px;
+      position: relative;
+      cursor: pointer;
+      transition: background .3s;
+      overflow: hidden;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(23,133,130,0.06) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity .35s;
+    }
+
+    .service-card:hover { background: var(--bg-mid); }
+    .service-card:hover::before { opacity: 1; }
+
+    .service-card:hover .service-icon-wrap { border-color: var(--teal); }
+    .service-card:hover .service-icon      { color: var(--teal-light); }
+    .service-card:hover .service-number    { color: var(--teal); opacity: 1; }
+    .service-card:hover .service-arrow     { transform: translate(4px, -4px); opacity: 1; }
+
+    .service-number {
+      font-family: var(--serif);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold-dim);
+      letter-spacing: 3px;
+      opacity: 0.6;
+      margin-bottom: 28px;
+      transition: color .3s, opacity .3s;
+    }
+
+    .service-icon-wrap {
+      width: 52px; height: 52px;
+      border: 1px solid var(--white-12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      transition: border-color .3s;
+    }
+
+    .service-icon {
+      font-size: 22px;
+      color: var(--gold-dim);
+      transition: color .3s;
+      line-height: 1;
+    }
+
+    .service-title {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .service-desc {
+      font-size: 13px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white-60);
+      margin-bottom: 28px;
+    }
+
+    .service-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+
+    .stag {
+      background: rgba(23,133,130,0.1);
+      color: var(--teal-light);
+      border: 1px solid rgba(23,133,130,0.25);
+      padding: 4px 10px;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .service-arrow {
+      position: absolute;
+      bottom: 36px; right: 36px;
+      color: var(--gold);
+      font-size: 22px;
+      opacity: 0.4;
+      transition: transform .25s, opacity .25s;
+    }
+
+    /* ── STATS STRIP ──────────────────────────────────── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      margin: 0 44px 80px;
+    }
+
+    .stat-item {
+      padding: 44px 32px;
+      border-right: 1px solid var(--glass-border);
+      position: relative;
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: var(--serif);
+      font-size: 52px;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--white-60);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── CTA BOTTOM ───────────────────────────────────── */
+    .cta-section {
+      padding: 80px 44px 100px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .cta-text h2 {
+      font-family: var(--serif);
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .cta-text h2 span { color: var(--teal-light); }
+
+    .cta-text p {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--white-60);
+      max-width: 420px;
+      line-height: 1.7;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: var(--bg-deep);
+      border: none;
+      padding: 16px 36px;
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background .2s, transform .15s;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+    /* ── FOOTER ───────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--glass-border);
+      padding: 32px 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--white-30);
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    /* ── ANIMATIONS ───────────────────────────────────── */
+    @keyframes fadeInUp {
+      from { opacity:0; transform: translateY(30px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeInUp .6s ease forwards;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">
+    <div class="logo-badge">FC</div>
+    <div class="logo-info">
+      <span class="logo-name">Fortaleza Contact Center</span>
+      <span class="logo-sub">Soluciones integrales de Contact Center</span>
+    </div>
+  </a>
+  <div class="nav-spacer"></div>
+  <div class="nav-links">
+    <a href="index.html">Firma</a>
+    <a href="servicios.html" class="active">Servicios</a>
+    <a href="index.html">Proyectos</a>
+    <a href="contacto.html">Contacto</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <section class="page-hero">
+    <div class="eyebrow">Lo que hacemos</div>
+    <h1>Soluciones que <span>impulsan</span> tu operación</h1>
+    <p>Ofrecemos servicios especializados de Contact Center diseñados para maximizar la eficiencia operativa, fortalecer la relación con tus clientes y garantizar el cumplimiento legal y financiero de tu empresa.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- GRID 6 SERVICIOS -->
+  <section class="services-grid">
+
+    <!-- 1 Cobranza -->
+    <div class="service-card fade-in" style="animation-delay:.05s">
+      <div class="service-number">01</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">◈</span>
+      </div>
+      <h3 class="service-title">Cobranza</h3>
+      <p class="service-desc">Gestionamos carteras de cobranza temprana, intermedia y tardía con estrategias personalizadas por segmento. Maximizamos la recuperación preservando la relación con el cliente mediante protocolos éticos y efectivos.</p>
+      <div class="service-tags">
+        <span class="stag">Temprana</span>
+        <span class="stag">Tardía</span>
+        <span class="stag">Extrajudicial</span>
+        <span class="stag">Preventiva</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 2 Ventas -->
+    <div class="service-card fade-in" style="animation-delay:.12s">
+      <div class="service-number">02</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">⬡</span>
+      </div>
+      <h3 class="service-title">Ventas</h3>
+      <p class="service-desc">Ejecutamos campañas de venta outbound e inbound con agentes altamente capacitados. Diseñamos scripts, scripts de objeción y flujos de conversión para sectores financiero, telecomunicaciones y retail.</p>
+      <div class="service-tags">
+        <span class="stag">Outbound</span>
+        <span class="stag">Inbound</span>
+        <span class="stag">Cross-Selling</span>
+        <span class="stag">Retención</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 3 Marketing -->
+    <div class="service-card fade-in" style="animation-delay:.19s">
+      <div class="service-number">03</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">◎</span>
+      </div>
+      <h3 class="service-title">Marketing</h3>
+      <p class="service-desc">Desarrollamos estrategias de marketing directo y digital integradas con operaciones de Contact Center. Desde la generación de leads hasta el seguimiento posventa, cubrimos todo el ciclo de conversión.</p>
+      <div class="service-tags">
+        <span class="stag">Lead Gen</span>
+        <span class="stag">Email Mkt</span>
+        <span class="stag">SMS / Push</span>
+        <span class="stag">Posventa</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 4 Backoffice -->
+    <div class="service-card fade-in" style="animation-delay:.26s">
+      <div class="service-number">04</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">▣</span>
+      </div>
+      <h3 class="service-title">Backoffice</h3>
+      <p class="service-desc">Procesamos operaciones administrativas de alto volumen: captura de datos, validación documental, gestión de expedientes y soporte a procesos críticos del negocio con precisión y confidencialidad.</p>
+      <div class="service-tags">
+        <span class="stag">Captura</span>
+        <span class="stag">Validación</span>
+        <span class="stag">Expedientes</span>
+        <span class="stag">Soporte Ops</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 5 Contaduría -->
+    <div class="service-card fade-in" style="animation-delay:.33s">
+      <div class="service-number">05</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">⊞</span>
+      </div>
+      <h3 class="service-title">Contaduría</h3>
+      <p class="service-desc">Brindamos servicios contables y fiscales integrales para empresas que buscan eficiencia y cumplimiento. Declaraciones, nómina, contabilidad fiscal y financiera con reportes ejecutivos en tiempo real.</p>
+      <div class="service-tags">
+        <span class="stag">Fiscal</span>
+        <span class="stag">Nómina</span>
+        <span class="stag">Financiero</span>
+        <span class="stag">SAT</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 6 Asesoría Legal -->
+    <div class="service-card fade-in" style="animation-delay:.40s">
+      <div class="service-number">06</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">⊕</span>
+      </div>
+      <h3 class="service-title">Asesoría Legal</h3>
+      <p class="service-desc">Ofrecemos acompañamiento legal especializado en derecho corporativo, laboral y de protección al consumidor. Gestionamos procesos jurídicos de cobranza, contratos y defensa ante autoridades regulatorias.</p>
+      <div class="service-tags">
+        <span class="stag">Corporativo</span>
+        <span class="stag">Laboral</span>
+        <span class="stag">Contratos</span>
+        <span class="stag">Regulatorio</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+  </section>
+
+  <!-- STATS -->
+  <section class="stats-strip">
+    <div class="stat-item fade-in" style="animation-delay:.1s">
+      <div class="stat-num">+12</div>
+      <div class="stat-label">Años de experiencia</div>
+    </div>
+    <div class="stat-item fade-in" style="animation-delay:.2s">
+      <div class="stat-num">6</div>
+      <div class="stat-label">Líneas de servicio</div>
+    </div>
+    <div class="stat-item fade-in" style="animation-delay:.3s">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Estados con presencia</div>
+    </div>
+    <div class="stat-item fade-in" style="animation-delay:.4s">
+      <div class="stat-num">98%</div>
+      <div class="stat-label">Tasa de satisfacción</div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-text">
+      <h2>¿Listo para <span>optimizar</span> tu operación?</h2>
+      <p>Contáctanos y un especialista diseñará una propuesta a la medida de las necesidades de tu empresa.</p>
+    </div>
+    <a href="contacto.html" class="btn-primary">Solicitar Propuesta</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>© 2025 Fortaleza Contact Center. Todos los derechos reservados.</span>
+    <span>CDMX · Jalisco · Morelos · Estado de México</span>
+  </footer>
+
+</main>
+
+<script>
+  /* Animación on-scroll */
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.animationPlayState = 'running';
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.fade-in').forEach(el => {
+    el.style.animationPlayState = 'paused';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>

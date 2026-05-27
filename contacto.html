@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contacto — Fortaleza Contact Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:           #0A1828;
+      --bg-mid:       #0d1e32;
+      --bg-deep:      #060f1a;
+      --teal:         #178582;
+      --teal-light:   #1fb0ac;
+      --teal-glow:    rgba(23,133,130,0.35);
+      --gold:         #BFA181;
+      --gold-light:   #d4b896;
+      --gold-dim:     rgba(191,161,129,0.55);
+      --white:        #ffffff;
+      --white-60:     rgba(255,255,255,0.6);
+      --white-30:     rgba(255,255,255,0.3);
+      --white-12:     rgba(255,255,255,0.12);
+      --white-06:     rgba(255,255,255,0.06);
+      --glass-bg:     rgba(10,24,40,0.72);
+      --glass-border: rgba(23,133,130,0.25);
+      --glass-blur:   blur(18px);
+      --serif:        'Cormorant Garamond', Georgia, serif;
+      --sans:         'Outfit', sans-serif;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background:  var(--bg);
+      color:       var(--white);
+      min-height:  100vh;
+      overflow-x:  hidden;
+    }
+
+    /* ── FONDO ──────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 70% at 90% 50%, rgba(23,133,130,0.07) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 40% at 10% 80%, rgba(191,161,129,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ──────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 32px;
+      padding: 0 44px;
+      height: 70px;
+      background: rgba(6,15,26,0.82);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-badge {
+      width: 40px; height: 40px;
+      border: 1.5px solid var(--teal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--teal-light);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .logo-badge::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border: 1px solid var(--teal-glow);
+    }
+
+    .logo-info { display: flex; flex-direction: column; gap: 3px; }
+
+    .logo-name {
+      font-family: var(--serif);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.5px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .logo-sub {
+      font-size: 9px;
+      color: var(--white-60);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .nav-spacer { flex: 1; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-links a {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--white-60);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color .2s;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .nav-links a.active,
+    .nav-links a:hover { color: var(--white); }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0; right: 0;
+      height: 1px;
+      background: var(--teal);
+      transform: scaleX(0);
+      transition: transform .25s;
+    }
+
+    .nav-links a.active::after,
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    /* ── MAIN ─────────────────────────────────────────── */
+    main {
+      position: relative;
+      z-index: 1;
+      padding-top: 70px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── LAYOUT CONTACTO ──────────────────────────────── */
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      flex: 1;
+      min-height: calc(100vh - 70px);
+    }
+
+    /* ── PANEL IZQUIERDO ──────────────────────────────── */
+    .contact-left {
+      padding: 80px 60px 80px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-right: 1px solid var(--glass-border);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--teal-light);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 28px; height: 1px;
+      background: var(--teal);
+    }
+
+    .contact-left h1 {
+      font-family: var(--serif);
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 22px;
+    }
+
+    .contact-left h1 span { color: var(--gold); }
+
+    .contact-left > p {
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white-60);
+      max-width: 400px;
+      margin-bottom: 52px;
+    }
+
+    /* Info blocks */
+    .info-blocks {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .info-block {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .info-icon {
+      width: 38px; height: 38px;
+      background: var(--white-06);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      color: var(--teal-light);
+    }
+
+    .info-content { display: flex; flex-direction: column; gap: 3px; }
+
+    .info-label {
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--white-30);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    .info-value {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--white-60);
+    }
+
+    /* Sedes pills */
+    .sedes-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 36px;
+    }
+
+    .sede-pill {
+      background: var(--white-06);
+      border: 1px solid var(--glass-border);
+      padding: 7px 14px;
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--white-60);
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sede-pill::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+
+    /* ── PANEL DERECHO — FORMULARIO ─────────────────── */
+    .contact-right {
+      padding: 80px 44px 80px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-title {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .form-subtitle {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--white-60);
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    /* Formulario */
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 9.5px;
+      font-weight: 500;
+      color: var(--white-60);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--white-12);
+      color: var(--white);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 300;
+      padding: 13px 16px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23178582' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    .field select option {
+      background: #0d1e32;
+      color: var(--white);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.6;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(23,133,130,0.12);
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder {
+      color: var(--white-30);
+      font-weight: 300;
+    }
+
+    /* Checkbox servicio */
+    .services-check {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .services-check-label {
+      font-size: 9.5px;
+      font-weight: 500;
+      color: var(--white-60);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .check-item input[type="checkbox"] {
+      width: 16px; height: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--glass-bg);
+      border: 1px solid var(--white-12);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .2s, border-color .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .check-item input[type="checkbox"]:checked {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    .check-item input[type="checkbox"]:checked::after {
+      content: '✓';
+      color: white;
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .check-item span {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--white-60);
+      transition: color .2s;
+    }
+
+    .check-item:hover span { color: var(--white); }
+
+    /* Submit */
+    .btn-submit {
+      background: var(--gold);
+      color: var(--bg-deep);
+      border: none;
+      padding: 16px 36px;
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-submit:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+    .btn-submit .arrow { font-size: 14px; transition: transform .2s; }
+    .btn-submit:hover .arrow { transform: translate(3px, -3px); }
+
+    /* Estado enviado */
+    .form-success {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 40px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      gap: 16px;
+    }
+
+    .success-icon {
+      width: 56px; height: 56px;
+      border: 1.5px solid var(--teal);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--teal-light);
+      margin-bottom: 8px;
+    }
+
+    .form-success h3 {
+      font-family: var(--serif);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .form-success p {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--white-60);
+      line-height: 1.7;
+      max-width: 320px;
+    }
+
+    /* ── FOOTER ─────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--glass-border);
+      padding: 24px 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--white-30);
+      font-size: 11px;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── ANIMATIONS ──────────────────────────────────── */
+    @keyframes fadeInUp {
+      from { opacity:0; transform: translateY(24px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    .contact-left  { animation: fadeInUp .7s ease both; }
+    .contact-right { animation: fadeInUp .7s ease .15s both; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">
+    <div class="logo-badge">FC</div>
+    <div class="logo-info">
+      <span class="logo-name">Fortaleza Contact Center</span>
+      <span class="logo-sub">Soluciones integrales de Contact Center</span>
+    </div>
+  </a>
+  <div class="nav-spacer"></div>
+  <div class="nav-links">
+    <a href="index.html">Firma</a>
+    <a href="servicios.html">Servicios</a>
+    <a href="index.html">Proyectos</a>
+    <a href="contacto.html" class="active">Contacto</a>
+  </div>
+</nav>
+
+<main>
+  <div class="contact-layout">
+
+    <!-- IZQUIERDA -->
+    <div class="contact-left">
+      <div class="eyebrow">Hablemos</div>
+      <h1>Iniciemos una <span>conversación</span></h1>
+      <p>Cuéntanos los retos operativos de tu empresa. Nuestro equipo analizará tu caso y te presentará una propuesta personalizada sin compromiso.</p>
+
+      <div class="info-blocks">
+        <div class="info-block">
+          <div class="info-icon">✉</div>
+          <div class="info-content">
+            <span class="info-label">Correo</span>
+            <span class="info-value">contacto@fortalezacc.mx</span>
+          </div>
+        </div>
+        <div class="info-block">
+          <div class="info-icon">◉</div>
+          <div class="info-content">
+            <span class="info-label">Horario de atención</span>
+            <span class="info-value">Lunes a Viernes · 9:00 – 18:00 hrs</span>
+          </div>
+        </div>
+        <div class="info-block">
+          <div class="info-icon">⊙</div>
+          <div class="info-content">
+            <span class="info-label">Tiempo de respuesta</span>
+            <span class="info-value">Menos de 24 horas hábiles</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sedes-pills">
+        <div class="sede-pill">CDMX</div>
+        <div class="sede-pill">Jalisco</div>
+        <div class="sede-pill">Morelos</div>
+        <div class="sede-pill">Estado de México</div>
+      </div>
+    </div>
+
+    <!-- DERECHA — FORMULARIO -->
+    <div class="contact-right">
+      <div class="form-title">Solicitar propuesta</div>
+      <div class="form-subtitle">Completa el formulario y un especialista se pondrá en contacto contigo para diseñar la solución ideal.</div>
+
+      <form class="contact-form" id="contactForm" onsubmit="handleSubmit(event)">
+
+        <div class="form-row">
+          <div class="field">
+            <label>Nombre completo *</label>
+            <input type="text" placeholder="Tu nombre" required />
+          </div>
+          <div class="field">
+            <label>Empresa *</label>
+            <input type="text" placeholder="Nombre de la empresa" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Correo electrónico *</label>
+            <input type="email" placeholder="tu@empresa.com" required />
+          </div>
+          <div class="field">
+            <label>Teléfono</label>
+            <input type="tel" placeholder="+52 55 0000 0000" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Sede de interés</label>
+          <select>
+            <option value="">Selecciona una sede</option>
+            <option>Ciudad de México</option>
+            <option>Jalisco</option>
+            <option>Morelos</option>
+            <option>Estado de México</option>
+            <option>Nacional (todas las sedes)</option>
+          </select>
+        </div>
+
+        <div class="services-check">
+          <div class="services-check-label">Servicios de interés</div>
+          <div class="check-grid">
+            <label class="check-item">
+              <input type="checkbox" />
+              <span>Cobranza</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" />
+              <span>Ventas</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" />
+              <span>Marketing</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" />
+              <span>Backoffice</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" />
+              <span>Contaduría</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" />
+              <span>Asesoría Legal</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Mensaje</label>
+          <textarea placeholder="Cuéntanos brevemente qué necesitas..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          Enviar Solicitud
+          <span class="arrow">↗</span>
+        </button>
+
+      </form>
+
+      <!-- Estado éxito -->
+      <div class="form-success" id="formSuccess">
+        <div class="success-icon">✓</div>
+        <h3>¡Mensaje enviado!</h3>
+        <p>Hemos recibido tu solicitud. Un especialista de Fortaleza Contact Center se pondrá en contacto contigo en menos de 24 horas hábiles.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <span>© 2025 Fortaleza Contact Center. Todos los derechos reservados.</span>
+    <span>CDMX · Jalisco · Morelos · Estado de México</span>
+  </footer>
+</main>
+
+<script>
+  function handleSubmit(e) {
+    e.preventDefault();
+    const form    = document.getElementById('contactForm');
+    const success = document.getElementById('formSuccess');
+    form.style.display    = 'none';
+    success.style.display = 'flex';
+  }
+</script>
+</body>
+</html>
