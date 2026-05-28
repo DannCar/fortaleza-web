@@ -646,7 +646,7 @@
      ⚠️  REEMPLAZA ESTE TOKEN CON EL TUYO DE MAPBOX
      Obténlo en: https://account.mapbox.com/access-tokens/
   ════════════════════════════════════════════════════ */
-  const MAPBOX_TOKEN = '%%MAPBOX_TOKEN%%';
+  const MAPBOX_TOKEN = window.MAPBOX_TOKEN || '%%MAPBOX_TOKEN%%';
 
   /* ── VISTA INICIAL ────────────────────────────────── */
   const INITIAL_VIEW = {
