@@ -619,28 +619,28 @@
         <div class="form-row">
           <div class="field">
             <label>Nombre completo *</label>
-            <input type="text" placeholder="Tu nombre" required />
+            <input type="text" name="nombre" placeholder="Tu nombre" required />
           </div>
           <div class="field">
             <label>Empresa *</label>
-            <input type="text" placeholder="Nombre de la empresa" required />
+            <input type="text" name="empresa" placeholder="Nombre de la empresa" required />
           </div>
         </div>
 
         <div class="form-row">
           <div class="field">
             <label>Correo electrónico *</label>
-            <input type="email" placeholder="tu@empresa.com" required />
+            <input type="email" name="email" placeholder="tu@empresa.com" required />
           </div>
           <div class="field">
             <label>Teléfono</label>
-            <input type="tel" placeholder="+52 55 0000 0000" />
+            <input type="tel" name="telefono" placeholder="+52 55 0000 0000" />
           </div>
         </div>
 
         <div class="field">
           <label>Sede de interés</label>
-          <select>
+          <select name="sede">
             <option value="">Selecciona una sede</option>
             <option>Ciudad de México</option>
             <option>Jalisco</option>
@@ -654,27 +654,27 @@
           <div class="services-check-label">Servicios de interés</div>
           <div class="check-grid">
             <label class="check-item">
-              <input type="checkbox" />
+              <input type="checkbox" name="servicios" value="Cobranza" />
               <span>Cobranza</span>
             </label>
             <label class="check-item">
-              <input type="checkbox" />
+              <input type="checkbox" name="servicios" value="Ventas" />
               <span>Ventas</span>
             </label>
             <label class="check-item">
-              <input type="checkbox" />
+              <input type="checkbox" name="servicios" value="Marketing" />
               <span>Marketing</span>
             </label>
             <label class="check-item">
-              <input type="checkbox" />
+              <input type="checkbox" name="servicios" value="Backoffice" />
               <span>Backoffice</span>
             </label>
             <label class="check-item">
-              <input type="checkbox" />
+              <input type="checkbox" name="servicios" value="Contaduría" />
               <span>Contaduría</span>
             </label>
             <label class="check-item">
-              <input type="checkbox" />
+              <input type="checkbox" name="servicios" value="Asesoría Legal" />
               <span>Asesoría Legal</span>
             </label>
           </div>
@@ -682,12 +682,12 @@
 
         <div class="field">
           <label>Mensaje</label>
-          <textarea placeholder="Cuéntanos brevemente qué necesitas..."></textarea>
+          <textarea name="mensaje" placeholder="Cuéntanos brevemente qué necesitas..."></textarea>
         </div>
 
-        <button type="submit" class="btn-submit">
-          Enviar Solicitud
-          <span class="arrow">↗</span>
+        <button type="submit" class="btn-submit" id="btnSubmit">
+          <span id="btnText">Enviar Solicitud</span>
+          <span class="arrow" id="btnArrow">↗</span>
         </button>
 
       </form>
@@ -697,6 +697,11 @@
         <div class="success-icon">✓</div>
         <h3>¡Mensaje enviado!</h3>
         <p>Hemos recibido tu solicitud. Un especialista de Fortaleza Contact Center se pondrá en contacto contigo en menos de 24 horas hábiles.</p>
+      </div>
+
+      <!-- Estado error -->
+      <div id="formError" style="display:none; margin-top:12px; padding:12px 16px; border:1px solid rgba(255,80,80,0.3); background:rgba(255,80,80,0.08); color:rgba(255,120,120,0.9); font-size:12px; font-weight:400; letter-spacing:1px;">
+        Ocurrió un error al enviar. Intenta de nuevo o escríbenos directamente.
       </div>
 
     </div>
@@ -709,12 +714,47 @@
 </main>
 
 <script>
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+
     const form    = document.getElementById('contactForm');
     const success = document.getElementById('formSuccess');
-    form.style.display    = 'none';
-    success.style.display = 'flex';
+    const error   = document.getElementById('formError');
+    const btnText = document.getElementById('btnText');
+    const btnArrow= document.getElementById('btnArrow');
+    const btn     = document.getElementById('btnSubmit');
+
+    /* Estado cargando */
+    btnText.textContent   = 'Enviando...';
+    btnArrow.textContent  = '⟳';
+    btn.style.opacity     = '0.7';
+    btn.style.cursor      = 'not-allowed';
+    btn.disabled          = true;
+    error.style.display   = 'none';
+
+    try {
+      const data = new FormData(form);
+      const res  = await fetch('https://formspree.io/f/xgobwwpq', {
+        method:  'POST',
+        body:    data,
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (res.ok) {
+        form.style.display    = 'none';
+        success.style.display = 'flex';
+      } else {
+        throw new Error('Error en el servidor');
+      }
+    } catch (err) {
+      /* Restaurar botón y mostrar error */
+      btnText.textContent  = 'Enviar Solicitud';
+      btnArrow.textContent = '↗';
+      btn.style.opacity    = '1';
+      btn.style.cursor     = 'pointer';
+      btn.disabled         = false;
+      error.style.display  = 'block';
+    }
   }
 </script>
 </body>
