@@ -926,7 +926,11 @@
   /* ── MAP INIT ─────────────────────────────────────── */
   mapboxgl.accessToken = MAPBOX_TOKEN;
 
-  const map = new mapboxgl.Map({
+  function initMap() {
+    const container = document.getElementById('map');
+    if (!container) return;
+
+    const map = new mapboxgl.Map({
     container:   'map',
     style:       'mapbox://styles/mapbox/satellite-v9',
     center:      INITIAL_VIEW.center,
@@ -1133,6 +1137,15 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && activeSedeId) closeCard();
   });
+
+  } // fin initMap
+
+  /* Llamar initMap cuando el DOM y el token estén listos */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMap);
+  } else {
+    initMap();
+  }
 </script>
 
 <style>
