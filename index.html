@@ -1119,28 +1119,22 @@
     });
   }
 
-  /* ── MOBILE MENU ──────────────────────────────────── */
-  function toggleMenu() {
-    const h = document.getElementById('hamburger');
-    const m = document.getElementById('mobileMenu');
-    h.classList.toggle('open');
-    m.classList.toggle('open');
-  }
-
-  /* Cerrar menu al hacer clic en un link */
-  document.querySelectorAll('.mobile-menu a').forEach(a => {
-    a.addEventListener('click', () => {
-      document.getElementById('hamburger').classList.remove('open');
-      document.getElementById('mobileMenu').classList.remove('open');
-    });
-  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && activeSedeId) closeCard();
   });
 
   } // fin initMap
 
-  /* Llamar initMap cuando el DOM y el token estén listos */
+  /* ── TOGGLE MENU — global para onclick del HTML ─── */
+  function toggleMenu() {
+    const h = document.getElementById('hamburger');
+    const m = document.getElementById('mobileMenu');
+    if (!h || !m) return;
+    h.classList.toggle('open');
+    m.classList.toggle('open');
+  }
+
+  /* Llamar initMap cuando el DOM esté listo */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMap);
   } else {
