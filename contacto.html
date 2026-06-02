@@ -538,7 +538,58 @@
       z-index: 1;
     }
 
-    /* ── ANIMATIONS ──────────────────────────────────── */
+    /* ── HAMBURGER ──────────────────────────────────────── */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 22px; height: 2px;
+      background: var(--white-60);
+      transition: all .25s;
+    }
+
+    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 64px; left: 0; right: 0;
+      background: rgba(6,15,26,0.97);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--glass-border);
+      z-index: 99;
+      flex-direction: column;
+      padding: 16px 0;
+    }
+
+    .mobile-menu.open { display: flex; }
+
+    .mobile-menu a {
+      padding: 14px 24px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--white-60);
+      text-decoration: none;
+      border-bottom: 1px solid var(--glass-border);
+      transition: color .2s, background .2s;
+    }
+
+    .mobile-menu a:last-child { border-bottom: none; }
+    .mobile-menu a.active,
+    .mobile-menu a:hover { color: var(--gold); background: rgba(23,133,130,0.06); }
+
+    /* ── ANIMATIONS ──────────────────────────────────────── */
     @keyframes fadeInUp {
       from { opacity:0; transform: translateY(24px); }
       to   { opacity:1; transform: translateY(0); }
@@ -546,6 +597,70 @@
 
     .contact-left  { animation: fadeInUp .7s ease both; }
     .contact-right { animation: fadeInUp .7s ease .15s both; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav {
+        padding: 0 20px;
+        height: 64px;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+      }
+
+      .nav-spacer,
+      .nav-links  { display: none; }
+      .hamburger  { display: flex; }
+      .logo-sub   { display: none; }
+      .logo-name  { font-size: 14px; }
+      .logo-badge { width: 34px; height: 34px; font-size: 12px; }
+
+      main { padding-top: 64px; }
+
+      .contact-layout {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .contact-left {
+        padding: 40px 20px 36px;
+        border-right: none;
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      .contact-left h1 { font-size: 36px; }
+
+      .contact-right {
+        padding: 36px 20px 60px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .check-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .btn-submit {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .sedes-pills { gap: 6px; }
+
+      footer {
+        padding: 24px 20px;
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .contact-left h1 { font-size: 28px; }
+      .check-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -566,7 +681,17 @@
     <a href="index.html">Proyectos</a>
     <a href="contacto.html" class="active">Contacto</a>
   </div>
+  <div class="hamburger" id="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
 </nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="index.html">Firma</a>
+  <a href="servicios.html">Servicios</a>
+  <a href="index.html">Proyectos</a>
+  <a href="contacto.html" class="active">Contacto</a>
+</div>
 
 <main>
   <div class="contact-layout">
@@ -714,6 +839,11 @@
 </main>
 
 <script>
+  function toggleMenu() {
+    document.getElementById('hamburger').classList.toggle('open');
+    document.getElementById('mobileMenu').classList.toggle('open');
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
 
