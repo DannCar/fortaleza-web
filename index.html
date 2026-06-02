@@ -648,6 +648,16 @@
       .logo-name  { font-size: 14px; }
       .logo-badge { width: 34px; height: 34px; font-size: 12px; }
 
+      /* MAPA — forzar dimensiones explícitas en móvil */
+      #map {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+      }
+
       /* DRAG HINT */
       .drag-hint { display: none; }
 
@@ -940,6 +950,9 @@
 
   /* ── MARKERS PRINCIPALES ──────────────────────────── */
   map.on('load', () => {
+    /* Forzar resize en móvil */
+    setTimeout(() => map.resize(), 100);
+
     sedes.forEach(sede => {
       const el = document.createElement('div');
       el.className    = 'marker-wrap';
