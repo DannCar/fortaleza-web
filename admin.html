@@ -1132,7 +1132,7 @@ input,select{font-family:'Outfit',sans-serif}
 ══════════════════════════════════════════════════════ */
 const CFG = {
   N8N_BASE: 'https://n8n.fortalezacontactcenter.com',
-  MAPBOX_TOKEN: 'pk.eyJ1IjoiZm9ydGFsZXphY2MiLCJhIjoiY20xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQifQ.YOUR_TOKEN_HERE',
+  MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
   SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
   PAGE_SIZE: 25,
 };
@@ -1140,7 +1140,7 @@ const CFG = {
 // ⚠️  REEMPLAZA este token con el tuyo real de Mapbox
 // Está disponible en: https://account.mapbox.com
 // El token actual del sitio funciona — cópialo desde index.html
-const MAPBOX_TOKEN_REAL = 'TU_TOKEN_MAPBOX_AQUI';
+const MAPBOX_TOKEN_REAL = 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w';
 
 /* ══════════════════════════════════════════════════════
    ESTADO DE LA APP
@@ -2231,10 +2231,12 @@ function openDesglose(idx) {
   // Mini mapa
   const mapWrap = document.getElementById('dsgMapWrap');
   const coords  = document.getElementById('dsgCoords');
-  const lat = parseFloat(v.LATITUD);
-  const lon = parseFloat(v.LONGITUD);
-
-  if(!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+  let lat = parseFloat(v.LATITUD);
+let lon = parseFloat(v.LONGITUD);
+// Corregir coordenadas en formato entero (sin punto decimal)
+// Ej: 19314837 → 19.314837 | -99076435 → -99.076435
+if(!isNaN(lat) && Math.abs(lat) > 90)  lat = lat / 1000000;
+if(!isNaN(lon) && Math.abs(lon) > 180) lon = lon / 1000000;
     mapWrap.innerHTML = '<div id="dsgMap" style="width:100%;height:100%"></div>';
     coords.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
