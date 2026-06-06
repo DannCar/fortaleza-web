@@ -1042,8 +1042,89 @@ input,select{font-family:'Outfit',sans-serif}
   </div>
 </div>
 
-<!-- TOASTS -->
-<div class="toast-container" id="toastContainer"></div>
+<!-- ══════════════════ MODAL DESGLOSE VISITA ══════════════════ -->
+<div class="modal-overlay" id="modalDesglose" style="align-items:flex-start;padding:20px;overflow-y:auto">
+  <div class="modal" style="width:780px;max-width:98vw;padding:0;overflow:hidden">
+
+    <!-- Header -->
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text)" id="dsgTitulo">Desglose de visita</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="dsgSubtitulo">—</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="dsgBadge" class="rb" style="font-size:11px;padding:4px 10px">—</span>
+        <button class="modal-close" onclick="closeModal('modalDesglose')"><i class="ti ti-x"></i></button>
+      </div>
+    </div>
+
+    <!-- Body grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+
+      <!-- Columna izquierda -->
+      <div style="padding:20px 24px;border-right:1px solid var(--border)">
+
+        <!-- Info titular -->
+        <div style="margin-bottom:18px">
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Información del titular</div>
+          <div style="display:flex;flex-direction:column;gap:8px" id="dsgInfoTitular"></div>
+        </div>
+
+        <!-- Resultado -->
+        <div style="margin-bottom:18px">
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Resultado de la visita</div>
+          <div style="display:flex;flex-direction:column;gap:8px" id="dsgResultado"></div>
+        </div>
+
+        <!-- Observaciones -->
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Observaciones</div>
+          <div id="dsgObservaciones" style="font-size:12px;color:var(--text2);line-height:1.6;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;min-height:60px"></div>
+        </div>
+      </div>
+
+      <!-- Columna derecha -->
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+
+        <!-- Foto -->
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Fotografía del domicilio</div>
+          <div id="dsgFotoWrap" style="border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--surface);min-height:160px;display:flex;align-items:center;justify-content:center">
+            <span style="color:var(--text3);font-size:12px">Sin fotografía</span>
+          </div>
+        </div>
+
+        <!-- Mini mapa -->
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Geolocalización</div>
+          <div id="dsgMapWrap" style="border-radius:10px;overflow:hidden;border:1px solid var(--border);height:180px;background:var(--surface);display:flex;align-items:center;justify-content:center">
+            <span style="color:var(--text3);font-size:12px">Sin coordenadas</span>
+          </div>
+          <div id="dsgCoords" style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)">
+      <div style="font-size:11px;color:var(--text3)" id="dsgFooterInfo">—</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" onclick="closeModal('modalDesglose')" style="font-size:12px;padding:6px 14px">Cerrar</button>
+        <button class="btn-primary" onclick="exportarDesgloseExcel()" style="font-size:12px;padding:6px 14px"><i class="ti ti-download" style="font-size:12px"></i>Exportar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── DESGLOSE INFO ROW ── */
+.dsg-row{display:flex;align-items:flex-start;gap:8px;font-size:12px}
+.dsg-label{color:var(--text3);min-width:90px;flex-shrink:0;font-size:11px;padding-top:1px}
+.dsg-val{color:var(--text);font-weight:500;flex:1}
+.dsg-val.mono{font-family:monospace;font-size:11px;color:var(--teal2)}
+</style>
+
 
 <script>
 /* ══════════════════════════════════════════════════════
@@ -1051,7 +1132,7 @@ input,select{font-family:'Outfit',sans-serif}
 ══════════════════════════════════════════════════════ */
 const CFG = {
   N8N_BASE: 'https://n8n.fortalezacontactcenter.com',
-  MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
+  MAPBOX_TOKEN: 'pk.eyJ1IjoiZm9ydGFsZXphY2MiLCJhIjoiY20xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQifQ.YOUR_TOKEN_HERE',
   SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
   PAGE_SIZE: 25,
 };
@@ -1380,11 +1461,12 @@ function renderFeed(visitas) {
     el.innerHTML = '<div class="feed-empty"><i class="ti ti-calendar-off"></i><br>Sin visitas para esta fecha</div>';
     return;
   }
-  el.innerHTML = sorted.slice(0,12).map(v=>{
+  el.innerHTML = sorted.slice(0,12).map((v,i)=>{
     const ini = getInitials(v.NOMBRE_TITULAR);
     const rb  = getBadgeClass(v.RESULTADO);
     const label = getResultadoShort(v.RESULTADO);
-    return `<div class="visita-item">
+    const idx = STATE.visitas.indexOf(v);
+    return `<div class="visita-item" onclick="openDesglose(${idx})" style="cursor:pointer">
       <div class="visita-avatar">${ini}</div>
       <div class="visita-info">
         <div class="visita-nombre">${v.NOMBRE_TITULAR||'—'}</div>
@@ -1689,7 +1771,7 @@ async function loadTitulares() {
   // Normalizar ACTIVO booleano
   titulares = titulares.map(t => ({
     ...t,
-    AACTIVO: (t.ACTIVO === true || t.ACTIVO === 'TRUE' || t.ACTIVO === 'true' || t.ACTIVO === 'SI' || t.ACTIVO === 'Si' || t.ACTIVO === 'si') ? 'TRUE' : 'FALSE'
+    ACTIVO: (t.ACTIVO === true || t.ACTIVO === 'TRUE' || t.ACTIVO === 'true') ? 'TRUE' : 'FALSE'
   }));
   STATE.titulares = titulares;
   STATE.titularesFiltrados = [...STATE.titulares];
@@ -1734,7 +1816,7 @@ function renderTitularesTable() {
         <td>${t.MUNICIPIO||'—'}</td>
         <td><span class="count-pill">${t.CARTERA||'—'}</span></td>
         <td style="font-size:11px;color:var(--teal2)">${gestorMap[t.ID_GESTOR]||t.ID_GESTOR||'—'}</td>
-        <td><span class="badge-${['TRUE','true','SI','Si','1',true].includes(t.ACTIVO)?'active':'inactive'}">${['TRUE','true','SI','Si','1',true].includes(t.ACTIVO)?'Sí':'No'}</span></td>
+        <td><span class="badge-${t.ACTIVO==='TRUE'?'active':'inactive'}">${t.ACTIVO==='TRUE'?'Sí':'No'}</span></td>
       </tr>
     `).join('');
   }
@@ -1818,17 +1900,18 @@ function renderVisitasTable() {
   if(!paged.items.length){
     body.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ti ti-calendar-off"></i><p>No hay visitas para los filtros seleccionados</p></div></td></tr>';
   } else {
-    body.innerHTML = paged.items.map(v=>`
-      <tr>
+    body.innerHTML = paged.items.map((v,i)=>{
+      const globalIdx = STATE.visitas.indexOf(v);
+      return `<tr onclick="openDesglose(${globalIdx})" style="cursor:pointer">
         <td>${v.FECHA_VISITA||'—'}</td>
         <td>${v.HORA_VISITA||'—'}</td>
         <td>${v.NOMBRE_TITULAR||'—'}</td>
         <td style="color:var(--teal2)">${v.NOMBRE_GESTOR||'—'}</td>
         <td><span class="rb ${getBadgeClass(v.RESULTADO)}">${getResultadoShort(v.RESULTADO)}</span></td>
         <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text3)" title="${v.OBSERVACIONES}">${v.OBSERVACIONES||'—'}</td>
-        <td>${v.FOTO_URL ? `<a href="${v.FOTO_URL}" target="_blank" style="color:var(--teal2);font-size:12px"><i class="ti ti-photo"></i> Ver</a>` : '<span style="color:var(--text3);font-size:11px">—</span>'}</td>
-      </tr>
-    `).join('');
+        <td>${v.FOTO_URL ? `<span style="color:var(--teal2);font-size:12px"><i class="ti ti-photo"></i> Ver</span>` : '<span style="color:var(--text3);font-size:11px">—</span>'}</td>
+      </tr>`;
+    }).join('');
   }
   renderPagination('visitasPag', paged, (p)=>{ STATE.visitasPage=p; renderVisitasTable(); });
 }
@@ -2085,7 +2168,150 @@ document.addEventListener('click', e=>{
   }
 });
 
-let toastTimer = null;
+/* ══════════════════════════════════════════════════════
+   DESGLOSE DE VISITA
+══════════════════════════════════════════════════════ */
+let STATE_desgloseVisita = null;
+
+function openDesglose(idx) {
+  const v = STATE.visitas[idx];
+  if(!v) return;
+  STATE_desgloseVisita = v;
+
+  const color = getResultadoColor(v.RESULTADO);
+  const rb    = getBadgeClass(v.RESULTADO);
+
+  // Header
+  document.getElementById('dsgTitulo').textContent = v.NOMBRE_TITULAR || '—';
+  document.getElementById('dsgSubtitulo').textContent = `Visita ${v.ID_VISITA||''} • ${v.FECHA_VISITA||''} a las ${v.HORA_VISITA||''}`;
+  const badge = document.getElementById('dsgBadge');
+  badge.textContent = getResultadoShort(v.RESULTADO);
+  badge.className = `rb ${rb}`;
+  badge.style.fontSize = '11px';
+  badge.style.padding = '4px 10px';
+
+  // Info titular
+  document.getElementById('dsgInfoTitular').innerHTML = `
+    <div class="dsg-row"><span class="dsg-label">ID Titular</span><span class="dsg-val mono">${v.ID_TITULAR||'—'}</span></div>
+    <div class="dsg-row"><span class="dsg-label">Nombre</span><span class="dsg-val">${v.NOMBRE_TITULAR||'—'}</span></div>
+    <div class="dsg-row"><span class="dsg-label">Gestor</span><span class="dsg-val" style="color:var(--teal2)">${v.NOMBRE_GESTOR||'—'} <span style="color:var(--text3);font-weight:400">(${v.ID_GESTOR||''})</span></span></div>
+    <div class="dsg-row"><span class="dsg-label">Fecha</span><span class="dsg-val">${v.FECHA_VISITA||'—'}</span></div>
+    <div class="dsg-row"><span class="dsg-label">Hora</span><span class="dsg-val">${v.HORA_VISITA||'—'}</span></div>
+  `;
+
+  // Resultado detalle
+  const esTercero = (v.CONTACTO_TERCERO||'').toLowerCase() === 'si' || v.CONTACTO_TERCERO === true;
+  const tienePago = v.MONTO_PROMESA && v.MONTO_PROMESA !== '';
+  document.getElementById('dsgResultado').innerHTML = `
+    <div class="dsg-row"><span class="dsg-label">Resultado</span><span class="dsg-val" style="color:${color}">${v.RESULTADO||'—'}</span></div>
+    ${esTercero ? `<div class="dsg-row"><span class="dsg-label">Con tercero</span><span class="dsg-val">${v.NOMBRE_TERCERO||'—'}</span></div>` : ''}
+    ${v.HORARIO_INDICADO ? `<div class="dsg-row"><span class="dsg-label">Horario</span><span class="dsg-val">${v.HORARIO_INDICADO}</span></div>` : ''}
+    ${tienePago ? `<div class="dsg-row"><span class="dsg-label">Promesa</span><span class="dsg-val" style="color:var(--gold2)">$${Number(v.MONTO_PROMESA).toLocaleString('es-MX')} — ${v.FECHA_PROMESA||'sin fecha'}</span></div>` : ''}
+  `;
+
+  // Observaciones
+  document.getElementById('dsgObservaciones').textContent = v.OBSERVACIONES || 'Sin observaciones registradas.';
+
+  // Foto
+  const fotoWrap = document.getElementById('dsgFotoWrap');
+  if(v.FOTO_URL && v.FOTO_URL.trim() !== '') {
+    fotoWrap.innerHTML = `
+      <img src="${v.FOTO_URL}" alt="Foto domicilio"
+        style="width:100%;max-height:220px;object-fit:cover;display:block;cursor:pointer"
+        onclick="window.open('${v.FOTO_URL}','_blank')"
+        onerror="this.parentElement.innerHTML='<div style=\\'padding:20px;text-align:center;color:var(--text3);font-size:12px\\'><i class=\\'ti ti-photo-off\\'></i><br>No se pudo cargar la imagen</div>'"
+      >
+      <div style="padding:6px 10px;font-size:10px;color:var(--text3);background:var(--surface);border-top:1px solid var(--border)">
+        <i class="ti ti-external-link" style="font-size:10px"></i> Clic para ampliar
+      </div>`;
+  } else {
+    fotoWrap.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text3)"><i class="ti ti-camera-off" style="font-size:28px;display:block;margin-bottom:8px"></i><span style="font-size:12px">Sin fotografía registrada</span></div>`;
+  }
+
+  // Mini mapa
+  const mapWrap = document.getElementById('dsgMapWrap');
+  const coords  = document.getElementById('dsgCoords');
+  const lat = parseFloat(v.LATITUD);
+  const lon = parseFloat(v.LONGITUD);
+
+  if(!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+    mapWrap.innerHTML = '<div id="dsgMap" style="width:100%;height:100%"></div>';
+    coords.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+
+    setTimeout(() => {
+      if(typeof mapboxgl === 'undefined') {
+        mapWrap.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lon}" target="_blank" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--teal2);font-size:12px;gap:6px"><i class="ti ti-map-pin" style="font-size:24px"></i>Ver en Google Maps</a>`;
+        return;
+      }
+      mapboxgl.accessToken = MAPBOX_TOKEN_REAL;
+      try {
+        const miniMap = new mapboxgl.Map({
+          container: 'dsgMap',
+          style: 'mapbox://styles/mapbox/satellite-v9',
+          center: [lon, lat],
+          zoom: 16,
+          interactive: true,
+        });
+        miniMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        miniMap.on('load', () => {
+          const color2 = getResultadoColor(v.RESULTADO);
+          const el2 = document.createElement('div');
+          el2.style.cssText = `width:16px;height:16px;border-radius:50%;background:${color2};border:3px solid rgba(255,255,255,.9);box-shadow:0 0 0 4px ${color2}55`;
+          new mapboxgl.Marker(el2).setLngLat([lon,lat]).addTo(miniMap);
+        });
+      } catch(e) {
+        mapWrap.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lon}" target="_blank" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--teal2);font-size:12px;gap:6px"><i class="ti ti-map-pin" style="font-size:24px"></i>Ver en Google Maps</a>`;
+      }
+    }, 200);
+  } else {
+    mapWrap.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text3)"><i class="ti ti-map-off" style="font-size:28px;display:block;margin-bottom:8px"></i><span style="font-size:12px">Sin coordenadas GPS</span></div>`;
+    coords.textContent = '';
+  }
+
+  // Footer
+  document.getElementById('dsgFooterInfo').textContent = `ID Visita: ${v.ID_VISITA||'—'} • Registrada el ${v.FECHA_VISITA||'—'} a las ${v.HORA_VISITA||'—'}`;
+
+  openModal('modalDesglose');
+}
+
+function getResultadoColor(resultado='') {
+  const r = resultado.toLowerCase();
+  if(r.includes('localiza a'))   return 'var(--green)';
+  if(r.includes('no se localiza')) return 'var(--red)';
+  if(r.includes('tercero'))       return 'var(--amber)';
+  if(r.includes('pago'))          return 'var(--teal2)';
+  return 'var(--text2)';
+}
+
+function exportarDesgloseExcel() {
+  const v = STATE_desgloseVisita;
+  if(!v) return;
+  const rows = [{
+    'ID Visita':       v.ID_VISITA||'',
+    'Fecha':           v.FECHA_VISITA||'',
+    'Hora':            v.HORA_VISITA||'',
+    'ID Titular':      v.ID_TITULAR||'',
+    'Titular':         v.NOMBRE_TITULAR||'',
+    'ID Gestor':       v.ID_GESTOR||'',
+    'Gestor':          v.NOMBRE_GESTOR||'',
+    'Resultado':       v.RESULTADO||'',
+    'Contacto Tercero':v.CONTACTO_TERCERO||'',
+    'Nombre Tercero':  v.NOMBRE_TERCERO||'',
+    'Horario Indicado':v.HORARIO_INDICADO||'',
+    'Monto Promesa':   v.MONTO_PROMESA||'',
+    'Fecha Promesa':   v.FECHA_PROMESA||'',
+    'Latitud':         v.LATITUD||'',
+    'Longitud':        v.LONGITUD||'',
+    'Foto URL':        v.FOTO_URL||'',
+    'Observaciones':   v.OBSERVACIONES||'',
+  }];
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = Object.keys(rows[0]).map(k=>({wch:Math.max(k.length+2,18)}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Visita',ws);
+  XLSX.writeFile(wb,`Visita_${v.ID_VISITA||'desglose'}_${v.FECHA_VISITA||''}.xlsx`);
+  showToast('Visita exportada','success');
+}
 function showToast(msg, type='info') {
   const container = document.getElementById('toastContainer');
   const icons = { success:'ti-circle-check', error:'ti-circle-x', info:'ti-info-circle' };
