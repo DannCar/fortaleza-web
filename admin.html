@@ -1616,9 +1616,11 @@ function updateMapMarkers(visitas, fullMap=false) {
 
   visitas.forEach(v=>{
     if(!v.LATITUD || !v.LONGITUD) return;
-    const lat = parseFloat(v.LATITUD);
-    const lon = parseFloat(v.LONGITUD);
-    if(isNaN(lat)||isNaN(lon)) return;
+let lat = parseFloat(v.LATITUD);
+let lon = parseFloat(v.LONGITUD);
+if(isNaN(lat)||isNaN(lon)) return;
+if(Math.abs(lat) > 90)  lat = lat / 1000000;
+if(Math.abs(lon) > 180) lon = lon / 1000000;
 
     const r = (v.RESULTADO||'').toLowerCase();
     let color = '#888';
