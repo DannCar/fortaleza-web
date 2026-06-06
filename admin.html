@@ -1051,7 +1051,7 @@ input,select{font-family:'Outfit',sans-serif}
 ══════════════════════════════════════════════════════ */
 const CFG = {
   N8N_BASE: 'https://n8n.fortalezacontactcenter.com',
-  MAPBOX_TOKEN: 'pk.eyJ1IjoiZm9ydGFsZXphY2MiLCJhIjoiY20xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQifQ.YOUR_TOKEN_HERE',
+  MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
   SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
   PAGE_SIZE: 25,
 };
@@ -1689,7 +1689,7 @@ async function loadTitulares() {
   // Normalizar ACTIVO booleano
   titulares = titulares.map(t => ({
     ...t,
-    ACTIVO: (t.ACTIVO === true || t.ACTIVO === 'TRUE' || t.ACTIVO === 'true') ? 'TRUE' : 'FALSE'
+    AACTIVO: (t.ACTIVO === true || t.ACTIVO === 'TRUE' || t.ACTIVO === 'true' || t.ACTIVO === 'SI' || t.ACTIVO === 'Si' || t.ACTIVO === 'si') ? 'TRUE' : 'FALSE'
   }));
   STATE.titulares = titulares;
   STATE.titularesFiltrados = [...STATE.titulares];
@@ -1734,7 +1734,7 @@ function renderTitularesTable() {
         <td>${t.MUNICIPIO||'—'}</td>
         <td><span class="count-pill">${t.CARTERA||'—'}</span></td>
         <td style="font-size:11px;color:var(--teal2)">${gestorMap[t.ID_GESTOR]||t.ID_GESTOR||'—'}</td>
-        <td><span class="badge-${t.ACTIVO==='TRUE'?'active':'inactive'}">${t.ACTIVO==='TRUE'?'Sí':'No'}</span></td>
+        <td><span class="badge-${['TRUE','true','SI','Si','1',true].includes(t.ACTIVO)?'active':'inactive'}">${['TRUE','true','SI','Si','1',true].includes(t.ACTIVO)?'Sí':'No'}</span></td>
       </tr>
     `).join('');
   }
