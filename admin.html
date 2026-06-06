@@ -1132,7 +1132,7 @@ input,select{font-family:'Outfit',sans-serif}
 ══════════════════════════════════════════════════════ */
 const CFG = {
   N8N_BASE: 'https://n8n.fortalezacontactcenter.com',
-  MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
+  MAPBOX_TOKEN: 'pk.eyJ1IjoiZm9ydGFsZXphY2MiLCJhIjoiY20xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQifQ.YOUR_TOKEN_HERE',
   SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
   PAGE_SIZE: 25,
 };
@@ -1140,7 +1140,7 @@ const CFG = {
 // ⚠️  REEMPLAZA este token con el tuyo real de Mapbox
 // Está disponible en: https://account.mapbox.com
 // El token actual del sitio funciona — cópialo desde index.html
-const MAPBOX_TOKEN_REAL = 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w';
+  const MAPBOX_TOKEN = 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w';
 
 /* ══════════════════════════════════════════════════════
    ESTADO DE LA APP
@@ -2219,8 +2219,9 @@ function openDesglose(idx) {
       <img src="${v.FOTO_URL}" alt="Foto domicilio"
         style="width:100%;max-height:220px;object-fit:cover;display:block;cursor:pointer"
         onclick="window.open('${v.FOTO_URL}','_blank')"
-        onerror="this.parentElement.innerHTML='<div style=\\'padding:20px;text-align:center;color:var(--text3);font-size:12px\\'><i class=\\'ti ti-photo-off\\'></i><br>No se pudo cargar la imagen</div>'"
+        onerror="this.style.display='none';this.parentElement.querySelector('.foto-error').style.display='flex'"
       >
+      <div class="foto-error" style="display:none;padding:20px;text-align:center;color:var(--text3);font-size:12px;flex-direction:column;align-items:center;gap:6px"><i class="ti ti-photo-off" style="font-size:24px"></i>No se pudo cargar la imagen</div>
       <div style="padding:6px 10px;font-size:10px;color:var(--text3);background:var(--surface);border-top:1px solid var(--border)">
         <i class="ti ti-external-link" style="font-size:10px"></i> Clic para ampliar
       </div>`;
@@ -2231,12 +2232,13 @@ function openDesglose(idx) {
   // Mini mapa
   const mapWrap = document.getElementById('dsgMapWrap');
   const coords  = document.getElementById('dsgCoords');
-  let lat = parseFloat(v.LATITUD);
-let lon = parseFloat(v.LONGITUD);
-// Corregir coordenadas en formato entero (sin punto decimal)
-// Ej: 19314837 → 19.314837 | -99076435 → -99.076435
-if(!isNaN(lat) && Math.abs(lat) > 90)  lat = lat / 1000000;
-if(!isNaN(lon) && Math.abs(lon) > 180) lon = lon / 1000000;
+  const lat_raw = parseFloat(v.LATITUD);
+  const lon_raw = parseFloat(v.LONGITUD);
+  // Corregir coords en formato entero: 19314837 → 19.314837
+  const lat = (!isNaN(lat_raw) && Math.abs(lat_raw) > 90)  ? lat_raw / 1000000 : lat_raw;
+  const lon = (!isNaN(lon_raw) && Math.abs(lon_raw) > 180) ? lon_raw / 1000000 : lon_raw;
+
+  if(!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
     mapWrap.innerHTML = '<div id="dsgMap" style="width:100%;height:100%"></div>';
     coords.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
