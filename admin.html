@@ -1051,7 +1051,7 @@ input,select{font-family:'Outfit',sans-serif}
 ══════════════════════════════════════════════════════ */
 const CFG = {
   N8N_BASE: 'https://n8n.fortalezacontactcenter.com',
-  MAPBOX_TOKEN: 'pk.eyJ1IjoiZm9ydGFsZXphY2MiLCJhIjoiY20xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQifQ.YOUR_TOKEN_HERE',
+  MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
   SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
   PAGE_SIZE: 25,
 };
@@ -1149,6 +1149,17 @@ async function doLogin() {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
+
+    if (!res.ok && !data.success) {
+  // Fallback a modo demo si el webhook no existe aún
+  if (email === 'admin@fortaleza.com' && password === 'admin123') {
+    STATE.token = 'demo_token_local';
+    STATE.user  = { nombre:'Admin Root', email, rol:'Admin Master', id:'ADM001' };
+    localStorage.setItem('fcc_session', JSON.stringify({ token: STATE.token, user: STATE.user }));
+    startApp();
+    return;
+  }
+}
 
     if (data.success && data.token) {
       STATE.token = data.token;
