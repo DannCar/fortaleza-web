@@ -1051,7 +1051,7 @@ input,select{font-family:'Outfit',sans-serif}
 ══════════════════════════════════════════════════════ */
 const CFG = {
   N8N_BASE: 'https://n8n.fortalezacontactcenter.com',
-  MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
+  MAPBOX_TOKEN: 'pk.eyJ1IjoiZm9ydGFsZXphY2MiLCJhIjoiY20xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQifQ.YOUR_TOKEN_HERE',
   SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
   PAGE_SIZE: 25,
 };
@@ -1059,7 +1059,7 @@ const CFG = {
 // ⚠️  REEMPLAZA este token con el tuyo real de Mapbox
 // Está disponible en: https://account.mapbox.com
 // El token actual del sitio funciona — cópialo desde index.html
-const MAPBOX_TOKEN_REAL = 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w';
+const MAPBOX_TOKEN_REAL = 'TU_TOKEN_MAPBOX_AQUI';
 
 /* ══════════════════════════════════════════════════════
    ESTADO DE LA APP
@@ -1149,17 +1149,6 @@ async function doLogin() {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-
-    if (!res.ok && !data.success) {
-  // Fallback a modo demo si el webhook no existe aún
-  if (email === 'admin@fortaleza.com' && password === 'admin123') {
-    STATE.token = 'demo_token_local';
-    STATE.user  = { nombre:'Admin Root', email, rol:'Admin Master', id:'ADM001' };
-    localStorage.setItem('fcc_session', JSON.stringify({ token: STATE.token, user: STATE.user }));
-    startApp();
-    return;
-  }
-}
 
     if (data.success && data.token) {
       STATE.token = data.token;
@@ -1320,7 +1309,7 @@ async function loadDashboard() {
 
   const [vRes, gRes] = await Promise.all([
     apiCall(`admin-dashboard?fecha=${fecha}`),
-    apiCall('admin-gestores?action=list'),
+    apiCall('admin-gestores', 'POST', {action:'list'}),
   ]);
 
   visitas  = (vRes && vRes.visitas)  ? vRes.visitas  : getDemoVisitas(fecha);
@@ -1584,8 +1573,14 @@ function filterMapaResultado() { filterMapaGestor(); }
    GESTORES PANEL
 ══════════════════════════════════════════════════════ */
 async function loadGestores() {
-  const res = await apiCall('admin-gestores?action=list');
-  STATE.gestores = (res && res.gestores) ? res.gestores : getDemoGestores();
+  const res = await apiCall('admin-gestores', 'POST', {action:'list'});
+  let gestores = (res && res.gestores) ? res.gestores : getDemoGestores();
+  // Normalizar ACTIVO — puede llegar como booleano true o string "TRUE"
+  gestores = gestores.map(g => ({
+    ...g,
+    ACTIVO: (g.ACTIVO === true || g.ACTIVO === 'TRUE' || g.ACTIVO === 'true') ? 'TRUE' : 'FALSE'
+  }));
+  STATE.gestores = gestores;
   STATE.gestoresFiltrados = [...STATE.gestores];
   renderGestoresTable();
 }
@@ -1689,8 +1684,14 @@ async function toggleGestor(id, nuevoEstado) {
    TITULARES PANEL
 ══════════════════════════════════════════════════════ */
 async function loadTitulares() {
-  const res = await apiCall('admin-titulares?action=list');
-  STATE.titulares = (res && res.titulares) ? res.titulares : getDemoTitulares();
+  const res = await apiCall('admin-titulares', 'POST', {action:'list'});
+  let titulares = (res && res.titulares) ? res.titulares : getDemoTitulares();
+  // Normalizar ACTIVO booleano
+  titulares = titulares.map(t => ({
+    ...t,
+    ACTIVO: (t.ACTIVO === true || t.ACTIVO === 'TRUE' || t.ACTIVO === 'true') ? 'TRUE' : 'FALSE'
+  }));
+  STATE.titulares = titulares;
   STATE.titularesFiltrados = [...STATE.titulares];
 
   // Llenar filtros
