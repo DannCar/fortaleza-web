@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0A1828">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fortaleza Field">
+<title>Fortaleza Field</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --navy:    #0A1828;
+  --navy2:   #0d1f33;
+  --navy3:   #112440;
+  --teal:    #178582;
+  --teal2:   #1ab5b1;
+  --teal3:   #0ef5f0;
+  --gold:    #BFA181;
+  --gold2:   #e8c990;
+  --gold3:   #f5e0a0;
+  --red:     #e84444;
+  --green:   #22c55e;
+  --surface: rgba(255,255,255,0.05);
+  --surface2:rgba(255,255,255,0.09);
+  --border:  rgba(255,255,255,0.08);
+  --border2: rgba(23,133,130,0.35);
+  --text:    #e8e8e2;
+  --text2:   rgba(232,232,226,0.6);
+  --text3:   rgba(232,232,226,0.35);
+
+  /* XP colors */
+  --xp-start: #178582;
+  --xp-end:   #BFA181;
+
+  /* Spacing */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ═══════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; overflow: hidden; }
+body {
+  height: 100%;
+  background: var(--navy);
+  font-family: 'Outfit', sans-serif;
+  color: var(--text);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+button { font-family: 'Outfit', sans-serif; cursor: pointer; border: none; outline: none; }
+input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
+
+/* ═══════════════════════════════════════════
+   ROUTER — solo una pantalla visible
+═══════════════════════════════════════════ */
+.screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s ease, transform .35s ease;
+  transform: translateY(12px);
+  overflow: hidden;
+}
+.screen.active {
+  opacity: 1; pointer-events: all;
+  transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 1 — LOGIN
+═══════════════════════════════════════════ */
+#screen-login {
+  background: var(--navy);
+  justify-content: flex-end;
+  padding-bottom: calc(var(--safe-bottom) + 32px);
+}
+
+/* Mapa de fondo animado */
+.login-map {
+  position: absolute; inset: 0;
+  overflow: hidden;
+}
+.map-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(23,133,130,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23,133,130,0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: mapDrift 20s linear infinite;
+}
+@keyframes mapDrift {
+  from { background-position: 0 0; }
+  to   { background-position: 32px 32px; }
+}
+.map-routes {
+  position: absolute; inset: 0;
+}
+.map-glow {
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(23,133,130,0.18) 0%, transparent 70%);
+  top: 20%; left: 50%; transform: translateX(-50%);
+  animation: glowPulse 4s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%,100% { opacity: .6; transform: translateX(-50%) scale(1); }
+  50%      { opacity: 1;  transform: translateX(-50%) scale(1.1); }
+}
+
+/* Pin animado en el mapa */
+.map-pin-hero {
+  position: absolute;
+  top: 28%; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  animation: pinFloat 3s ease-in-out infinite;
+}
+@keyframes pinFloat {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(-8px); }
+}
+.pin-circle {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 0 0 8px rgba(23,133,130,0.2), 0 0 0 16px rgba(23,133,130,0.08);
+}
+.pin-shadow {
+  width: 24px; height: 6px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 50%;
+  margin-top: 6px;
+  filter: blur(3px);
+}
+
+/* Pings decorativos en el mapa */
+.map-ping {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--teal2);
+  animation: pingAnim 3s ease-in-out infinite;
+}
+.map-ping::after {
+  content: '';
+  position: absolute; inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--teal2);
+  opacity: 0;
+  animation: pingRing 3s ease-in-out infinite;
+}
+@keyframes pingAnim  { 0%,100%{opacity:.8}50%{opacity:.4} }
+@keyframes pingRing  { 0%{opacity:.6;transform:scale(1)}100%{opacity:0;transform:scale(2.5)} }
+
+/* Login card */
+.login-card {
+  position: relative; z-index: 10;
+  background: rgba(13,31,51,0.92);
+  border: 1px solid var(--border2);
+  border-radius: 24px 24px 0 0;
+  padding: 32px 28px 24px;
+  backdrop-filter: blur(20px);
+  animation: cardUp .6s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes cardUp {
+  from { transform: translateY(60px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.login-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.logo-eyebrow {
+  font-size: 10px; letter-spacing: 4px;
+  color: var(--teal2); text-transform: uppercase;
+  font-weight: 600; margin-bottom: 4px;
+}
+.logo-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 600;
+  color: var(--text);
+  letter-spacing: .5px;
+}
+.logo-name span { color: var(--gold2); }
+.logo-tagline {
+  font-size: 11px; color: var(--text3);
+  margin-top: 6px; letter-spacing: 1px;
+}
+
+.input-group {
+  margin-bottom: 14px;
+  position: relative;
+}
+.input-label {
+  font-size: 10px; letter-spacing: 2px;
+  color: var(--text3); text-transform: uppercase;
+  margin-bottom: 6px; display: block; font-weight: 600;
+}
+.input-field {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 15px; color: var(--text);
+  transition: border-color .2s, background .2s;
+}
+.input-field:focus {
+  border-color: var(--teal2);
+  background: var(--surface2);
+}
+.input-field::placeholder { color: var(--text3); }
+
+.btn-login {
+  width: 100%;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 15px; font-weight: 700;
+  color: #fff; letter-spacing: .5px;
+  margin-top: 8px;
+  transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 4px 24px rgba(23,133,130,0.4);
+}
+.btn-login:active { transform: scale(0.98); }
+.btn-login:disabled { opacity: .6; }
+
+.login-error {
+  text-align: center; font-size: 12px;
+  color: var(--red);
+  margin-top: 10px; min-height: 16px;
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 2 — HOME (HUD RPG)
+═══════════════════════════════════════════ */
+#screen-home {
+  background: var(--navy);
+  padding-top: var(--safe-top);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#screen-home::-webkit-scrollbar { display: none; }
+
+/* Topbar */
+.home-topbar {
+  display: flex; align-items: center;
+  padding: 16px 20px 12px;
+  gap: 12px;
+  position: sticky; top: 0; z-index: 20;
+  background: linear-gradient(var(--navy) 80%, transparent);
+}
+.avatar-mini {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  border: 2px solid var(--teal2);
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+}
+.level-badge-mini {
+  position: absolute; bottom: -4px; right: -4px;
+  background: var(--gold);
+  color: var(--navy); font-size: 9px; font-weight: 800;
+  border-radius: 8px; padding: 1px 5px;
+  border: 1.5px solid var(--navy);
+}
+.home-greeting { flex: 1; min-width: 0; }
+.greeting-sub {
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.greeting-name {
+  font-size: 16px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.notif-btn {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--text2);
+  position: relative;
+}
+.notif-dot {
+  position: absolute; top: 8px; right: 9px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--gold2);
+  border: 1.5px solid var(--navy);
+}
+
+/* XP Bar section */
+.xp-section {
+  margin: 0 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 16px;
+}
+.xp-top {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.xp-rank {
+  display: flex; align-items: center; gap: 8px;
+}
+.rank-icon { font-size: 22px; }
+.rank-label {
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.rank-name {
+  font-size: 14px; font-weight: 700; color: var(--gold2);
+}
+.xp-numbers {
+  text-align: right;
+  font-size: 12px; color: var(--text2);
+}
+.xp-numbers strong {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; color: var(--teal2); font-weight: 600;
+}
+.xp-bar-track {
+  height: 8px; background: rgba(255,255,255,0.07);
+  border-radius: 8px; overflow: hidden;
+}
+.xp-bar-fill {
+  height: 100%; border-radius: 8px;
+  background: linear-gradient(90deg, var(--teal), var(--gold2));
+  transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+.xp-bar-fill::after {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 20px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+  border-radius: 0 8px 8px 0;
+  animation: xpShine 2s ease-in-out infinite;
+}
+@keyframes xpShine { 0%,100%{opacity:0}50%{opacity:1} }
+.xp-bar-footer {
+  display: flex; justify-content: space-between;
+  margin-top: 6px;
+  font-size: 10px; color: var(--text3);
+}
+
+/* Streak */
+.streak-section {
+  margin: 0 20px 20px;
+  display: flex; gap: 10px;
+}
+.streak-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.streak-card.active {
+  border-color: rgba(245,158,11,0.4);
+  background: rgba(245,158,11,0.06);
+}
+.streak-icon { font-size: 26px; }
+.streak-info {}
+.streak-label {
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1px; text-transform: uppercase;
+}
+.streak-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600; color: var(--text);
+}
+.streak-value.fire { color: #f59e0b; }
+
+/* Leaderboard mini */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; margin-bottom: 12px;
+}
+.section-title {
+  font-size: 11px; letter-spacing: 2px;
+  color: var(--text3); text-transform: uppercase; font-weight: 600;
+}
+.section-link {
+  font-size: 11px; color: var(--teal2); font-weight: 600;
+  letter-spacing: .5px;
+}
+
+.ranking-list { padding: 0 20px; margin-bottom: 20px; }
+.ranking-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  transition: border-color .2s;
+}
+.ranking-item.me {
+  border-color: var(--border2);
+  background: rgba(23,133,130,0.08);
+}
+.rank-pos {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 600;
+  width: 24px; text-align: center;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.rank-pos.gold   { color: #f59e0b; }
+.rank-pos.silver { color: #94a3b8; }
+.rank-pos.bronze { color: #cd7f32; }
+.rank-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.rank-info { flex: 1; min-width: 0; }
+.rank-name-text {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rank-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.rank-xp {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px; font-weight: 600; color: var(--teal2);
+  flex-shrink: 0;
+}
+
+/* Misiones del día */
+.missions-scroll {
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
+.mission-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex; gap: 14px; align-items: center;
+  transition: border-color .2s, transform .15s;
+  cursor: pointer;
+}
+.mission-card:active { transform: scale(0.98); }
+.mission-card.urgent { border-color: rgba(232,68,68,0.3); }
+.mission-card.done   {
+  opacity: .5;
+  border-color: rgba(34,197,94,0.2);
+}
+.mission-type-icon {
+  width: 46px; height: 46px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.mt-cobranza { background: rgba(232,68,68,0.12); }
+.mt-ventas   { background: rgba(23,133,130,0.12); }
+.mt-censo    { background: rgba(191,161,129,0.12); }
+.mission-info { flex: 1; min-width: 0; }
+.mission-client {
+  font-size: 10px; color: var(--teal2);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  font-weight: 600;
+}
+.mission-name {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mission-meta {
+  font-size: 11px; color: var(--text3); margin-top: 2px;
+}
+.mission-xp {
+  font-size: 11px; color: var(--gold2);
+  font-weight: 700; flex-shrink: 0;
+  text-align: right;
+}
+.mission-xp span {
+  display: block;
+  font-size: 10px; color: var(--text3);
+  font-weight: 400;
+}
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(10,24,40,0.95);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  display: flex;
+  padding-bottom: var(--safe-bottom);
+  z-index: 50;
+}
+.nav-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0 8px;
+  font-size: 9px; letter-spacing: 1px;
+  color: var(--text3);
+  text-transform: uppercase; font-weight: 600;
+  cursor: pointer;
+  transition: color .15s;
+  gap: 4px;
+  position: relative;
+}
+.nav-item.active { color: var(--teal2); }
+.nav-icon { font-size: 22px; }
+.nav-dot {
+  position: absolute; top: 8px; right: 28%;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold2);
+  border: 1.5px solid var(--navy);
+}
+
+/* Padding para bottom nav */
+.home-scroll-content {
+  padding-bottom: calc(70px + var(--safe-bottom));
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 3 — PERFIL / AVATAR
+═══════════════════════════════════════════ */
+#screen-perfil {
+  background: var(--navy);
+  padding-top: var(--safe-top);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#screen-perfil::-webkit-scrollbar { display: none; }
+
+.perfil-header {
+  position: relative;
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.back-btn {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--text2);
+}
+.perfil-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 500; color: var(--text);
+}
+
+/* Avatar grande */
+.avatar-stage {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px 20px 24px;
+  position: relative;
+}
+.avatar-bg-glow {
+  position: absolute;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(23,133,130,0.2) 0%, transparent 70%);
+  top: 0; left: 50%; transform: translateX(-50%);
+}
+.avatar-large {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--navy2), var(--navy3));
+  border: 3px solid var(--teal2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 52px;
+  position: relative; z-index: 1;
+  box-shadow: 0 0 0 8px rgba(23,133,130,0.1), 0 8px 32px rgba(0,0,0,0.4);
+  cursor: pointer;
+}
+.avatar-edit-badge {
+  position: absolute; bottom: 4px; right: 4px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--teal); border: 2px solid var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+.avatar-name {
+  font-size: 20px; font-weight: 700; color: var(--text);
+  margin-top: 14px; z-index: 1;
+}
+.avatar-rank-badge {
+  background: linear-gradient(135deg, rgba(23,133,130,0.2), rgba(191,161,129,0.2));
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 11px; color: var(--gold2);
+  letter-spacing: 1px; font-weight: 600;
+  margin-top: 6px; z-index: 1;
+}
+
+/* Selector de avatar emoji */
+.avatar-picker {
+  margin: 0 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: none;
+}
+.avatar-picker.open { display: block; }
+.picker-title {
+  font-size: 11px; color: var(--text3);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  margin-bottom: 12px; font-weight: 600;
+}
+.emoji-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+}
+.emoji-opt {
+  width: 100%; aspect-ratio: 1;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1.5px solid transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  transition: border-color .15s, transform .15s;
+}
+.emoji-opt:active { transform: scale(0.92); }
+.emoji-opt.selected { border-color: var(--teal2); background: rgba(23,133,130,0.12); }
+
+/* Stats del perfil */
+.perfil-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin: 0 20px 20px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+.stat-icon { font-size: 20px; margin-bottom: 6px; }
+.stat-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px; font-weight: 600; color: var(--text);
+}
+.stat-label {
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1px; text-transform: uppercase; margin-top: 2px;
+}
+
+/* Badges */
+.badges-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 10px; margin: 0 20px 20px;
+}
+.badge-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 10px;
+  text-align: center;
+  transition: border-color .2s;
+}
+.badge-card.unlocked { border-color: rgba(191,161,129,0.3); }
+.badge-card.locked   { opacity: .4; }
+.badge-emoji { font-size: 28px; margin-bottom: 6px; }
+.badge-name {
+  font-size: 10px; color: var(--text2); font-weight: 600;
+  line-height: 1.2;
+}
+.badge-desc {
+  font-size: 9px; color: var(--text3); margin-top: 3px;
+}
+
+/* Logout */
+.btn-logout {
+  margin: 0 20px;
+  width: calc(100% - 40px);
+  background: rgba(232,68,68,0.1);
+  border: 1px solid rgba(232,68,68,0.25);
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 14px; font-weight: 600;
+  color: var(--red);
+  margin-bottom: calc(80px + var(--safe-bottom));
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 4 — MISIONES (placeholder)
+═══════════════════════════════════════════ */
+#screen-misiones {
+  background: var(--navy);
+  padding-top: var(--safe-top);
+  overflow-y: auto;
+}
+.coming-soon {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: calc(100% - 120px);
+  text-align: center; padding: 40px;
+}
+.coming-icon { font-size: 64px; margin-bottom: 20px; }
+.coming-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px; font-weight: 500; color: var(--text);
+  margin-bottom: 8px;
+}
+.coming-sub { font-size: 14px; color: var(--text2); line-height: 1.5; }
+.coming-badge {
+  margin-top: 20px;
+  background: var(--teal-dim, rgba(23,133,130,0.15));
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 11px; color: var(--teal2); font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* ═══════════════════════════════════════════
+   TOAST / NOTIFICACIONES
+═══════════════════════════════════════════ */
+.toast-container {
+  position: fixed; top: calc(var(--safe-top) + 16px); left: 16px; right: 16px;
+  z-index: 999; pointer-events: none;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
+  background: var(--navy3);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: toastIn .4s cubic-bezier(0.16,1,0.3,1) both;
+  pointer-events: all;
+}
+@keyframes toastIn {
+  from { opacity:0; transform: translateY(-20px) scale(0.95); }
+  to   { opacity:1; transform: translateY(0)     scale(1); }
+}
+.toast-icon { font-size: 22px; }
+.toast-text { font-size: 13px; color: var(--text); font-weight: 500; }
+.toast-xp   { font-size: 13px; color: var(--teal2); font-weight: 700; }
+
+/* ═══════════════════════════════════════════
+   LEVEL UP MODAL
+═══════════════════════════════════════════ */
+.levelup-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 900; display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column;
+  text-align: center; padding: 40px;
+}
+.levelup-overlay.show { display: flex; animation: fadeIn .4s ease; }
+@keyframes fadeIn { from{opacity:0}to{opacity:1} }
+.levelup-burst { font-size: 80px; animation: burst .6s cubic-bezier(0.16,1,0.3,1) both; }
+@keyframes burst { from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1} }
+.levelup-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px; font-weight: 600; color: var(--gold2);
+  margin-top: 16px;
+}
+.levelup-sub { font-size: 16px; color: var(--text2); margin-top: 8px; }
+.levelup-rank {
+  font-size: 18px; color: var(--teal2); font-weight: 700;
+  margin-top: 12px; letter-spacing: 1px;
+}
+.btn-levelup-close {
+  margin-top: 32px;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  border-radius: 14px; padding: 14px 40px;
+  font-size: 15px; font-weight: 700; color: #fff;
+  box-shadow: 0 4px 24px rgba(23,133,130,0.4);
+}
+
+/* ═══════════════════════════════════════════
+   PARTÍCULAS / DECORACIÓN
+═══════════════════════════════════════════ */
+.particles {
+  position: fixed; inset: 0; pointer-events: none; z-index: 800;
+  overflow: hidden;
+}
+.particle {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  animation: particleFall 1.5s ease-out forwards;
+}
+@keyframes particleFall {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(200px) scale(0); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════ SCREEN: LOGIN ════════════════ -->
+<div class="screen active" id="screen-login">
+  <div class="login-map">
+    <div class="map-grid"></div>
+    <svg class="map-routes" viewBox="0 0 390 600" preserveAspectRatio="xMidYMid slice">
+      <path d="M0,200 Q100,180 200,220 Q300,260 390,200" stroke="rgba(23,133,130,0.15)" stroke-width="2" fill="none"/>
+      <path d="M0,300 Q150,280 250,320 Q320,350 390,310" stroke="rgba(191,161,129,0.1)"  stroke-width="1.5" fill="none"/>
+      <path d="M80,0 Q100,150 90,300 Q80,420 100,600" stroke="rgba(23,133,130,0.1)"  stroke-width="1" fill="none"/>
+      <path d="M280,0 Q300,100 290,280 Q280,400 310,600" stroke="rgba(23,133,130,0.08)" stroke-width="1" fill="none"/>
+    </svg>
+    <div class="map-glow"></div>
+    <div class="map-ping" style="top:22%;left:30%;animation-delay:.5s"></div>
+    <div class="map-ping" style="top:35%;left:72%;animation-delay:1.2s;background:var(--gold2)"></div>
+    <div class="map-ping" style="top:55%;left:20%;animation-delay:.8s"></div>
+    <div class="map-pin-hero">
+      <div class="pin-circle">🧭</div>
+      <div class="pin-shadow"></div>
+    </div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-eyebrow">Fortaleza Contact Center</div>
+      <div class="logo-name">Fortaleza <span>Field</span></div>
+      <div class="logo-tagline">Tu territorio. Tu misión.</div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Usuario Telegram</label>
+      <input class="input-field" type="text" id="loginUser"
+        placeholder="@tu_usuario" autocomplete="username"
+        inputmode="text">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Contraseña</label>
+      <input class="input-field" type="password" id="loginPass"
+        placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="btnLogin" onclick="doLogin()">
+      Iniciar misión
+    </button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN: HOME ════════════════ -->
+<div class="screen" id="screen-home">
+  <div class="home-scroll-content">
+    <!-- Topbar -->
+    <div class="home-topbar">
+      <div class="avatar-mini" id="homeAvatar" onclick="goTo('perfil')">
+        🧭
+        <div class="level-badge-mini" id="homeLevelBadge">1</div>
+      </div>
+      <div class="home-greeting">
+        <div class="greeting-sub">Bienvenido de vuelta</div>
+        <div class="greeting-name" id="homeGestorName">Agente</div>
+      </div>
+      <div class="notif-btn">
+        🔔
+        <div class="notif-dot"></div>
+      </div>
+    </div>
+
+    <!-- XP Bar -->
+    <div class="xp-section">
+      <div class="xp-top">
+        <div class="xp-rank">
+          <div class="rank-icon">🗺️</div>
+          <div>
+            <div class="rank-label">Nivel <span id="xpLevelNum">1</span></div>
+            <div class="rank-name" id="xpRankName">Recluta de Campo</div>
+          </div>
+        </div>
+        <div class="xp-numbers">
+          <strong id="xpCurrent">0</strong>
+          <div>/ <span id="xpNext">500</span> XP</div>
+        </div>
+      </div>
+      <div class="xp-bar-track">
+        <div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div>
+      </div>
+      <div class="xp-bar-footer">
+        <span>Nivel <span id="xpLevelFrom">1</span></span>
+        <span>Nivel <span id="xpLevelTo">2</span></span>
+      </div>
+    </div>
+
+    <!-- Streak -->
+    <div class="streak-section">
+      <div class="streak-card active">
+        <div class="streak-icon">🔥</div>
+        <div class="streak-info">
+          <div class="streak-label">Racha actual</div>
+          <div class="streak-value fire" id="streakValue">0 días</div>
+        </div>
+      </div>
+      <div class="streak-card">
+        <div class="streak-icon">⚡</div>
+        <div class="streak-info">
+          <div class="streak-label">Visitas hoy</div>
+          <div class="streak-value" id="visitasHoy">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ranking mini -->
+    <div class="section-header">
+      <div class="section-title">🏆 Ranking semanal</div>
+      <div class="section-link" onclick="goTo('ranking')">Ver todo</div>
+    </div>
+    <div class="ranking-list" id="rankingList">
+      <!-- dinámico -->
+    </div>
+
+    <!-- Misiones del día -->
+    <div class="section-header">
+      <div class="section-title">📍 Misiones del día</div>
+      <div class="section-link">Ver todas</div>
+    </div>
+    <div class="missions-scroll" id="missionsList">
+      <!-- dinámico -->
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="goTo('home')" id="nav-home">
+      <div class="nav-icon">🏠</div>
+      <span>Inicio</span>
+    </div>
+    <div class="nav-item" onclick="goTo('misiones')" id="nav-misiones">
+      <div class="nav-icon">🗺️</div>
+      <span>Misiones</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="goTo('captura')" id="nav-captura">
+      <div class="nav-icon">📸</div>
+      <span>Capturar</span>
+    </div>
+    <div class="nav-item" onclick="goTo('perfil')" id="nav-perfil">
+      <div class="nav-icon">👤</div>
+      <span>Perfil</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN: PERFIL ════════════════ -->
+<div class="screen" id="screen-perfil">
+  <div style="padding-bottom:calc(80px + var(--safe-bottom))">
+    <!-- Header -->
+    <div class="perfil-header">
+      <button class="back-btn" onclick="goTo('home')">←</button>
+      <div class="perfil-title">Mi Perfil</div>
+    </div>
+
+    <!-- Avatar stage -->
+    <div class="avatar-stage">
+      <div class="avatar-bg-glow"></div>
+      <div class="avatar-large" id="avatarLarge" onclick="togglePicker()">
+        🧭
+        <div class="avatar-edit-badge">✏️</div>
+      </div>
+      <div class="avatar-name" id="perfilName">Cargando...</div>
+      <div class="avatar-rank-badge" id="perfilRank">🗺️ Recluta de Campo</div>
+    </div>
+
+    <!-- Avatar picker -->
+    <div class="avatar-picker" id="avatarPicker">
+      <div class="picker-title">Elige tu avatar</div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="section-header" style="margin-top:4px">
+      <div class="section-title">📊 Mis estadísticas</div>
+    </div>
+    <div class="perfil-stats">
+      <div class="stat-card">
+        <div class="stat-icon">🗺️</div>
+        <div class="stat-value" id="statVisitas">0</div>
+        <div class="stat-label">Visitas totales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-value" id="statXP">0</div>
+        <div class="stat-label">XP acumulado</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-value" id="statStreak">0</div>
+        <div class="stat-label">Racha máxima</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-value" id="statRanking">#—</div>
+        <div class="stat-label">Mejor ranking</div>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="section-header">
+      <div class="section-title">🎖️ Mis logros</div>
+    </div>
+    <div class="badges-grid" id="badgesGrid"></div>
+
+    <!-- Logout -->
+    <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goTo('home')" id="nav-home2">
+      <div class="nav-icon">🏠</div><span>Inicio</span>
+    </div>
+    <div class="nav-item" onclick="goTo('misiones')" id="nav-misiones2">
+      <div class="nav-icon">🗺️</div><span>Misiones</span>
+    </div>
+    <div class="nav-item" onclick="goTo('captura')" id="nav-captura2">
+      <div class="nav-icon">📸</div><span>Capturar</span>
+    </div>
+    <div class="nav-item active" id="nav-perfil2">
+      <div class="nav-icon">👤</div><span>Perfil</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN: MISIONES ════════════════ -->
+<div class="screen" id="screen-misiones">
+  <div class="perfil-header">
+    <button class="back-btn" onclick="goTo('home')">←</button>
+    <div class="perfil-title">Misiones</div>
+  </div>
+  <div class="coming-soon">
+    <div class="coming-icon">🗺️</div>
+    <div class="coming-title">Territorio en exploración</div>
+    <div class="coming-sub">Aquí verás todas tus misiones activas, titulares asignados y rutas del día.</div>
+    <div class="coming-badge">FASE 2 — EN CONSTRUCCIÓN</div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goTo('home')"><div class="nav-icon">🏠</div><span>Inicio</span></div>
+    <div class="nav-item active"><div class="nav-icon">🗺️</div><span>Misiones</span></div>
+    <div class="nav-item" onclick="goTo('captura')"><div class="nav-icon">📸</div><span>Capturar</span></div>
+    <div class="nav-item" onclick="goTo('perfil')"><div class="nav-icon">👤</div><span>Perfil</span></div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN: CAPTURA ════════════════ -->
+<div class="screen" id="screen-captura">
+  <div class="perfil-header">
+    <button class="back-btn" onclick="goTo('home')">←</button>
+    <div class="perfil-title">Captura de visita</div>
+  </div>
+  <div class="coming-soon">
+    <div class="coming-icon">📸</div>
+    <div class="coming-title">Cámara de campo</div>
+    <div class="coming-sub">Aquí registrarás fotos, GPS y el cuestionario completo de cada visita.</div>
+    <div class="coming-badge">FASE 3 — EN CONSTRUCCIÓN</div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="goTo('home')"><div class="nav-icon">🏠</div><span>Inicio</span></div>
+    <div class="nav-item" onclick="goTo('misiones')"><div class="nav-icon">🗺️</div><span>Misiones</span></div>
+    <div class="nav-item active"><div class="nav-icon">📸</div><span>Capturar</span></div>
+    <div class="nav-item" onclick="goTo('perfil')"><div class="nav-icon">👤</div><span>Perfil</span></div>
+  </div>
+</div>
+
+<!-- ════════════════ LEVEL UP MODAL ════════════════ -->
+<div class="levelup-overlay" id="levelupOverlay">
+  <div class="levelup-burst">🎖️</div>
+  <div class="levelup-title">¡Subiste de nivel!</div>
+  <div class="levelup-sub">Nivel <span id="levelupNum">2</span> alcanzado</div>
+  <div class="levelup-rank" id="levelupRank">Explorador</div>
+  <button class="btn-levelup-close" onclick="closeLevelUp()">¡Continuar misión!</button>
+</div>
+
+<!-- PARTÍCULAS -->
+<div class="particles" id="particles"></div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIGURACIÓN
+// ═══════════════════════════════════════════════
+const N8N_BASE = 'https://n8n.fortalezacontactcenter.com';
+
+// Rangos RPG
+const RANKS = [
+  { nivel:1,  nombre:'Recluta de Campo',    icono:'🧭', xpNext:500   },
+  { nivel:2,  nombre:'Explorador',          icono:'🗺️', xpNext:1200  },
+  { nivel:3,  nombre:'Agente de Territorio',icono:'📍', xpNext:2500  },
+  { nivel:5,  nombre:'Agente Fortaleza',    icono:'⚡', xpNext:5000  },
+  { nivel:10, nombre:'Veterano de Campo',   icono:'🏆', xpNext:12000 },
+  { nivel:20, nombre:'Élite Fortaleza',     icono:'💎', xpNext:30000 },
+  { nivel:35, nombre:'Maestro del Territorio',icono:'👑',xpNext:70000},
+  { nivel:50, nombre:'Leyenda de Campo',    icono:'🌟', xpNext:999999},
+];
+
+const AVATARES = ['🧭','🗺️','📍','🧱','🔭','⚡','🦅','🌆','🏙️','🛡️','🎯','🚀','🌍','🔥','💎','👑','🦁','🐺','🦊','🦅','🤺','🧗'];
+
+const BADGES_DEF = [
+  { id:'primer_contacto', nombre:'Primer contacto', emoji:'🎯', desc:'Primera visita completada', xpReq:1 },
+  { id:'en_racha',        nombre:'En racha',         emoji:'🔥', desc:'7 días consecutivos',      streakReq:7 },
+  { id:'explorador',      nombre:'Explorador',        emoji:'🗺️', desc:'Visitas en 3 municipios', visitasReq:10 },
+  { id:'comunicador',     nombre:'Comunicador',       emoji:'💬', desc:'50 contactos con titular', visitasReq:50 },
+  { id:'velocista',       nombre:'Velocista',         emoji:'⚡', desc:'5 visitas en un día',      diario:5 },
+  { id:'veterano',        nombre:'Veterano',          emoji:'🏆', desc:'100 visitas totales',      visitasReq:100 },
+];
+
+// ═══════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════
+let STATE = {
+  user: null,
+  currentScreen: 'login',
+  avatar: '🧭',
+};
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  buildEmojiGrid();
+  buildBadges();
+
+  // Sesión guardada
+  const saved = localStorage.getItem('ff_session');
+  if (saved) {
+    try {
+      STATE.user = JSON.parse(saved);
+      STATE.avatar = STATE.user.avatar || '🧭';
+      startApp();
+      return;
+    } catch(e) {}
+  }
+
+  // Enter en inputs
+  document.getElementById('loginPass').addEventListener('keypress', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+
+// ═══════════════════════════════════════════════
+// ROUTER
+// ═══════════════════════════════════════════════
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(`screen-${screen}`);
+  if (el) {
+    el.classList.add('active');
+    STATE.currentScreen = screen;
+  }
+  if (screen === 'perfil') renderPerfil();
+  if (screen === 'home')   renderHome();
+}
+
+// ═══════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════
+async function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  const btn   = document.getElementById('btnLogin');
+
+  errEl.textContent = '';
+  if (!user || !pass) { errEl.textContent = 'Ingresa tu usuario y contraseña'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+
+  try {
+    const res = await fetch(`${N8N_BASE}/webhook/admin-auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user, password: pass }),
+    });
+    const data = await res.json();
+
+    if (data.success && data.user) {
+      STATE.user = {
+        ...data.user,
+        xp:       data.user.xp      || 0,
+        streak:   data.user.streak  || 0,
+        visitas:  data.user.visitas || 0,
+        avatar:   data.user.avatar  || '🧭',
+        badges:   data.user.badges  || [],
+      };
+      STATE.avatar = STATE.user.avatar;
+      localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+      startApp();
+      return;
+    }
+    errEl.textContent = data.message || 'Credenciales incorrectas';
+  } catch(e) {
+    // DEMO MODE
+    if (user && pass) {
+      STATE.user = {
+        nombre:  user.replace('@',''),
+        email:   user,
+        rol:     'Gestor',
+        xp:      320,
+        streak:  3,
+        visitas: 7,
+        avatar:  '🧭',
+        badges:  ['primer_contacto'],
+        ranking: 2,
+      };
+      STATE.avatar = '🧭';
+      localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+      startApp();
+    } else {
+      errEl.textContent = 'Error de conexión. Verifica tu usuario.';
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Iniciar misión';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('ff_session');
+  STATE.user = null;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-login').classList.add('active');
+}
+
+// ═══════════════════════════════════════════════
+// INICIAR APP
+// ═══════════════════════════════════════════════
+function startApp() {
+  goTo('home');
+  renderHome();
+  setTimeout(() => showToast('🗺️', `¡Bienvenido, ${STATE.user.nombre || 'Agente'}!`, '+0 XP'), 600);
+}
+
+// ═══════════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════════
+function renderHome() {
+  if (!STATE.user) return;
+  const u = STATE.user;
+
+  // Topbar
+  document.getElementById('homeAvatar').childNodes[0].textContent = STATE.avatar;
+  document.getElementById('homeGestorName').textContent = u.nombre || 'Agente';
+
+  // XP y nivel
+  const rank = getRank(u.xp || 0);
+  document.getElementById('xpLevelNum').textContent  = rank.nivel;
+  document.getElementById('xpRankName').textContent  = rank.nombre;
+  document.getElementById('homeLevelBadge').textContent = rank.nivel;
+  document.getElementById('xpCurrent').textContent   = (u.xp || 0).toLocaleString();
+  document.getElementById('xpNext').textContent      = rank.xpNext.toLocaleString();
+  document.getElementById('xpLevelFrom').textContent = rank.nivel;
+  document.getElementById('xpLevelTo').textContent   = rank.nivel + 1;
+
+  const pct = Math.min(((u.xp||0) / rank.xpNext) * 100, 100);
+  setTimeout(() => {
+    document.getElementById('xpBarFill').style.width = pct + '%';
+  }, 300);
+
+  // Streak
+  document.getElementById('streakValue').textContent = `${u.streak||0} días`;
+  document.getElementById('visitasHoy').textContent  = u.visitasHoy || 0;
+
+  // Ranking
+  renderRanking();
+
+  // Misiones
+  renderMissions();
+}
+
+function getRank(xp) {
+  let rank = RANKS[0];
+  for (const r of RANKS) { if (xp >= (r.xpMin||0)) rank = r; }
+  // nivel real
+  const nivel = Math.max(1, Math.floor(xp / 500) + 1);
+  const xpNext = nivel * 500;
+  const rankDef = RANKS.findLast(r => nivel >= r.nivel) || RANKS[0];
+  return { ...rankDef, nivel, xpNext };
+}
+
+function renderRanking() {
+  const mock = [
+    { nombre:'Carlos Mendoza', xp:1240, avatar:'⚡', me:false },
+    { nombre: STATE.user?.nombre || 'Tú', xp: STATE.user?.xp||320, avatar: STATE.avatar, me:true },
+    { nombre:'DOCA Team',       xp:280,  avatar:'🗺️', me:false },
+  ].sort((a,b) => b.xp - a.xp);
+
+  const posClasses = ['gold','silver','bronze'];
+  document.getElementById('rankingList').innerHTML = mock.map((g,i) => `
+    <div class="ranking-item ${g.me?'me':''}">
+      <div class="rank-pos ${posClasses[i]||''}">${i+1}</div>
+      <div class="rank-avatar">${g.avatar}</div>
+      <div class="rank-info">
+        <div class="rank-name-text">${g.nombre}${g.me?' (tú)':''}</div>
+        <div class="rank-sub">${getRank(g.xp).nombre}</div>
+      </div>
+      <div class="rank-xp">${g.xp.toLocaleString()} XP</div>
+    </div>
+  `).join('');
+}
+
+function renderMissions() {
+  const missions = [
+    { tipo:'cobranza', icono:'💰', clase:'mt-cobranza', cliente:'Cartera Welcome', nombre:'Juan Pérez López',    meta:'MX01058803', xp:50, done:false, urgent:true  },
+    { tipo:'cobranza', icono:'💰', clase:'mt-cobranza', cliente:'Cartera Welcome', nombre:'María Torres Ruiz',   meta:'MX01060059', xp:50, done:false, urgent:false },
+    { tipo:'censo',    icono:'📋', clase:'mt-censo',    cliente:'Censo CDMX',     nombre:'Roberto Soto García', meta:'C-2041',     xp:30, done:true,  urgent:false },
+  ];
+
+  document.getElementById('missionsList').innerHTML = missions.map(m => `
+    <div class="mission-card ${m.urgent?'urgent':''} ${m.done?'done':''}"
+         onclick="${m.done?'':'goTo(\'captura\')'}" >
+      <div class="mission-type-icon ${m.clase}">${m.icono}</div>
+      <div class="mission-info">
+        <div class="mission-client">${m.cliente}</div>
+        <div class="mission-name">${m.nombre}</div>
+        <div class="mission-meta">ID: ${m.meta} ${m.urgent?'· ⚡ Urgente':''}</div>
+      </div>
+      <div class="mission-xp">
+        +${m.xp} XP
+        <span>${m.done?'✅ Lista':'Pendiente'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════
+// PERFIL
+// ═══════════════════════════════════════════════
+function renderPerfil() {
+  if (!STATE.user) return;
+  const u = STATE.user;
+  const rank = getRank(u.xp||0);
+
+  document.getElementById('avatarLarge').childNodes[0].textContent = STATE.avatar;
+  document.getElementById('perfilName').textContent = u.nombre || 'Agente';
+  document.getElementById('perfilRank').textContent = `${rank.icono} ${rank.nombre}`;
+
+  document.getElementById('statVisitas').textContent = u.visitas || 0;
+  document.getElementById('statXP').textContent      = (u.xp||0).toLocaleString();
+  document.getElementById('statStreak').textContent  = u.streak || 0;
+  document.getElementById('statRanking').textContent = `#${u.ranking||'—'}`;
+
+  renderBadgesState(u.badges||[]);
+}
+
+function buildEmojiGrid() {
+  document.getElementById('emojiGrid').innerHTML = AVATARES.map(e => `
+    <div class="emoji-opt ${e===STATE.avatar?'selected':''}"
+         onclick="selectAvatar('${e}')">${e}</div>
+  `).join('');
+}
+
+function togglePicker() {
+  const p = document.getElementById('avatarPicker');
+  p.classList.toggle('open');
+  buildEmojiGrid();
+}
+
+function selectAvatar(emoji) {
+  STATE.avatar = emoji;
+  document.getElementById('avatarLarge').childNodes[0].textContent = emoji;
+  document.getElementById('homeAvatar').childNodes[0].textContent  = emoji;
+  if (STATE.user) {
+    STATE.user.avatar = emoji;
+    localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+  }
+  document.querySelectorAll('.emoji-opt').forEach(el => {
+    el.classList.toggle('selected', el.textContent === emoji);
+  });
+  document.getElementById('avatarPicker').classList.remove('open');
+  showToast('✅','Avatar actualizado','');
+}
+
+function buildBadges() {}
+function renderBadgesState(unlocked) {
+  document.getElementById('badgesGrid').innerHTML = BADGES_DEF.map(b => `
+    <div class="badge-card ${unlocked.includes(b.id)?'unlocked':'locked'}">
+      <div class="badge-emoji">${b.emoji}</div>
+      <div class="badge-name">${b.nombre}</div>
+      <div class="badge-desc">${b.desc}</div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════
+// GAMIFICACIÓN
+// ═══════════════════════════════════════════════
+function addXP(cantidad, motivo='') {
+  if (!STATE.user) return;
+  const xpAntes = STATE.user.xp || 0;
+  STATE.user.xp = xpAntes + cantidad;
+  localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+
+  showToast('⚡', motivo || 'XP ganado', `+${cantidad} XP`);
+
+  // ¿Subió de nivel?
+  const rankAntes  = getRank(xpAntes);
+  const rankAhora  = getRank(STATE.user.xp);
+  if (rankAhora.nivel > rankAntes.nivel) {
+    setTimeout(() => showLevelUp(rankAhora), 1200);
+  }
+
+  renderHome();
+}
+
+function showLevelUp(rank) {
+  document.getElementById('levelupNum').textContent  = rank.nivel;
+  document.getElementById('levelupRank').textContent = `${rank.icono} ${rank.nombre}`;
+  document.getElementById('levelupOverlay').classList.add('show');
+  spawnParticles();
+}
+
+function closeLevelUp() {
+  document.getElementById('levelupOverlay').classList.remove('show');
+}
+
+function spawnParticles() {
+  const container = document.getElementById('particles');
+  const colors = ['#178582','#BFA181','#f59e0b','#22c55e','#e8c990'];
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `
+      left: ${Math.random()*100}%;
+      top:  ${20 + Math.random()*30}%;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      animation-delay: ${Math.random()*0.5}s;
+      animation-duration: ${1 + Math.random()*0.8}s;
+      width:  ${4+Math.random()*6}px;
+      height: ${4+Math.random()*6}px;
+    `;
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 2000);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// TOASTS
+// ═══════════════════════════════════════════════
+function showToast(icon, text, xp='') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `
+    <div class="toast-icon">${icon}</div>
+    <div class="toast-text">${text}</div>
+    ${xp ? `<div class="toast-xp">${xp}</div>` : ''}
+  `;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-10px) scale(0.95)';
+    toast.style.transition = 'all .3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// Demo: +50XP al tocar el avatar
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const av = document.getElementById('homeAvatar');
+    if (av) {
+      let taps = 0;
+      av.addEventListener('click', () => {
+        taps++;
+        if (taps === 3) {
+          addXP(50, '🎯 Bonus de explorador');
+          taps = 0;
+        }
+      });
+    }
+  }, 1000);
+});
+</script>
+</body>
+</html>
