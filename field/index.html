@@ -248,10 +248,19 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 #screen-home {
   background: var(--navy);
   padding-top: var(--safe-top);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 #screen-home::-webkit-scrollbar { display: none; }
+
+.home-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(70px + var(--safe-bottom));
+}
+.home-scroll-area::-webkit-scrollbar { display: none; }
 
 /* Topbar */
 .home-topbar {
@@ -528,10 +537,8 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
   border: 1.5px solid var(--navy);
 }
 
-/* Padding para bottom nav */
-.home-scroll-content {
-  padding-bottom: calc(70px + var(--safe-bottom));
-}
+/* Padding para bottom nav — ya no necesario aquí */
+.home-scroll-content { }
 
 /* ═══════════════════════════════════════════
    SCREEN 3 — PERFIL / AVATAR
@@ -539,10 +546,19 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 #screen-perfil {
   background: var(--navy);
   padding-top: var(--safe-top);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 #screen-perfil::-webkit-scrollbar { display: none; }
+
+.perfil-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(70px + var(--safe-bottom));
+}
+.perfil-scroll-area::-webkit-scrollbar { display: none; }
 
 .perfil-header {
   position: relative;
@@ -1060,8 +1076,314 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 }
 
 /* ═══════════════════════════════════════════
-   TOAST / NOTIFICACIONES
+   SCREEN CAPTURA — FASE 3
 ═══════════════════════════════════════════ */
+#screen-captura {
+  background: var(--navy);
+  padding-top: var(--safe-top);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Pasos de progreso */
+.captura-progress {
+  flex-shrink: 0;
+  padding: 14px 20px 10px;
+  background: var(--navy);
+}
+.progress-steps {
+  display: flex; gap: 6px; align-items: center;
+  margin-bottom: 8px;
+}
+.step-dot {
+  flex: 1; height: 4px; border-radius: 4px;
+  background: var(--border);
+  transition: background .3s;
+}
+.step-dot.done    { background: var(--green); }
+.step-dot.active  { background: var(--teal2); }
+.progress-label {
+  font-size: 11px; color: var(--text3);
+  letter-spacing: 1px;
+}
+.progress-label span { color: var(--teal2); font-weight: 600; }
+
+/* Scroll content captura */
+.captura-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 20px calc(100px + var(--safe-bottom));
+}
+.captura-scroll::-webkit-scrollbar { display: none; }
+
+/* Titular mini header en captura */
+.captura-titular-card {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 20px;
+  display: flex; gap: 12px; align-items: center;
+}
+.captura-avatar {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; font-weight: 600; color: var(--teal2);
+  flex-shrink: 0;
+}
+.captura-titular-info { flex: 1; min-width: 0; }
+.captura-titular-id   { font-size: 10px; color: var(--teal2); font-weight: 600; letter-spacing: 1px; }
+.captura-titular-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.captura-titular-dir  { font-size: 11px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Sección de cada paso */
+.captura-step { display: none; }
+.captura-step.active { display: block; }
+
+.step-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 500; color: var(--text);
+  margin-bottom: 6px;
+}
+.step-sub {
+  font-size: 13px; color: var(--text2); line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* PASO 1 — GPS */
+.gps-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.gps-icon { font-size: 48px; margin-bottom: 12px; }
+.gps-coords {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; color: var(--teal2);
+  margin-bottom: 8px; font-weight: 600;
+}
+.gps-status { font-size: 12px; color: var(--text3); }
+.gps-status.ok    { color: var(--green); }
+.gps-status.error { color: var(--red); }
+.btn-gps {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border2);
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 14px; font-weight: 600; color: var(--teal2);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all .15s;
+}
+.btn-gps:active { transform: scale(0.98); }
+.btn-gps.captured { border-color: var(--green); color: var(--green); }
+
+/* PASO 2 — FOTOS */
+.fotos-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px; margin-bottom: 16px;
+}
+.foto-slot {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 1.5px dashed var(--border2);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all .15s;
+  overflow: hidden;
+  background: var(--surface);
+  position: relative;
+}
+.foto-slot:active { transform: scale(0.97); }
+.foto-slot.filled { border-style: solid; border-color: var(--teal2); }
+.foto-slot img {
+  width: 100%; height: 100%; object-fit: cover;
+  position: absolute; inset: 0;
+}
+.foto-slot-label {
+  font-size: 10px; color: var(--text3);
+  margin-top: 6px; text-align: center;
+}
+.foto-num { font-size: 11px; color: var(--teal2); font-weight: 600; }
+.foto-required { color: var(--red); }
+.foto-slot-icon { font-size: 24px; }
+.foto-delete {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(232,68,68,0.8);
+  color: #fff; font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
+}
+input[type="file"].foto-input { display: none; }
+
+/* PASO 3 — CONTACTO */
+.contacto-opciones {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 16px;
+}
+.contacto-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+}
+.contacto-btn:active { transform: scale(0.98); }
+.contacto-btn.selected {
+  border-color: var(--teal2);
+  background: rgba(23,133,130,0.1);
+}
+.contacto-icon { font-size: 28px; flex-shrink: 0; }
+.contacto-info {}
+.contacto-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.contacto-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Sub-preguntas dinámicas */
+.sub-preguntas {
+  margin-top: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.campo-group {}
+.campo-label {
+  font-size: 11px; color: var(--text3);
+  letter-spacing: 1.5px; text-transform: uppercase;
+  font-weight: 600; margin-bottom: 6px; display: block;
+}
+.campo-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px; color: var(--text);
+  transition: border-color .2s;
+}
+.campo-input:focus { border-color: var(--teal2); outline: none; }
+.campo-input::placeholder { color: var(--text3); }
+.campo-si-no {
+  display: flex; gap: 10px;
+}
+.btn-sino {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px; font-weight: 600; color: var(--text2);
+  transition: all .15s;
+}
+.btn-sino.active-si  { border-color: var(--green);  color: var(--green);  background: rgba(34,197,94,0.1);  }
+.btn-sino.active-no  { border-color: var(--red);    color: var(--red);    background: rgba(232,68,68,0.1); }
+
+/* PASO 4 — RESULTADO */
+.resultado-opciones {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-bottom: 16px;
+}
+.resultado-btn {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.resultado-btn:active { transform: scale(0.98); }
+.resultado-btn.selected { border-color: var(--teal2); background: rgba(23,133,130,0.1); }
+.resultado-dot {
+  width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+}
+.resultado-text { font-size: 14px; font-weight: 600; color: var(--text); }
+
+/* PASO 5 — OBSERVACIONES */
+.obs-textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 14px; color: var(--text);
+  min-height: 120px; resize: none;
+  font-family: 'Outfit', sans-serif;
+  line-height: 1.5;
+  transition: border-color .2s;
+}
+.obs-textarea:focus { border-color: var(--teal2); outline: none; }
+.obs-textarea::placeholder { color: var(--text3); }
+.obs-contador {
+  font-size: 11px; color: var(--text3);
+  text-align: right; margin-top: 4px;
+}
+
+/* Botón de acción de cada paso */
+.btn-paso {
+  position: fixed;
+  bottom: calc(16px + var(--safe-bottom));
+  left: 20px; right: 20px;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  border-radius: 16px;
+  padding: 17px;
+  font-size: 16px; font-weight: 700; color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 8px 32px rgba(23,133,130,0.5);
+  transition: all .15s;
+  z-index: 30;
+}
+.btn-paso:disabled {
+  opacity: .4;
+  box-shadow: none;
+}
+.btn-paso:active:not(:disabled) { transform: scale(0.98); }
+.btn-paso.completar {
+  background: linear-gradient(135deg, #16a34a, var(--green));
+  box-shadow: 0 8px 32px rgba(34,197,94,0.4);
+}
+
+/* Éxito final */
+.captura-success {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  min-height: 60vh;
+}
+.captura-success.show { display: flex; }
+.success-burst { font-size: 72px; animation: burst .5s cubic-bezier(0.16,1,0.3,1) both; }
+.success-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 600; color: var(--text);
+  margin: 16px 0 8px;
+}
+.success-xp {
+  font-size: 22px; font-weight: 800; color: var(--teal2);
+  margin-bottom: 8px;
+}
+.success-sub { font-size: 14px; color: var(--text2); line-height: 1.5; }
+.btn-volver-misiones {
+  margin-top: 28px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border2);
+  border-radius: 14px;
+  padding: 14px 32px;
+  font-size: 14px; font-weight: 600; color: var(--teal2);
+}
+
 .toast-container {
   position: fixed; top: calc(var(--safe-top) + 16px); left: 16px; right: 16px;
   z-index: 999; pointer-events: none;
@@ -1181,23 +1503,24 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 
 <!-- ════════════════ SCREEN: HOME ════════════════ -->
 <div class="screen" id="screen-home">
-  <div class="home-scroll-content">
-    <!-- Topbar -->
-    <div class="home-topbar">
-      <div class="avatar-mini" id="homeAvatar" onclick="goTo('perfil')">
-        🧭
-        <div class="level-badge-mini" id="homeLevelBadge">1</div>
-      </div>
-      <div class="home-greeting">
-        <div class="greeting-sub">Bienvenido de vuelta</div>
-        <div class="greeting-name" id="homeGestorName">Agente</div>
-      </div>
-      <div class="notif-btn">
-        🔔
-        <div class="notif-dot"></div>
-      </div>
+  <!-- Topbar FIJO — fuera del scroll -->
+  <div class="home-topbar" style="flex-shrink:0;background:var(--navy);z-index:20;">
+    <div class="avatar-mini" id="homeAvatar" onclick="goTo('perfil')">
+      🧭
+      <div class="level-badge-mini" id="homeLevelBadge">1</div>
     </div>
+    <div class="home-greeting">
+      <div class="greeting-sub">Bienvenido de vuelta</div>
+      <div class="greeting-name" id="homeGestorName">Agente</div>
+    </div>
+    <div class="notif-btn">
+      🔔
+      <div class="notif-dot"></div>
+    </div>
+  </div>
 
+  <!-- Área scrolleable -->
+  <div class="home-scroll-area">
     <!-- XP Bar -->
     <div class="xp-section">
       <div class="xp-top">
@@ -1257,38 +1580,36 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
     <div class="missions-scroll" id="missionsList">
       <!-- dinámico -->
     </div>
-  </div>
+  </div><!-- /home-scroll-area -->
 
-  <!-- Bottom nav -->
+  <!-- Bottom nav FIXED -->
   <div class="bottom-nav">
     <div class="nav-item active" onclick="goTo('home')" id="nav-home">
-      <div class="nav-icon">🏠</div>
-      <span>Inicio</span>
+      <div class="nav-icon">🏠</div><span>Inicio</span>
     </div>
     <div class="nav-item" onclick="goTo('misiones')" id="nav-misiones">
-      <div class="nav-icon">🗺️</div>
-      <span>Misiones</span>
+      <div class="nav-icon">🗺️</div><span>Misiones</span>
       <div class="nav-dot"></div>
     </div>
     <div class="nav-item" onclick="goTo('captura')" id="nav-captura">
-      <div class="nav-icon">📸</div>
-      <span>Capturar</span>
+      <div class="nav-icon">📸</div><span>Capturar</span>
     </div>
     <div class="nav-item" onclick="goTo('perfil')" id="nav-perfil">
-      <div class="nav-icon">👤</div>
-      <span>Perfil</span>
+      <div class="nav-icon">👤</div><span>Perfil</span>
     </div>
   </div>
 </div>
 
 <!-- ════════════════ SCREEN: PERFIL ════════════════ -->
 <div class="screen" id="screen-perfil">
-  <div style="padding-bottom:calc(80px + var(--safe-bottom))">
-    <!-- Header -->
-    <div class="perfil-header">
-      <button class="back-btn" onclick="goTo('home')">←</button>
-      <div class="perfil-title">Mi Perfil</div>
-    </div>
+  <!-- Header FIJO -->
+  <div class="perfil-header" style="flex-shrink:0;background:var(--navy);z-index:20;">
+    <button class="back-btn" onclick="goTo('home')">←</button>
+    <div class="perfil-title">Mi Perfil</div>
+  </div>
+
+  <!-- Scroll area -->
+  <div class="perfil-scroll-area">
 
     <!-- Avatar stage -->
     <div class="avatar-stage">
@@ -1342,9 +1663,9 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 
     <!-- Logout -->
     <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
-  </div>
+  </div><!-- /perfil-scroll-area -->
 
-  <!-- Bottom nav -->
+  <!-- Bottom nav FIXED -->
   <div class="bottom-nav">
     <div class="nav-item" onclick="goTo('home')" id="nav-home2">
       <div class="nav-icon">🏠</div><span>Inicio</span>
@@ -1460,22 +1781,161 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 
 <!-- ════════════════ SCREEN: CAPTURA ════════════════ -->
 <div class="screen" id="screen-captura">
-  <div class="perfil-header">
-    <button class="back-btn" onclick="goTo('home')">←</button>
-    <div class="perfil-title">Captura de visita</div>
+
+  <!-- Barra de progreso FIJA -->
+  <div class="captura-progress">
+    <div class="progress-steps">
+      <div class="step-dot active" id="sdot-1"></div>
+      <div class="step-dot"        id="sdot-2"></div>
+      <div class="step-dot"        id="sdot-3"></div>
+      <div class="step-dot"        id="sdot-4"></div>
+      <div class="step-dot"        id="sdot-5"></div>
+    </div>
+    <div class="progress-label">Paso <span id="pasoActualLabel">1</span> de 5 — <span id="pasoNombreLabel">Ubicación GPS</span></div>
   </div>
-  <div class="coming-soon">
-    <div class="coming-icon">📸</div>
-    <div class="coming-title">Cámara de campo</div>
-    <div class="coming-sub">Aquí registrarás fotos, GPS y el cuestionario completo de cada visita.</div>
-    <div class="coming-badge">FASE 3 — EN CONSTRUCCIÓN</div>
-  </div>
-  <div class="bottom-nav">
-    <div class="nav-item" onclick="goTo('home')"><div class="nav-icon">🏠</div><span>Inicio</span></div>
-    <div class="nav-item" onclick="goTo('misiones')"><div class="nav-icon">🗺️</div><span>Misiones</span></div>
-    <div class="nav-item active"><div class="nav-icon">📸</div><span>Capturar</span></div>
-    <div class="nav-item" onclick="goTo('perfil')"><div class="nav-icon">👤</div><span>Perfil</span></div>
-  </div>
+
+  <!-- Scroll content -->
+  <div class="captura-scroll" id="capturaScroll">
+
+    <!-- Mini card del titular -->
+    <div class="captura-titular-card" id="capturaTitularCard">
+      <div class="captura-avatar" id="capturaAvatarInicial">—</div>
+      <div class="captura-titular-info">
+        <div class="captura-titular-id"   id="capturaTitularId">Selecciona un titular</div>
+        <div class="captura-titular-name" id="capturaTitularName">desde la pantalla Misiones</div>
+        <div class="captura-titular-dir"  id="capturaTitularDir">—</div>
+      </div>
+    </div>
+
+    <!-- PASO 1: GPS -->
+    <div class="captura-step active" id="paso-1">
+      <div class="step-title">📍 Ubicación GPS</div>
+      <div class="step-sub">Captura tu ubicación actual para verificar que estás en el domicilio.</div>
+      <div class="gps-card">
+        <div class="gps-icon" id="gpsIcon">📍</div>
+        <div class="gps-coords" id="gpsCoordsText">Sin coordenadas capturadas</div>
+        <div class="gps-status" id="gpsStatus">Presiona el botón para capturar tu posición</div>
+      </div>
+      <button class="btn-gps" id="btnGps" onclick="capturarGPS()">
+        <span>📡</span> Capturar mi ubicación
+      </button>
+    </div>
+
+    <!-- PASO 2: FOTOS -->
+    <div class="captura-step" id="paso-2">
+      <div class="step-title">📸 Fotografías</div>
+      <div class="step-sub">Toma al menos 1 foto del domicilio como evidencia. Máximo 3.</div>
+      <div class="fotos-grid">
+        <div class="foto-slot" id="fotoSlot1" onclick="tomarFoto(1)">
+          <span class="foto-slot-icon">📷</span>
+          <span class="foto-slot-label"><span class="foto-required">*</span> Foto 1</span>
+          <input type="file" class="foto-input" id="fotoInput1" accept="image/*" capture="environment" onchange="procesarFoto(1,this)">
+        </div>
+        <div class="foto-slot" id="fotoSlot2" onclick="tomarFoto(2)">
+          <span class="foto-slot-icon">📷</span>
+          <span class="foto-slot-label foto-num">Foto 2</span>
+          <input type="file" class="foto-input" id="fotoInput2" accept="image/*" capture="environment" onchange="procesarFoto(2,this)">
+        </div>
+        <div class="foto-slot" id="fotoSlot3" onclick="tomarFoto(3)">
+          <span class="foto-slot-icon">📷</span>
+          <span class="foto-slot-label foto-num">Foto 3</span>
+          <input type="file" class="foto-input" id="fotoInput3" accept="image/*" capture="environment" onchange="procesarFoto(3,this)">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px">
+        <span style="color:var(--red)">*</span> La primera foto es obligatoria
+      </div>
+    </div>
+
+    <!-- PASO 3: CONTACTO -->
+    <div class="captura-step" id="paso-3">
+      <div class="step-title">👥 Tipo de contacto</div>
+      <div class="step-sub">¿Con quién tuviste contacto en el domicilio?</div>
+      <div class="contacto-opciones">
+        <div class="contacto-btn" id="cbtn-titular" onclick="seleccionarContacto('titular')">
+          <span class="contacto-icon">👤</span>
+          <div class="contacto-info">
+            <div class="contacto-name">Contacto con titular</div>
+            <div class="contacto-desc">El titular atendió directamente</div>
+          </div>
+        </div>
+        <div class="contacto-btn" id="cbtn-tercero" onclick="seleccionarContacto('tercero')">
+          <span class="contacto-icon">👥</span>
+          <div class="contacto-info">
+            <div class="contacto-name">Contacto con tercero</div>
+            <div class="contacto-desc">Familiar u otra persona en el domicilio</div>
+          </div>
+        </div>
+        <div class="contacto-btn" id="cbtn-vecino" onclick="seleccionarContacto('vecino')">
+          <span class="contacto-icon">🏘️</span>
+          <div class="contacto-info">
+            <div class="contacto-name">Contacto con vecino</div>
+            <div class="contacto-desc">Un vecino proporcionó información</div>
+          </div>
+        </div>
+        <div class="contacto-btn" id="cbtn-nadie" onclick="seleccionarContacto('nadie')">
+          <span class="contacto-icon">🚪</span>
+          <div class="contacto-info">
+            <div class="contacto-name">Nadie atiende</div>
+            <div class="contacto-desc">Domicilio cerrado o sin respuesta</div>
+          </div>
+        </div>
+      </div>
+      <div class="sub-preguntas" id="subPreguntas" style="display:none"></div>
+    </div>
+
+    <!-- PASO 4: RESULTADO -->
+    <div class="captura-step" id="paso-4">
+      <div class="step-title">📋 Resultado</div>
+      <div class="step-sub">¿Cuál fue el resultado de la visita?</div>
+      <div class="resultado-opciones">
+        <div class="resultado-btn" id="rbtn-localiza"   onclick="seleccionarResultado('Se localiza a domicilio')">
+          <div class="resultado-dot" style="background:#22c55e"></div>
+          <div class="resultado-text">Se localiza a domicilio</div>
+        </div>
+        <div class="resultado-btn" id="rbtn-nolocaliza" onclick="seleccionarResultado('No se localiza a domicilio')">
+          <div class="resultado-dot" style="background:#e84444"></div>
+          <div class="resultado-text">No se localiza a domicilio</div>
+        </div>
+        <div class="resultado-btn" id="rbtn-carta"      onclick="seleccionarResultado('Se deja carta con tercero')">
+          <div class="resultado-dot" style="background:#f59e0b"></div>
+          <div class="resultado-text">Se deja carta con tercero</div>
+        </div>
+        <div class="resultado-btn" id="rbtn-pago"       onclick="seleccionarResultado('Realiza pago')">
+          <div class="resultado-dot" style="background:#1ab5b1"></div>
+          <div class="resultado-text">Realiza pago</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASO 5: OBSERVACIONES -->
+    <div class="captura-step" id="paso-5">
+      <div class="step-title">📝 Observaciones</div>
+      <div class="step-sub">Describe lo que ocurrió durante la visita. Mínimo 10 caracteres.</div>
+      <textarea class="obs-textarea" id="obsTextarea"
+        placeholder="Ej: El titular comentó que no tiene dinero esta semana pero se comprometió a pagar el lunes próximo..."
+        oninput="contarObs(this)" maxlength="500"></textarea>
+      <div class="obs-contador" id="obsContador">0 / 500 caracteres</div>
+    </div>
+
+    <!-- ÉXITO -->
+    <div class="captura-success" id="capturaSuccess">
+      <div class="success-burst">🎯</div>
+      <div class="success-title">¡Visita registrada!</div>
+      <div class="success-xp" id="successXp">+50 XP</div>
+      <div class="success-sub" id="successSub">La visita fue registrada exitosamente en tu cartera.</div>
+      <button class="btn-volver-misiones" onclick="volverMisiones()">
+        🗺️ Volver a misiones
+      </button>
+    </div>
+
+  </div><!-- /captura-scroll -->
+
+  <!-- Botón de acción FIJO -->
+  <button class="btn-paso" id="btnPaso" onclick="siguientePaso()" disabled>
+    Continuar →
+  </button>
+
 </div>
 
 <!-- ════════════════ LEVEL UP MODAL ════════════════ -->
@@ -1568,6 +2028,7 @@ function goTo(screen) {
   if (screen === 'perfil')   renderPerfil();
   if (screen === 'home')     renderHome();
   if (screen === 'misiones') loadMisiones();
+  if (screen === 'captura')  initCaptura();
 }
 
 // ═══════════════════════════════════════════════
@@ -1895,8 +2356,420 @@ function showToast(icon, text, xp='') {
 }
 
 // ═══════════════════════════════════════════════
-// ESTADO MISIONES
+// FASE 3 — CAPTURA DE VISITA
 // ═══════════════════════════════════════════════
+const PASOS_NOMBRES = ['Ubicación GPS','Fotografías','Tipo de contacto','Resultado','Observaciones'];
+
+let CAPTURA = {
+  paso:         1,
+  lat:          null,
+  lon:          null,
+  fotos:        [null, null, null], // base64 de cada foto
+  fotoFiles:    [null, null, null],
+  contacto:     null,
+  subDatos:     {},
+  resultado:    null,
+  observaciones:'',
+};
+
+// ── Inicializar captura al entrar a la pantalla ──
+function initCaptura() {
+  // Reset estado
+  CAPTURA = { paso:1, lat:null, lon:null, fotos:[null,null,null], fotoFiles:[null,null,null], contacto:null, subDatos:{}, resultado:null, observaciones:'' };
+
+  // Rellenar card del titular
+  const t = STATE.titularEnVisita;
+  if (t) {
+    document.getElementById('capturaAvatarInicial').textContent = getInitials(t.NOMBRE);
+    document.getElementById('capturaTitularId').textContent     = t.ID_TITULAR;
+    document.getElementById('capturaTitularName').textContent   = t.NOMBRE;
+    document.getElementById('capturaTitularDir').textContent    = t.MUNICIPIO || t.DIRECCION || '—';
+  }
+
+  // Reset pasos
+  document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('paso-1').classList.add('active');
+  document.getElementById('capturaSuccess').classList.remove('show');
+
+  // Reset GPS
+  document.getElementById('gpsIcon').textContent    = '📍';
+  document.getElementById('gpsCoordsText').textContent = 'Sin coordenadas capturadas';
+  document.getElementById('gpsStatus').textContent  = 'Presiona el botón para capturar tu posición';
+  document.getElementById('gpsStatus').className    = 'gps-status';
+  document.getElementById('btnGps').className       = 'btn-gps';
+
+  // Reset fotos
+  for(let i=1;i<=3;i++) {
+    const slot = document.getElementById(`fotoSlot${i}`);
+    slot.className = 'foto-slot';
+    slot.innerHTML = `<span class="foto-slot-icon">📷</span><span class="foto-slot-label">${i===1?'<span class="foto-required">*</span> ':''} Foto ${i}</span><input type="file" class="foto-input" id="fotoInput${i}" accept="image/*" capture="environment" onchange="procesarFoto(${i},this)">`;
+  }
+
+  // Reset contacto y resultado
+  document.querySelectorAll('.contacto-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.resultado-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('subPreguntas').style.display = 'none';
+  document.getElementById('subPreguntas').innerHTML = '';
+  if(document.getElementById('obsTextarea')) document.getElementById('obsTextarea').value = '';
+  if(document.getElementById('obsContador')) document.getElementById('obsContador').textContent = '0 / 500 caracteres';
+
+  actualizarProgreso();
+  actualizarBotonPaso();
+}
+
+// ── Actualizar barra de progreso ──
+function actualizarProgreso() {
+  const p = CAPTURA.paso;
+  for(let i=1;i<=5;i++) {
+    const dot = document.getElementById(`sdot-${i}`);
+    if(!dot) continue;
+    dot.className = 'step-dot' + (i < p ? ' done' : i === p ? ' active' : '');
+  }
+  document.getElementById('pasoActualLabel').textContent  = p;
+  document.getElementById('pasoNombreLabel').textContent  = PASOS_NOMBRES[p-1] || '';
+}
+
+// ── Botón continuar ──
+function actualizarBotonPaso() {
+  const btn = document.getElementById('btnPaso');
+  if(!btn) return;
+  const p = CAPTURA.paso;
+  let habilitado = false;
+
+  if(p === 1) habilitado = !!(CAPTURA.lat && CAPTURA.lon);
+  if(p === 2) habilitado = !!CAPTURA.fotos[0];
+  if(p === 3) habilitado = !!CAPTURA.contacto;
+  if(p === 4) habilitado = !!CAPTURA.resultado;
+  if(p === 5) habilitado = CAPTURA.observaciones.length >= 10;
+
+  btn.disabled = !habilitado;
+
+  if(p === 5) {
+    btn.textContent = '🚀 Registrar visita · +50 XP';
+    btn.className   = 'btn-paso completar';
+  } else {
+    btn.textContent = `Continuar →`;
+    btn.className   = 'btn-paso';
+    if(habilitado) btn.className += '';
+  }
+}
+
+function siguientePaso() {
+  const p = CAPTURA.paso;
+  if(p < 5) {
+    CAPTURA.paso++;
+    document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`paso-${CAPTURA.paso}`).classList.add('active');
+    document.getElementById('capturaScroll').scrollTop = 0;
+    actualizarProgreso();
+    actualizarBotonPaso();
+  } else {
+    registrarVisita();
+  }
+}
+
+// ── PASO 1: GPS ──
+function capturarGPS() {
+  const btn    = document.getElementById('btnGps');
+  const status = document.getElementById('gpsStatus');
+  const coords = document.getElementById('gpsCoordsText');
+  const icon   = document.getElementById('gpsIcon');
+
+  btn.disabled   = true;
+  btn.innerHTML  = '<span>⏳</span> Obteniendo posición...';
+  status.textContent = 'Buscando señal GPS...';
+  status.className   = 'gps-status';
+
+  if(!navigator.geolocation) {
+    status.textContent = 'GPS no disponible en este dispositivo';
+    status.className   = 'gps-status error';
+    btn.disabled = false;
+    btn.innerHTML = '<span>📡</span> Capturar mi ubicación';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      CAPTURA.lat = pos.coords.latitude.toFixed(6);
+      CAPTURA.lon = pos.coords.longitude.toFixed(6);
+      icon.textContent    = '✅';
+      coords.textContent  = `${CAPTURA.lat}, ${CAPTURA.lon}`;
+      status.textContent  = `Precisión: ±${Math.round(pos.coords.accuracy)}m`;
+      status.className    = 'gps-status ok';
+      btn.className       = 'btn-gps captured';
+      btn.innerHTML       = '<span>✅</span> Ubicación capturada';
+      btn.disabled        = false;
+      actualizarBotonPaso();
+      showToast('📍','Ubicación capturada','');
+    },
+    err => {
+      status.textContent = 'No se pudo obtener ubicación. Verifica permisos.';
+      status.className   = 'gps-status error';
+      btn.disabled = false;
+      btn.innerHTML = '<span>🔄</span> Reintentar';
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+// ── PASO 2: FOTOS ──
+function tomarFoto(num) {
+  document.getElementById(`fotoInput${num}`).click();
+}
+
+function procesarFoto(num, input) {
+  if(!input.files || !input.files[0]) return;
+  const file = input.files[0];
+
+  // Comprimir antes de guardar (max 800px)
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if(w > MAX) { h = h*(MAX/w); w = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const b64 = canvas.toDataURL('image/jpeg', 0.75);
+      CAPTURA.fotos[num-1]    = b64;
+      CAPTURA.fotoFiles[num-1] = file;
+
+      // Mostrar preview en el slot
+      const slot = document.getElementById(`fotoSlot${num}`);
+      slot.className = 'foto-slot filled';
+      slot.innerHTML = `
+        <img src="${b64}" alt="Foto ${num}">
+        <div class="foto-delete" onclick="eliminarFoto(${num}, event)">✕</div>
+        <input type="file" class="foto-input" id="fotoInput${num}" accept="image/*" capture="environment" onchange="procesarFoto(${num},this)">
+      `;
+      actualizarBotonPaso();
+      showToast('📷',`Foto ${num} guardada`,'');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function eliminarFoto(num, e) {
+  e.stopPropagation();
+  CAPTURA.fotos[num-1]    = null;
+  CAPTURA.fotoFiles[num-1] = null;
+  const slot = document.getElementById(`fotoSlot${num}`);
+  slot.className = 'foto-slot';
+  slot.innerHTML = `<span class="foto-slot-icon">📷</span><span class="foto-slot-label">${num===1?'<span class="foto-required">*</span> ':''} Foto ${num}</span><input type="file" class="foto-input" id="fotoInput${num}" accept="image/*" capture="environment" onchange="procesarFoto(${num},this)">`;
+  actualizarBotonPaso();
+}
+
+// ── PASO 3: CONTACTO ──
+function seleccionarContacto(tipo) {
+  CAPTURA.contacto = tipo;
+  CAPTURA.subDatos = {};
+
+  // Highlight seleccionado
+  document.querySelectorAll('.contacto-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById(`cbtn-${tipo}`).classList.add('selected');
+
+  // Sub-preguntas según tipo
+  const sp = document.getElementById('subPreguntas');
+  sp.innerHTML = '';
+  sp.style.display = 'none';
+
+  let html = '';
+
+  if(tipo === 'titular') {
+    html = `
+      <div class="campo-group">
+        <label class="campo-label">Horarios de localización</label>
+        <input class="campo-input" type="text" id="sp-horario" placeholder="Ej: Lunes a viernes de 6pm a 9pm" oninput="CAPTURA.subDatos.horario=this.value">
+      </div>
+      <div class="campo-group">
+        <label class="campo-label">Teléfono adicional (opcional)</label>
+        <input class="campo-input" type="tel" id="sp-telefono" placeholder="Ej: 55 1234 5678 (o N/A)" oninput="CAPTURA.subDatos.telefono=this.value">
+      </div>`;
+  } else if(tipo === 'tercero') {
+    html = `
+      <div class="campo-group">
+        <label class="campo-label">Nombre del tercero</label>
+        <input class="campo-input" type="text" id="sp-nombre-tercero" placeholder="Nombre completo" oninput="CAPTURA.subDatos.nombreTercero=this.value">
+      </div>
+      <div class="campo-group">
+        <label class="campo-label">¿Conoce al titular?</label>
+        <div class="campo-si-no">
+          <button class="btn-sino" onclick="setSiNo('conoce','si',this)">✅ Sí</button>
+          <button class="btn-sino" onclick="setSiNo('conoce','no',this)">❌ No</button>
+        </div>
+      </div>
+      <div class="campo-group">
+        <label class="campo-label">Horarios de localización</label>
+        <input class="campo-input" type="text" id="sp-horario" placeholder="Ej: Tardes después de las 6pm" oninput="CAPTURA.subDatos.horario=this.value">
+      </div>
+      <div class="campo-group">
+        <label class="campo-label">¿Proporcionó teléfono?</label>
+        <div class="campo-si-no">
+          <button class="btn-sino" onclick="setSiNo('telefono','si',this)">✅ Sí</button>
+          <button class="btn-sino" onclick="setSiNo('telefono','no',this)">❌ No</button>
+        </div>
+      </div>
+      <div class="campo-group" id="sp-tel-group" style="display:none">
+        <label class="campo-label">Número de teléfono</label>
+        <input class="campo-input" type="tel" id="sp-telefono" placeholder="55 1234 5678" oninput="CAPTURA.subDatos.telefono=this.value">
+      </div>`;
+  } else if(tipo === 'vecino') {
+    html = `
+      <div class="campo-group">
+        <label class="campo-label">Horarios de localización del titular</label>
+        <input class="campo-input" type="text" id="sp-horario" placeholder="Según el vecino..." oninput="CAPTURA.subDatos.horario=this.value">
+      </div>
+      <div class="campo-group">
+        <label class="campo-label">¿El vecino conoce al titular?</label>
+        <div class="campo-si-no">
+          <button class="btn-sino" onclick="setSiNo('conoce','si',this)">✅ Sí</button>
+          <button class="btn-sino" onclick="setSiNo('conoce','no',this)">❌ No</button>
+        </div>
+      </div>
+      <div class="campo-group">
+        <label class="campo-label">Nombre o seña particular (opcional)</label>
+        <input class="campo-input" type="text" id="sp-sena" placeholder="Ej: Señora de cabello corto, N/A" oninput="CAPTURA.subDatos.sena=this.value">
+      </div>`;
+  } else if(tipo === 'nadie') {
+    html = `
+      <div class="campo-group">
+        <label class="campo-label">¿Hubo contacto con algún vecino?</label>
+        <div class="campo-si-no">
+          <button class="btn-sino" onclick="setSiNo('vecino','si',this)">✅ Sí</button>
+          <button class="btn-sino" onclick="setSiNo('vecino','no',this)">❌ No</button>
+        </div>
+      </div>`;
+  }
+
+  if(html) {
+    sp.innerHTML = html;
+    sp.style.display = 'flex';
+  }
+
+  actualizarBotonPaso();
+}
+
+function setSiNo(campo, valor, btn) {
+  CAPTURA.subDatos[campo] = valor;
+  const parent = btn.closest('.campo-si-no');
+  parent.querySelectorAll('.btn-sino').forEach(b => {
+    b.className = 'btn-sino';
+  });
+  btn.className = `btn-sino active-${valor}`;
+  // Mostrar/ocultar campo teléfono
+  if(campo === 'telefono') {
+    const tg = document.getElementById('sp-tel-group');
+    if(tg) tg.style.display = valor === 'si' ? 'block' : 'none';
+  }
+}
+
+// ── PASO 4: RESULTADO ──
+function seleccionarResultado(resultado) {
+  CAPTURA.resultado = resultado;
+  document.querySelectorAll('.resultado-btn').forEach(b => b.classList.remove('selected'));
+  // Highlight el correcto
+  const map = {
+    'Se localiza a domicilio':    'rbtn-localiza',
+    'No se localiza a domicilio': 'rbtn-nolocaliza',
+    'Se deja carta con tercero':  'rbtn-carta',
+    'Realiza pago':               'rbtn-pago',
+  };
+  const el = document.getElementById(map[resultado]);
+  if(el) el.classList.add('selected');
+  actualizarBotonPaso();
+}
+
+// ── PASO 5: OBSERVACIONES ──
+function contarObs(textarea) {
+  CAPTURA.observaciones = textarea.value;
+  document.getElementById('obsContador').textContent = `${textarea.value.length} / 500 caracteres`;
+  actualizarBotonPaso();
+}
+
+// ── REGISTRAR VISITA ──
+async function registrarVisita() {
+  const btn = document.getElementById('btnPaso');
+  btn.disabled  = true;
+  btn.textContent = '⏳ Registrando...';
+
+  const t = STATE.titularEnVisita || {};
+  const ahora = new Date();
+  const fecha = ahora.toISOString().split('T')[0];
+  const hora  = ahora.toTimeString().slice(0,5);
+
+  const payload = {
+    id_visita:          `VIS-${Date.now()}`,
+    id_titular:         t.ID_TITULAR || '',
+    nombre_titular:     t.NOMBRE     || '',
+    id_gestor:          STATE.user?.idGestor  || '',
+    nombre_gestor:      STATE.user?.nombre    || '',
+    fecha_visita:       fecha,
+    hora_visita:        hora,
+    tipo_contacto:      CAPTURA.contacto  || '',
+    resultado:          CAPTURA.resultado || '',
+    latitud:            CAPTURA.lat       || '',
+    longitud:           CAPTURA.lon       || '',
+    observaciones:      CAPTURA.observaciones || '',
+    horario_indicado:   CAPTURA.subDatos.horario        || '',
+    nombre_tercero:     CAPTURA.subDatos.nombreTercero  || '',
+    conoce_titular:     CAPTURA.subDatos.conoce         || '',
+    telefono_adicional: CAPTURA.subDatos.telefono       || '',
+    sena_particular:    CAPTURA.subDatos.sena           || '',
+    foto_base64_1:      CAPTURA.fotos[0] || '',
+    foto_base64_2:      CAPTURA.fotos[1] || '',
+    foto_base64_3:      CAPTURA.fotos[2] || '',
+    estatus:            'CONCLUIDA',
+  };
+
+  try {
+    const res = await fetch(`${N8N_BASE}/webhook/field-registrar-visita`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+  } catch(e) {
+    // En demo o error de red — guardar localmente
+    const pendientes = JSON.parse(localStorage.getItem('ff_visitas_pendientes') || '[]');
+    pendientes.push({ ...payload, _pendiente: true });
+    localStorage.setItem('ff_visitas_pendientes', JSON.stringify(pendientes));
+    console.warn('Visita guardada localmente:', e.message);
+  }
+
+  // Agregar XP
+  if(STATE.user) {
+    const xpBonus = CAPTURA.resultado === 'Realiza pago' ? 100 : 50;
+    STATE.user.xp      = (STATE.user.xp || 0) + xpBonus;
+    STATE.user.visitas = (STATE.user.visitas || 0) + 1;
+    STATE.user.visitasHoy = (STATE.user.visitasHoy || 0) + 1;
+    localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+    addXP(0, ''); // actualizar render sin sumar de nuevo
+  }
+
+  // Marcar como visitado
+  if(t.ID_TITULAR) VISITAS_HOY_IDS.add(t.ID_TITULAR);
+
+  // Mostrar éxito
+  btn.style.display = 'none';
+  document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('successXp').textContent = CAPTURA.resultado === 'Realiza pago' ? '+100 XP 💰' : '+50 XP';
+  document.getElementById('successSub').textContent = `${t.NOMBRE || 'Titular'} · ${CAPTURA.resultado}`;
+  document.getElementById('capturaSuccess').classList.add('show');
+  spawnParticles();
+}
+
+function volverMisiones() {
+  document.getElementById('btnPaso').style.display = 'flex';
+  goTo('misiones');
+}
+
+// Actualizar goTo para inicializar captura
+const _goToOriginal = goTo;
+
 let TITULARES_DATA  = [];  // todos del gestor
 let TITULARES_FILTRADOS = [];
 let VISITAS_HOY_IDS = new Set(); // IDs visitados hoy
