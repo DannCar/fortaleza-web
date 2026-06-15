@@ -1782,6 +1782,17 @@ input[type="file"].foto-input { display: none; }
 <!-- ════════════════ SCREEN: CAPTURA ════════════════ -->
 <div class="screen" id="screen-captura">
 
+  <!-- Header con back button FIJO -->
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 20px 10px;flex-shrink:0;background:var(--navy);">
+    <button onclick="retrocederCaptura()"
+      style="width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--text2);flex-shrink:0;">←</button>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase">Registrando visita</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="capturaHeaderName">—</div>
+    </div>
+    <div style="font-size:11px;color:var(--teal2);font-weight:600;background:var(--teal-dim,rgba(23,133,130,0.15));border:1px solid var(--border2);border-radius:20px;padding:3px 10px;" id="capturaStepBadge">1/5</div>
+  </div>
+
   <!-- Barra de progreso FIJA -->
   <div class="captura-progress">
     <div class="progress-steps">
@@ -2384,6 +2395,19 @@ function initCaptura() {
     document.getElementById('capturaTitularId').textContent     = t.ID_TITULAR;
     document.getElementById('capturaTitularName').textContent   = t.NOMBRE;
     document.getElementById('capturaTitularDir').textContent    = t.MUNICIPIO || t.DIRECCION || '—';
+    // Header name
+    const hn = document.getElementById('capturaHeaderName');
+    if(hn) hn.textContent = t.NOMBRE;
+
+    // ── BLOQUEO DE DUPLICADOS ──
+    // Si ya tiene visita CONCLUIDA hoy, mostrar alerta
+    if(VISITAS_HOY_IDS.has(t.ID_TITULAR)) {
+      // Permitir continuar pero con aviso
+      showToast('⚠️', 'Este titular ya fue visitado hoy', 'Se registrará como visita adicional');
+    }
+  } else {
+    const hn = document.getElementById('capturaHeaderName');
+    if(hn) hn.textContent = 'Sin titular seleccionado';
   }
 
   // Reset pasos
@@ -2417,6 +2441,22 @@ function initCaptura() {
   actualizarBotonPaso();
 }
 
+// ── Retroceder en captura ──
+function retrocederCaptura() {
+  if (CAPTURA.paso > 1) {
+    // Retroceder al paso anterior
+    CAPTURA.paso--;
+    document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`paso-${CAPTURA.paso}`).classList.add('active');
+    document.getElementById('capturaScroll').scrollTop = 0;
+    actualizarProgreso();
+    actualizarBotonPaso();
+  } else {
+    // Paso 1 → volver a la ficha del titular
+    goTo('ficha');
+  }
+}
+
 // ── Actualizar barra de progreso ──
 function actualizarProgreso() {
   const p = CAPTURA.paso;
@@ -2425,8 +2465,10 @@ function actualizarProgreso() {
     if(!dot) continue;
     dot.className = 'step-dot' + (i < p ? ' done' : i === p ? ' active' : '');
   }
-  document.getElementById('pasoActualLabel').textContent  = p;
-  document.getElementById('pasoNombreLabel').textContent  = PASOS_NOMBRES[p-1] || '';
+  document.getElementById('pasoActualLabel').textContent = p;
+  document.getElementById('pasoNombreLabel').textContent = PASOS_NOMBRES[p-1] || '';
+  const badge = document.getElementById('capturaStepBadge');
+  if(badge) badge.textContent = `${p}/5`;
 }
 
 // ── Botón continuar ──
@@ -3001,11 +3043,54 @@ function renderHistorial() {
 // ═══════════════════════════════════════════════
 function iniciarVisita() {
   if (!TITULAR_ACTIVO) return;
-  // Guardar titular activo para la pantalla de captura
+
+  const yaVisitado = VISITAS_HOY_IDS.has(TITULAR_ACTIVO.ID_TITULAR);
+
+  if (yaVisitado) {
+    // Mostrar modal de confirmación de duplicado
+    mostrarConfirmDuplicado();
+    return;
+  }
+
+  // Sin visita previa hoy — continuar normal
   STATE.titularEnVisita = TITULAR_ACTIVO;
   localStorage.setItem('ff_session', JSON.stringify(STATE.user));
   goTo('captura');
-  showToast('📍', `Iniciando visita: ${TITULAR_ACTIVO.NOMBRE.split(' ')[0]}`, '+50 XP al completar');
+  showToast('📍', `Iniciando: ${TITULAR_ACTIVO.NOMBRE.split(' ')[0]}`, '+50 XP al completar');
+}
+
+function mostrarConfirmDuplicado() {
+  // Crear modal inline
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
+  overlay.innerHTML = `
+    <div style="background:var(--navy2);border:1px solid rgba(245,158,11,0.4);border-radius:20px;padding:28px;max-width:340px;text-align:center">
+      <div style="font-size:44px;margin-bottom:12px">⚠️</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px">Titular ya visitado</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:20px">
+        <strong>${TITULAR_ACTIVO.NOMBRE}</strong> ya tiene una visita registrada hoy.<br><br>
+        ¿Deseas registrar una visita adicional?
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="confirmarVisitaAdicional(this.closest('[style]'))"
+          style="background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;color:#fff;cursor:pointer">
+          ✅ Sí, registrar visita adicional
+        </button>
+        <button onclick="this.closest('[style]').remove()"
+          style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:14px;color:var(--text2);cursor:pointer">
+          ← Volver a misiones
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function confirmarVisitaAdicional(overlay) {
+  if(overlay) overlay.remove();
+  STATE.titularEnVisita = TITULAR_ACTIVO;
+  localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+  goTo('captura');
+  showToast('📍', `Visita adicional: ${TITULAR_ACTIVO.NOMBRE.split(' ')[0]}`, 'Se registrará como visita adicional');
 }
 
 // Helper iniciales
