@@ -834,12 +834,8 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
       <label class="input-label">Usuario Telegram</label>
       <input class="input-field" type="text" id="loginUser"
         placeholder="@tu_usuario" autocomplete="username"
-        inputmode="text">
-    </div>
-    <div class="input-group">
-      <label class="input-label">Contraseña</label>
-      <input class="input-field" type="password" id="loginPass"
-        placeholder="••••••••" autocomplete="current-password">
+        inputmode="text" autocorrect="off" autocapitalize="none"
+        spellcheck="false">
     </div>
     <button class="btn-login" id="btnLogin" onclick="doLogin()">
       Iniciar misión
@@ -1141,8 +1137,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
   }
 
-  // Enter en inputs
-  document.getElementById('loginPass').addEventListener('keypress', e => {
+  // Enter en input
+  document.getElementById('loginUser').addEventListener('keypress', e => {
     if (e.key === 'Enter') doLogin();
   });
 });
@@ -1165,59 +1161,79 @@ function goTo(screen) {
 // LOGIN
 // ═══════════════════════════════════════════════
 async function doLogin() {
-  const user = document.getElementById('loginUser').value.trim();
-  const pass = document.getElementById('loginPass').value;
+  let user = document.getElementById('loginUser').value.trim();
   const errEl = document.getElementById('loginError');
   const btn   = document.getElementById('btnLogin');
 
   errEl.textContent = '';
-  if (!user || !pass) { errEl.textContent = 'Ingresa tu usuario y contraseña'; return; }
+
+  // Normalizar — agregar @ si no lo tiene
+  if (user && !user.startsWith('@')) user = '@' + user;
+
+  if (!user || user === '@') {
+    errEl.textContent = 'Ingresa tu usuario de Telegram';
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'Verificando...';
 
   try {
-    const res = await fetch(`${N8N_BASE}/webhook/admin-auth`, {
+    // Llamar webhook N8N que valida USUARIO_TELEGRAM en la pestaña GESTORES
+    const res = await fetch(`${N8N_BASE}/webhook/field-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user, password: pass }),
+      body: JSON.stringify({ usuario_telegram: user }),
     });
     const data = await res.json();
 
-    if (data.success && data.user) {
+    if (data.success && data.gestor) {
       STATE.user = {
-        ...data.user,
-        xp:       data.user.xp      || 0,
-        streak:   data.user.streak  || 0,
-        visitas:  data.user.visitas || 0,
-        avatar:   data.user.avatar  || '🧭',
-        badges:   data.user.badges  || [],
+        nombre:      data.gestor.NOMBRE        || user.replace('@',''),
+        email:       user,
+        telegramUser:data.gestor.USUARIO_TELEGRAM,
+        telegramId:  data.gestor.TELEGRAM_ID,
+        idGestor:    data.gestor.ID_GESTOR,
+        rol:         'Gestor',
+        xp:          data.gamificacion?.XP_TOTAL   || 0,
+        streak:      data.gamificacion?.STREAK_ACTUAL || 0,
+        streakMax:   data.gamificacion?.STREAK_MAX    || 0,
+        visitas:     data.gamificacion?.VISITAS_TOTAL  || 0,
+        visitasHoy:  data.gamificacion?.VISITAS_HOY    || 0,
+        ranking:     data.gamificacion?.RANKING_HOY    || '—',
+        avatar:      data.gamificacion?.AVATAR         || '🧭',
+        badges:      data.gamificacion?.BADGES ? data.gamificacion.BADGES.split(',') : [],
       };
       STATE.avatar = STATE.user.avatar;
       localStorage.setItem('ff_session', JSON.stringify(STATE.user));
       startApp();
       return;
     }
-    errEl.textContent = data.message || 'Credenciales incorrectas';
+    errEl.textContent = data.message || 'Usuario no encontrado. Verifica tu @usuario de Telegram.';
+
   } catch(e) {
-    // DEMO MODE
-    if (user && pass) {
+    // DEMO MODE — sin N8N activo
+    if (user && user.length > 1) {
       STATE.user = {
-        nombre:  user.replace('@',''),
-        email:   user,
-        rol:     'Gestor',
-        xp:      320,
-        streak:  3,
-        visitas: 7,
-        avatar:  '🧭',
-        badges:  ['primer_contacto'],
-        ranking: 2,
+        nombre:      user.replace('@',''),
+        email:       user,
+        telegramUser:user,
+        idGestor:    'G001',
+        rol:         'Gestor',
+        xp:          0,
+        streak:      0,
+        streakMax:   0,
+        visitas:     0,
+        visitasHoy:  0,
+        ranking:     '—',
+        avatar:      '🧭',
+        badges:      [],
       };
       STATE.avatar = '🧭';
       localStorage.setItem('ff_session', JSON.stringify(STATE.user));
       startApp();
     } else {
-      errEl.textContent = 'Error de conexión. Verifica tu usuario.';
+      errEl.textContent = 'Error de conexión. Intenta de nuevo.';
     }
   } finally {
     btn.disabled = false;
