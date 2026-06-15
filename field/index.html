@@ -699,16 +699,23 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 #screen-misiones {
   background: var(--navy);
   padding-top: var(--safe-top);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 #screen-misiones::-webkit-scrollbar { display: none; }
+
+/* Header sticky completo */
+.misiones-sticky {
+  flex-shrink: 0;
+  background: var(--navy);
+  z-index: 20;
+  padding-bottom: 4px;
+}
 
 .misiones-topbar {
   display: flex; align-items: center;
   padding: 16px 20px 12px; gap: 12px;
-  position: sticky; top: 0; z-index: 20;
-  background: linear-gradient(var(--navy) 80%, transparent);
 }
 .misiones-title {
   flex: 1;
@@ -726,7 +733,7 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 /* Filtros */
 .filtros-row {
   display: flex; gap: 8px;
-  padding: 0 20px 14px;
+  padding: 0 20px 12px;
   overflow-x: auto;
 }
 .filtros-row::-webkit-scrollbar { display: none; }
@@ -749,25 +756,42 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 
 /* Buscador */
 .buscar-wrap {
-  margin: 0 20px 14px;
+  margin: 0 20px 12px;
   position: relative;
 }
 .buscar-input {
   width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface2);
+  border: 1.5px solid var(--border2);
   border-radius: 12px;
-  padding: 11px 16px 11px 40px;
+  padding: 12px 16px 12px 42px;
   font-size: 14px; color: var(--text);
   transition: border-color .2s;
+  -webkit-appearance: none;
 }
-.buscar-input:focus { border-color: var(--border2); }
+.buscar-input:focus {
+  border-color: var(--teal2);
+  outline: none;
+}
 .buscar-input::placeholder { color: var(--text3); }
+/* Quitar ícono nativo de búsqueda en iOS */
+.buscar-input::-webkit-search-decoration,
+.buscar-input::-webkit-search-cancel-button { display: none; }
 .buscar-icon {
   position: absolute; left: 14px; top: 50%;
   transform: translateY(-50%);
   font-size: 16px; pointer-events: none;
+  color: var(--teal2);
 }
+
+/* Área scrolleable de la lista */
+.misiones-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(70px + var(--safe-bottom));
+}
+.misiones-scroll-area::-webkit-scrollbar { display: none; }
 
 /* Lista titulares */
 .titulares-list { padding: 0 20px; }
@@ -1339,38 +1363,39 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 
 <!-- ════════════════ SCREEN: MISIONES ════════════════ -->
 <div class="screen" id="screen-misiones">
-  <!-- Topbar -->
-  <div class="misiones-topbar">
-    <div class="misiones-title">🗺️ Mis Misiones</div>
-    <div class="misiones-count" id="misionesCount">— titulares</div>
-  </div>
 
-  <!-- Buscador -->
-  <div class="buscar-wrap">
-    <span class="buscar-icon">🔍</span>
-    <input class="buscar-input" type="search" id="buscarInput"
-      placeholder="Buscar por nombre o ID..."
-      inputmode="search" autocomplete="off"
-      oninput="filtrarTitulares()">
-  </div>
-
-  <!-- Filtros -->
-  <div class="filtros-row">
-    <div class="filtro-chip active" data-filtro="todos"    onclick="setFiltro('todos')">Todos</div>
-    <div class="filtro-chip"        data-filtro="pendiente" onclick="setFiltro('pendiente')">⏳ Pendientes</div>
-    <div class="filtro-chip"        data-filtro="visitado"  onclick="setFiltro('visitado')">✅ Visitados hoy</div>
-    <div class="filtro-chip"        data-filtro="urgente"   onclick="setFiltro('urgente')">⚡ Urgentes</div>
-  </div>
-
-  <!-- Lista -->
-  <div class="titulares-list" id="titularesList">
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <div class="loading-text">Cargando tu cartera...</div>
+  <!-- Zona sticky: topbar + buscador + filtros -->
+  <div class="misiones-sticky">
+    <div class="misiones-topbar">
+      <div class="misiones-title">🗺️ Mis Misiones</div>
+      <div class="misiones-count" id="misionesCount">— titulares</div>
+    </div>
+    <div class="buscar-wrap">
+      <span class="buscar-icon">🔍</span>
+      <input class="buscar-input" type="search" id="buscarInput"
+        placeholder="Buscar por nombre o ID..."
+        inputmode="search" autocomplete="off"
+        oninput="filtrarTitulares()">
+    </div>
+    <div class="filtros-row">
+      <div class="filtro-chip active" data-filtro="todos"     onclick="setFiltro('todos')">Todos</div>
+      <div class="filtro-chip"        data-filtro="pendiente" onclick="setFiltro('pendiente')">⏳ Pendientes</div>
+      <div class="filtro-chip"        data-filtro="visitado"  onclick="setFiltro('visitado')">✅ Visitados hoy</div>
+      <div class="filtro-chip"        data-filtro="urgente"   onclick="setFiltro('urgente')">⚡ Urgentes</div>
     </div>
   </div>
 
-  <!-- Bottom nav -->
+  <!-- Zona scrolleable -->
+  <div class="misiones-scroll-area">
+    <div class="titulares-list" id="titularesList">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <div class="loading-text">Cargando tu cartera...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav FIXED -->
   <div class="bottom-nav">
     <div class="nav-item" onclick="goTo('home')"    id="nav-home3"><div class="nav-icon">🏠</div><span>Inicio</span></div>
     <div class="nav-item active"                    id="nav-mis3"> <div class="nav-icon">🗺️</div><span>Misiones</span></div>
