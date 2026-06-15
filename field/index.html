@@ -694,13 +694,324 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 }
 
 /* ═══════════════════════════════════════════
-   SCREEN 4 — MISIONES (placeholder)
+   SCREEN 4 — MISIONES
 ═══════════════════════════════════════════ */
 #screen-misiones {
   background: var(--navy);
   padding-top: var(--safe-top);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
+#screen-misiones::-webkit-scrollbar { display: none; }
+
+.misiones-topbar {
+  display: flex; align-items: center;
+  padding: 16px 20px 12px; gap: 12px;
+  position: sticky; top: 0; z-index: 20;
+  background: linear-gradient(var(--navy) 80%, transparent);
+}
+.misiones-title {
+  flex: 1;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 500; color: var(--text);
+}
+.misiones-count {
+  font-size: 11px; color: var(--text3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+/* Filtros */
+.filtros-row {
+  display: flex; gap: 8px;
+  padding: 0 20px 14px;
+  overflow-x: auto;
+}
+.filtros-row::-webkit-scrollbar { display: none; }
+.filtro-chip {
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px; color: var(--text2);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filtro-chip.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+/* Buscador */
+.buscar-wrap {
+  margin: 0 20px 14px;
+  position: relative;
+}
+.buscar-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 16px 11px 40px;
+  font-size: 14px; color: var(--text);
+  transition: border-color .2s;
+}
+.buscar-input:focus { border-color: var(--border2); }
+.buscar-input::placeholder { color: var(--text3); }
+.buscar-icon {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px; pointer-events: none;
+}
+
+/* Lista titulares */
+.titulares-list { padding: 0 20px; }
+.titular-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex; gap: 14px; align-items: flex-start;
+  cursor: pointer;
+  transition: border-color .2s, transform .15s;
+  position: relative;
+  overflow: hidden;
+}
+.titular-card:active { transform: scale(0.985); }
+.titular-card.visitado { border-color: rgba(34,197,94,0.25); }
+.titular-card.urgente  { border-color: rgba(232,68,68,0.3); }
+.titular-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; border-radius: 3px 0 0 3px;
+  background: var(--teal);
+}
+.titular-card.visitado::before { background: var(--green); }
+.titular-card.urgente::before  { background: var(--red); }
+
+.titular-avatar-wrap { flex-shrink: 0; }
+.titular-avatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 600; color: var(--teal2);
+}
+.titular-info { flex: 1; min-width: 0; }
+.titular-id {
+  font-size: 10px; color: var(--teal2);
+  letter-spacing: 1px; font-weight: 600;
+  margin-bottom: 2px;
+}
+.titular-nombre {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.titular-dir {
+  font-size: 11px; color: var(--text3);
+  margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.titular-tags {
+  display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;
+}
+.tag {
+  font-size: 10px; padding: 2px 8px;
+  border-radius: 8px; font-weight: 500;
+}
+.tag-cartera { background: rgba(191,161,129,0.12); color: var(--gold2); }
+.tag-estado  { background: rgba(23,133,130,0.1);   color: var(--teal2); }
+.tag-visit   { background: rgba(34,197,94,0.1);    color: var(--green); }
+.tag-urgente { background: rgba(232,68,68,0.1);    color: var(--red); }
+
+.titular-right { flex-shrink: 0; text-align: right; }
+.titular-xp {
+  font-size: 12px; color: var(--gold2); font-weight: 700;
+}
+.titular-arrow { font-size: 16px; color: var(--text3); margin-top: 4px; }
+
+/* Spinner de carga */
+.loading-state {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 13px; color: var(--text3); }
+
+/* Empty state */
+.empty-state-misiones {
+  text-align: center; padding: 60px 20px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-text { font-size: 14px; line-height: 1.5; }
+
+/* ═══════════════════════════════════════════
+   SCREEN 5 — FICHA TITULAR
+═══════════════════════════════════════════ */
+#screen-ficha {
+  background: var(--navy);
+  padding-top: var(--safe-top);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#screen-ficha::-webkit-scrollbar { display: none; }
+
+.ficha-header {
+  display: flex; align-items: center;
+  padding: 16px 20px; gap: 12px;
+  position: sticky; top: 0; z-index: 20;
+  background: linear-gradient(var(--navy) 80%, transparent);
+}
+.ficha-back {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--text2);
+  flex-shrink: 0;
+}
+.ficha-header-info { flex: 1; min-width: 0; }
+.ficha-header-id {
+  font-size: 10px; color: var(--teal2);
+  letter-spacing: 1.5px; font-weight: 600;
+}
+.ficha-header-name {
+  font-size: 16px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Hero de la ficha */
+.ficha-hero {
+  margin: 0 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 20px;
+  position: relative; overflow: hidden;
+}
+.ficha-hero::before {
+  content: '📍';
+  position: absolute; right: -8px; top: -8px;
+  font-size: 80px; opacity: .06;
+}
+.ficha-nombre {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600; color: var(--text);
+  margin-bottom: 4px;
+}
+.ficha-id-badge {
+  display: inline-block;
+  background: rgba(23,133,130,0.15);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 11px; color: var(--teal2); font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+.ficha-dato-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 10px;
+}
+.ficha-dato-row:last-child { margin-bottom: 0; }
+.ficha-dato-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.ficha-dato-content { flex: 1; }
+.ficha-dato-label {
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1px; text-transform: uppercase; font-weight: 600;
+}
+.ficha-dato-value {
+  font-size: 13px; color: var(--text); margin-top: 1px;
+}
+
+/* Historial de visitas */
+.historial-section {
+  margin: 0 20px 20px;
+}
+.historial-title {
+  font-size: 11px; color: var(--text3);
+  letter-spacing: 2px; text-transform: uppercase; font-weight: 600;
+  margin-bottom: 12px;
+}
+.historial-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.historial-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 4px;
+}
+.historial-info { flex: 1; min-width: 0; }
+.historial-fecha {
+  font-size: 11px; color: var(--text3);
+  margin-bottom: 2px;
+}
+.historial-resultado {
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+.historial-obs {
+  font-size: 11px; color: var(--text2);
+  margin-top: 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.historial-empty {
+  text-align: center; padding: 20px;
+  font-size: 13px; color: var(--text3);
+}
+
+/* Botón iniciar visita */
+.btn-iniciar-visita {
+  position: fixed;
+  bottom: calc(16px + var(--safe-bottom));
+  left: 20px; right: 20px;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  border-radius: 16px;
+  padding: 17px;
+  font-size: 16px; font-weight: 700; color: #fff;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(23,133,130,0.5);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: transform .15s, box-shadow .15s;
+  z-index: 30;
+}
+.btn-iniciar-visita:active {
+  transform: scale(0.98);
+  box-shadow: 0 4px 16px rgba(23,133,130,0.4);
+}
+.btn-iniciar-visita.ya-visitado {
+  background: linear-gradient(135deg, #1a6b1a, #22c55e);
+  box-shadow: 0 8px 32px rgba(34,197,94,0.3);
+}
+
+.ficha-scroll-content {
+  padding-bottom: calc(90px + var(--safe-bottom));
+}
+
+/* Coming soon genérico */
 .coming-soon {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -716,7 +1027,7 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 .coming-sub { font-size: 14px; color: var(--text2); line-height: 1.5; }
 .coming-badge {
   margin-top: 20px;
-  background: var(--teal-dim, rgba(23,133,130,0.15));
+  background: rgba(23,133,130,0.15);
   border: 1px solid var(--border2);
   border-radius: 20px;
   padding: 6px 16px;
@@ -1028,22 +1339,98 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 
 <!-- ════════════════ SCREEN: MISIONES ════════════════ -->
 <div class="screen" id="screen-misiones">
-  <div class="perfil-header">
-    <button class="back-btn" onclick="goTo('home')">←</button>
-    <div class="perfil-title">Misiones</div>
+  <!-- Topbar -->
+  <div class="misiones-topbar">
+    <div class="misiones-title">🗺️ Mis Misiones</div>
+    <div class="misiones-count" id="misionesCount">— titulares</div>
   </div>
-  <div class="coming-soon">
-    <div class="coming-icon">🗺️</div>
-    <div class="coming-title">Territorio en exploración</div>
-    <div class="coming-sub">Aquí verás todas tus misiones activas, titulares asignados y rutas del día.</div>
-    <div class="coming-badge">FASE 2 — EN CONSTRUCCIÓN</div>
+
+  <!-- Buscador -->
+  <div class="buscar-wrap">
+    <span class="buscar-icon">🔍</span>
+    <input class="buscar-input" type="search" id="buscarInput"
+      placeholder="Buscar por nombre o ID..."
+      inputmode="search" autocomplete="off"
+      oninput="filtrarTitulares()">
   </div>
+
+  <!-- Filtros -->
+  <div class="filtros-row">
+    <div class="filtro-chip active" data-filtro="todos"    onclick="setFiltro('todos')">Todos</div>
+    <div class="filtro-chip"        data-filtro="pendiente" onclick="setFiltro('pendiente')">⏳ Pendientes</div>
+    <div class="filtro-chip"        data-filtro="visitado"  onclick="setFiltro('visitado')">✅ Visitados hoy</div>
+    <div class="filtro-chip"        data-filtro="urgente"   onclick="setFiltro('urgente')">⚡ Urgentes</div>
+  </div>
+
+  <!-- Lista -->
+  <div class="titulares-list" id="titularesList">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <div class="loading-text">Cargando tu cartera...</div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
   <div class="bottom-nav">
-    <div class="nav-item" onclick="goTo('home')"><div class="nav-icon">🏠</div><span>Inicio</span></div>
-    <div class="nav-item active"><div class="nav-icon">🗺️</div><span>Misiones</span></div>
-    <div class="nav-item" onclick="goTo('captura')"><div class="nav-icon">📸</div><span>Capturar</span></div>
-    <div class="nav-item" onclick="goTo('perfil')"><div class="nav-icon">👤</div><span>Perfil</span></div>
+    <div class="nav-item" onclick="goTo('home')"    id="nav-home3"><div class="nav-icon">🏠</div><span>Inicio</span></div>
+    <div class="nav-item active"                    id="nav-mis3"> <div class="nav-icon">🗺️</div><span>Misiones</span></div>
+    <div class="nav-item" onclick="goTo('captura')" id="nav-cap3"> <div class="nav-icon">📸</div><span>Capturar</span></div>
+    <div class="nav-item" onclick="goTo('perfil')"  id="nav-per3"> <div class="nav-icon">👤</div><span>Perfil</span></div>
   </div>
+</div>
+
+<!-- ════════════════ SCREEN: FICHA TITULAR ════════════════ -->
+<div class="screen" id="screen-ficha">
+  <div class="ficha-scroll-content">
+    <!-- Header -->
+    <div class="ficha-header">
+      <button class="ficha-back" onclick="goTo('misiones')">←</button>
+      <div class="ficha-header-info">
+        <div class="ficha-header-id" id="fichaHeaderId">—</div>
+        <div class="ficha-header-name" id="fichaHeaderName">—</div>
+      </div>
+    </div>
+
+    <!-- Hero datos del titular -->
+    <div class="ficha-hero" id="fichaHero">
+      <div class="ficha-nombre" id="fichaNombre">—</div>
+      <div class="ficha-id-badge" id="fichaId">—</div>
+      <div class="ficha-dato-row">
+        <div class="ficha-dato-icon">📍</div>
+        <div class="ficha-dato-content">
+          <div class="ficha-dato-label">Dirección</div>
+          <div class="ficha-dato-value" id="fichaDireccion">—</div>
+        </div>
+      </div>
+      <div class="ficha-dato-row">
+        <div class="ficha-dato-icon">🏙️</div>
+        <div class="ficha-dato-content">
+          <div class="ficha-dato-label">Municipio / Estado</div>
+          <div class="ficha-dato-value" id="fichaMunicipio">—</div>
+        </div>
+      </div>
+      <div class="ficha-dato-row">
+        <div class="ficha-dato-icon">📁</div>
+        <div class="ficha-dato-content">
+          <div class="ficha-dato-label">Cartera</div>
+          <div class="ficha-dato-value" id="fichaCartera">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial de visitas -->
+    <div class="historial-section">
+      <div class="historial-title">📋 Historial de visitas</div>
+      <div id="fichaHistorial">
+        <div class="historial-empty">Cargando historial...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botón iniciar visita -->
+  <button class="btn-iniciar-visita" id="btnIniciarVisita" onclick="iniciarVisita()">
+    <span>📸</span> Iniciar visita · <span id="btnXpLabel">+50 XP</span>
+  </button>
 </div>
 
 <!-- ════════════════ SCREEN: CAPTURA ════════════════ -->
@@ -1153,8 +1540,9 @@ function goTo(screen) {
     el.classList.add('active');
     STATE.currentScreen = screen;
   }
-  if (screen === 'perfil') renderPerfil();
-  if (screen === 'home')   renderHome();
+  if (screen === 'perfil')   renderPerfil();
+  if (screen === 'home')     renderHome();
+  if (screen === 'misiones') loadMisiones();
 }
 
 // ═══════════════════════════════════════════════
@@ -1481,22 +1869,251 @@ function showToast(icon, text, xp='') {
   }, 3000);
 }
 
-// Demo: +50XP al tocar el avatar
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    const av = document.getElementById('homeAvatar');
-    if (av) {
-      let taps = 0;
-      av.addEventListener('click', () => {
-        taps++;
-        if (taps === 3) {
-          addXP(50, '🎯 Bonus de explorador');
-          taps = 0;
-        }
-      });
+// ═══════════════════════════════════════════════
+// ESTADO MISIONES
+// ═══════════════════════════════════════════════
+let TITULARES_DATA  = [];  // todos del gestor
+let TITULARES_FILTRADOS = [];
+let VISITAS_HOY_IDS = new Set(); // IDs visitados hoy
+let TITULAR_ACTIVO  = null; // el que está en pantalla ficha
+let FILTRO_ACTIVO   = 'todos';
+let HISTORIAL_DATA  = [];
+
+// ═══════════════════════════════════════════════
+// CARGAR MISIONES DESDE N8N
+// ═══════════════════════════════════════════════
+async function loadMisiones() {
+  if (!STATE.user) return;
+
+  document.getElementById('titularesList').innerHTML = `
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <div class="loading-text">Cargando tu cartera...</div>
+    </div>`;
+
+  try {
+    const res = await fetch(`${N8N_BASE}/webhook/field-misiones`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id_gestor:   STATE.user.idGestor   || 'G001',
+        fecha_hoy:   new Date().toISOString().split('T')[0],
+      }),
+    });
+    const data = await res.json();
+
+    if (data.titulares) {
+      TITULARES_DATA = data.titulares;
+      VISITAS_HOY_IDS = new Set(data.visitados_hoy || []);
+    } else {
+      throw new Error('Sin datos');
     }
-  }, 1000);
-});
+  } catch(e) {
+    // DEMO con datos ficticios realistas
+    TITULARES_DATA = getDemoTitulares();
+    VISITAS_HOY_IDS = new Set(['MX01060059']);
+  }
+
+  TITULARES_FILTRADOS = [...TITULARES_DATA];
+  renderTitularesList();
+}
+
+function getDemoTitulares() {
+  return [
+    { ID_TITULAR:'MX01058803', NOMBRE:'Jorge Daniel Bautista Corpus',  DIRECCION:'Rio aguanaval 11, Prados de Ixtacala II',   MUNICIPIO:'Atizapán de Zaragoza', ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
+    { ID_TITULAR:'MX01060059', NOMBRE:'Carlos Martinez Hernandez',      DIRECCION:'ALLENDE DEP 01, BENITO JUAREZ',             MUNICIPIO:'Acambay de Ruíz',      ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
+    { ID_TITULAR:'MX01061024', NOMBRE:'Omar Martinez Del Toro',         DIRECCION:'Nayarit Mz 20 Lt 15, Anáhuac 1a Secc',     MUNICIPIO:'Acolman',              ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
+    { ID_TITULAR:'MX01061252', NOMBRE:'Alfredo Abraham Soto Velázquez', DIRECCION:'CDA DE FRAILES',                           MUNICIPIO:'Acolman',              ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
+    { ID_TITULAR:'MX01060396', NOMBRE:'Diana Ledezma Reyes',            DIRECCION:'SANTA ANA MATLAHUACA',                     MUNICIPIO:'Aculco',               ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
+    { ID_TITULAR:'MX01059245', NOMBRE:'Mayled Aguilar Nieto',           DIRECCION:'cda los pinos S/N',                        MUNICIPIO:'Almoloya de Alquisiras',ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
+  ];
+}
+
+// ═══════════════════════════════════════════════
+// RENDER LISTA TITULARES
+// ═══════════════════════════════════════════════
+function renderTitularesList() {
+  const lista = document.getElementById('titularesList');
+  const count = document.getElementById('misionesCount');
+
+  count.textContent = `${TITULARES_FILTRADOS.length} titular${TITULARES_FILTRADOS.length !== 1 ? 'es' : ''}`;
+
+  if (!TITULARES_FILTRADOS.length) {
+    lista.innerHTML = `
+      <div class="empty-state-misiones">
+        <div class="empty-icon">🗺️</div>
+        <div class="empty-text">No hay titulares para este filtro</div>
+      </div>`;
+    return;
+  }
+
+  lista.innerHTML = TITULARES_FILTRADOS.map((t, i) => {
+    const visitadoHoy = VISITAS_HOY_IDS.has(t.ID_TITULAR);
+    const iniciales   = getInitials(t.NOMBRE);
+    const claseCard   = visitadoHoy ? 'visitado' : '';
+
+    return `<div class="titular-card ${claseCard}"
+         onclick="abrirFicha('${t.ID_TITULAR}')"
+         style="animation-delay:${i*40}ms">
+      <div class="titular-avatar-wrap">
+        <div class="titular-avatar">${iniciales}</div>
+      </div>
+      <div class="titular-info">
+        <div class="titular-id">${t.ID_TITULAR}</div>
+        <div class="titular-nombre">${t.NOMBRE}</div>
+        <div class="titular-dir">📍 ${t.MUNICIPIO || t.ESTADO || '—'}</div>
+        <div class="titular-tags">
+          <span class="tag tag-cartera">${t.CARTERA || 'Sin cartera'}</span>
+          ${t.ESTADO ? `<span class="tag tag-estado">${t.ESTADO}</span>` : ''}
+          ${visitadoHoy ? '<span class="tag tag-visit">✅ Visitado hoy</span>' : ''}
+        </div>
+      </div>
+      <div class="titular-right">
+        <div class="titular-xp">+50 XP</div>
+        <div class="titular-arrow">${visitadoHoy ? '✅' : '›'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// FILTROS Y BÚSQUEDA
+// ═══════════════════════════════════════════════
+function setFiltro(filtro) {
+  FILTRO_ACTIVO = filtro;
+  document.querySelectorAll('.filtro-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.filtro === filtro);
+  });
+  aplicarFiltros();
+}
+
+function filtrarTitulares() { aplicarFiltros(); }
+
+function aplicarFiltros() {
+  const q = (document.getElementById('buscarInput')?.value || '').toLowerCase().trim();
+
+  TITULARES_FILTRADOS = TITULARES_DATA.filter(t => {
+    // Búsqueda por texto
+    const matchQ = !q ||
+      t.NOMBRE?.toLowerCase().includes(q) ||
+      t.ID_TITULAR?.toLowerCase().includes(q) ||
+      t.MUNICIPIO?.toLowerCase().includes(q);
+
+    // Filtro de categoría
+    const visitadoHoy = VISITAS_HOY_IDS.has(t.ID_TITULAR);
+    let matchF = true;
+    if (FILTRO_ACTIVO === 'pendiente') matchF = !visitadoHoy;
+    if (FILTRO_ACTIVO === 'visitado')  matchF = visitadoHoy;
+    if (FILTRO_ACTIVO === 'urgente')   matchF = false; // placeholder
+
+    return matchQ && matchF;
+  });
+
+  renderTitularesList();
+}
+
+// ═══════════════════════════════════════════════
+// ABRIR FICHA DE TITULAR
+// ═══════════════════════════════════════════════
+async function abrirFicha(idTitular) {
+  TITULAR_ACTIVO = TITULARES_DATA.find(t => t.ID_TITULAR === idTitular) || null;
+  if (!TITULAR_ACTIVO) return;
+
+  const t = TITULAR_ACTIVO;
+  const visitadoHoy = VISITAS_HOY_IDS.has(t.ID_TITULAR);
+
+  // Rellenar datos
+  document.getElementById('fichaHeaderId').textContent   = t.ID_TITULAR;
+  document.getElementById('fichaHeaderName').textContent = t.NOMBRE;
+  document.getElementById('fichaNombre').textContent     = t.NOMBRE;
+  document.getElementById('fichaId').textContent         = t.ID_TITULAR;
+  document.getElementById('fichaDireccion').textContent  = t.DIRECCION  || '—';
+  document.getElementById('fichaMunicipio').textContent  = [t.MUNICIPIO, t.ESTADO].filter(Boolean).join(', ') || '—';
+  document.getElementById('fichaCartera').textContent    = t.CARTERA    || '—';
+
+  // Botón iniciar visita
+  const btn = document.getElementById('btnIniciarVisita');
+  if (visitadoHoy) {
+    btn.className = 'btn-iniciar-visita ya-visitado';
+    btn.innerHTML = '<span>✅</span> Registrar otra visita · <span>+50 XP</span>';
+  } else {
+    btn.className = 'btn-iniciar-visita';
+    btn.innerHTML = '<span>📸</span> Iniciar visita · <span id="btnXpLabel">+50 XP</span>';
+  }
+
+  // Historial
+  document.getElementById('fichaHistorial').innerHTML = `
+    <div class="historial-empty">
+      <div class="spinner" style="margin:0 auto 8px"></div>
+      Cargando historial...
+    </div>`;
+
+  goTo('ficha');
+  loadHistorial(idTitular);
+}
+
+async function loadHistorial(idTitular) {
+  try {
+    const res = await fetch(`${N8N_BASE}/webhook/field-historial`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_titular: idTitular }),
+    });
+    const data = await res.json();
+    HISTORIAL_DATA = data.visitas || [];
+  } catch(e) {
+    // Demo historial
+    HISTORIAL_DATA = idTitular === 'MX01058803' ? [
+      { FECHA_VISITA:'2026-06-06', HORA_VISITA:'13:08', RESULTADO:'Se deja carta con tercero',    OBSERVACIONES:'Titular comenta que no va a pagar', NOMBRE_GESTOR:'Daniel (admin)' },
+      { FECHA_VISITA:'2026-06-05', HORA_VISITA:'10:30', RESULTADO:'No se localiza a domicilio',  OBSERVACIONES:'Domicilio cerrado, vecinos no saben', NOMBRE_GESTOR:'Daniel (admin)' },
+    ] : [];
+  }
+  renderHistorial();
+}
+
+function renderHistorial() {
+  const el = document.getElementById('fichaHistorial');
+  if (!HISTORIAL_DATA.length) {
+    el.innerHTML = `<div class="historial-empty">Sin visitas previas registradas</div>`;
+    return;
+  }
+
+  const colores = {
+    'Se localiza a domicilio':    '#22c55e',
+    'No se localiza a domicilio': '#e84444',
+    'Se deja carta con tercero':  '#f59e0b',
+    'Realiza pago':               '#1ab5b1',
+  };
+
+  el.innerHTML = HISTORIAL_DATA.slice(0, 5).map(v => {
+    const color = colores[v.RESULTADO] || '#888';
+    return `<div class="historial-item">
+      <div class="historial-dot" style="background:${color}"></div>
+      <div class="historial-info">
+        <div class="historial-fecha">${v.FECHA_VISITA} · ${v.HORA_VISITA || ''} · ${v.NOMBRE_GESTOR || ''}</div>
+        <div class="historial-resultado" style="color:${color}">${v.RESULTADO || '—'}</div>
+        <div class="historial-obs">${v.OBSERVACIONES || ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// INICIAR VISITA
+// ═══════════════════════════════════════════════
+function iniciarVisita() {
+  if (!TITULAR_ACTIVO) return;
+  // Guardar titular activo para la pantalla de captura
+  STATE.titularEnVisita = TITULAR_ACTIVO;
+  localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+  goTo('captura');
+  showToast('📍', `Iniciando visita: ${TITULAR_ACTIVO.NOMBRE.split(' ')[0]}`, '+50 XP al completar');
+}
+
+// Helper iniciales
+function getInitials(nombre = '') {
+  return nombre.split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
+}
 </script>
 </body>
 </html>
