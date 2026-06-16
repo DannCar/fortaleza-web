@@ -172,6 +172,37 @@ input{font-family:inherit}
 .stub li{font-size:13.5px;color:var(--text-dim);padding:6px 0 6px 24px;position:relative}
 .stub li::before{content:"→";position:absolute;left:0;color:var(--gold)}
 
+/* ░░ TITULARES ░░ */
+.tit-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px}
+.tit-search{flex:1;min-width:220px;background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:11px 15px;color:var(--text);font-size:14px}
+.tit-search:focus{outline:none;border-color:var(--teal)}
+.tit-sel{background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:11px 13px;color:var(--text);font-size:13px;cursor:pointer}
+.tit-sel:focus{outline:none;border-color:var(--teal)}
+.tit-chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);cursor:pointer;user-select:none}
+.tit-chk input{accent-color:var(--amber);width:15px;height:15px}
+.tit-count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text-faint)}
+.tit-wrap{max-height:calc(100vh - 250px);overflow:auto}
+.tit-table{width:100%;border-collapse:collapse;font-size:13px}
+.tit-table thead th{position:sticky;top:0;z-index:2;background:var(--navy-700);text-align:left;padding:12px 14px;
+  font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);border-bottom:1px solid var(--border);white-space:nowrap}
+.tit-table td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tit-table tbody tr:hover{background:var(--navy-700)}
+.tit-table tr.is-inactive{opacity:.45}
+.tit-name{font-weight:600}
+.tit-id{font-family:var(--mono);font-size:11px;color:var(--text-faint)}
+.tit-loc{font-size:12px;color:var(--text-dim)}
+.tit-geo{font-family:var(--mono);font-size:10px;color:var(--teal-bright);margin-left:6px}
+.tit-no-geo{font-family:var(--mono);font-size:10px;color:var(--text-faint);margin-left:6px}
+.tit-gsel{background:var(--navy-600);border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--text);font-size:12px;cursor:pointer;max-width:150px}
+.tit-gsel:focus{outline:none;border-color:var(--teal)}
+.tit-act{display:flex;gap:7px;justify-content:flex-end}
+.tit-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--border);display:grid;place-items:center;font-size:15px;transition:.14s;color:var(--text-dim)}
+.tit-btn:hover{border-color:var(--border-strong);color:var(--text)}
+.tit-btn.urg-on{background:rgba(224,160,74,.16);border-color:rgba(224,160,74,.4);color:var(--amber)}
+.tit-btn.act-on{color:var(--good)}
+.tit-btn.act-off{color:var(--danger);background:rgba(217,100,90,.1)}
+.urg-tag{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.5px;background:rgba(224,160,74,.16);color:var(--amber);padding:1px 6px;border-radius:5px;margin-left:6px;vertical-align:middle}
+
 /* ░░ TOAST ░░ */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);z-index:99;
   background:var(--navy-600);border:1px solid var(--border-strong);border-radius:12px;padding:13px 20px;
@@ -325,16 +356,16 @@ input{font-family:inherit}
         </div></div>
       </section>
       <section class="panel" id="panel-titulares">
-        <div class="stub"><div class="stub-inner">
-          <span class="stub-tag">FASE 2</span><h2>Titulares</h2>
-          <p>El módulo grande de esta v2. Lo que viene:</p>
-          <ul>
-            <li>Importar Excel de nuevas bases con geolocalización automática (Mapbox Geocoding)</li>
-            <li>Reasignar titulares entre gestores</li>
-            <li>Desasignar / desactivar titulares</li>
-            <li>Marcar como urgente</li>
-            <li>Filtros por estado y municipio</li>
-          </ul>
+        <div class="tit-bar">
+          <input class="tit-search" id="titSearch" placeholder="Buscar nombre, ID o dirección…" oninput="applyTitFilters()">
+          <select class="tit-sel" id="titEstado" onchange="onEstadoChange()"><option value="">Estado · todos</option></select>
+          <select class="tit-sel" id="titMuni" onchange="applyTitFilters()"><option value="">Municipio · todos</option></select>
+          <select class="tit-sel" id="titGestorF" onchange="applyTitFilters()"><option value="">Gestor · todos</option></select>
+          <label class="tit-chk"><input type="checkbox" id="titUrg" onchange="applyTitFilters()"> Solo urgentes</label>
+          <span class="tit-count" id="titCount">—</span>
+        </div>
+        <div class="card"><div class="tit-wrap" id="titWrap">
+          <div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>
         </div></div>
       </section>
       <section class="panel" id="panel-visitas">
@@ -451,6 +482,7 @@ function showPanel(id){
   document.getElementById('panelTitle').textContent=t[1];
   document.getElementById('sidebar').classList.remove('open');
   if(id==='mapa'){ setTimeout(()=>{ if(!STATE.mapFull) initMap('mapFull','mapFull'); else STATE.mapFull.resize(); paintMarkers(STATE.mapFull,'mapFullMeta'); },200); }
+  if(id==='titulares'){ loadTitulares(); }
 }
 function onDateChange(){ STATE.selectedDate=document.getElementById('datePick').value||todayLocal(); loadDashboard(); resetCountdown(); }
 
@@ -565,6 +597,83 @@ function paintMarkers(map,metaId){
     STATE.markers.push(mk); bounds.extend([g.lon,g.lat]);
   });
   try{ map.fitBounds(bounds,{padding:70,maxZoom:13,duration:600}); }catch(e){}
+}
+
+/* ════════ BOOT ════════ */
+/* ════════ TITULARES ════════ */
+let TIT_ALL=[], TIT_GESTORES=[], TIT_LOADED=false;
+
+async function loadTitulares(force){
+  if(TIT_LOADED && !force) return;
+  const wrap=document.getElementById('titWrap');
+  wrap.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>';
+  const res=await apiCall('admin-titulares-v2','POST',{action:'list'});
+  if(!res || !res.success){
+    wrap.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>No se pudieron cargar los titulares.</p><button class="btn-ghost" onclick="loadTitulares(true)">Reintentar</button></div>';
+    return;
+  }
+  TIT_ALL=res.titulares||[]; TIT_GESTORES=res.gestores||[]; TIT_LOADED=true;
+  populateTitFilters(); applyTitFilters();
+}
+function populateTitFilters(){
+  const estados=[...new Set(TIT_ALL.map(t=>t.ESTADO).filter(Boolean))].sort();
+  document.getElementById('titEstado').innerHTML='<option value="">Estado · todos</option>'+estados.map(e=>`<option value="${e}">${e}</option>`).join('');
+  document.getElementById('titGestorF').innerHTML='<option value="">Gestor · todos</option><option value="__none__">Sin asignar</option>'+TIT_GESTORES.map(g=>`<option value="${g.ID_GESTOR}">${g.NOMBRE}</option>`).join('');
+  onEstadoChange();
+}
+function onEstadoChange(){
+  const est=document.getElementById('titEstado').value;
+  const munis=[...new Set(TIT_ALL.filter(t=>!est||t.ESTADO===est).map(t=>t.MUNICIPIO).filter(Boolean))].sort();
+  document.getElementById('titMuni').innerHTML='<option value="">Municipio · todos</option>'+munis.map(m=>`<option value="${m}">${m}</option>`).join('');
+  applyTitFilters();
+}
+function applyTitFilters(){
+  if(!TIT_LOADED) return;
+  const q=(document.getElementById('titSearch').value||'').toLowerCase().trim();
+  const est=document.getElementById('titEstado').value, mun=document.getElementById('titMuni').value;
+  const ges=document.getElementById('titGestorF').value, soloUrg=document.getElementById('titUrg').checked;
+  const rows=TIT_ALL.filter(t=>{
+    if(est && t.ESTADO!==est) return false;
+    if(mun && t.MUNICIPIO!==mun) return false;
+    if(ges==='__none__'){ if(t.ID_GESTOR) return false; } else if(ges){ if(t.ID_GESTOR!==ges) return false; }
+    if(soloUrg && !t.URGENTE) return false;
+    if(q && !((t.NOMBRE+' '+t.ID_TITULAR+' '+t.DIRECCION).toLowerCase().includes(q))) return false;
+    return true;
+  });
+  renderTit(rows);
+}
+function renderTit(rows){
+  document.getElementById('titCount').textContent=`${rows.length} de ${TIT_ALL.length}`;
+  const wrap=document.getElementById('titWrap');
+  if(!rows.length){ wrap.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>Sin titulares para estos filtros.</p></div>'; return; }
+  const cap=rows.slice(0,400);
+  const gOpts=g=>TIT_GESTORES.map(x=>`<option value="${x.ID_GESTOR}" ${x.ID_GESTOR===g?'selected':''}>${x.NOMBRE}</option>`).join('');
+  wrap.innerHTML='<table class="tit-table"><thead><tr><th>Titular</th><th>Ubicación</th><th>Gestor</th><th style="text-align:right">Acciones</th></tr></thead><tbody>'+
+    cap.map(t=>`<tr class="${t.ACTIVO?'':'is-inactive'}">
+      <td><div class="tit-name">${t.NOMBRE||'—'}${t.URGENTE?'<span class="urg-tag">URGENTE</span>':''}</div><div class="tit-id">${t.ID_TITULAR}</div></td>
+      <td><div class="tit-loc">${t.MUNICIPIO||'—'}, ${t.ESTADO||'—'}</div><div class="tit-loc" style="color:var(--text-faint)">${t.DIRECCION||''}${(t.LATITUD&&t.LONGITUD)?'<span class="tit-geo">● geo</span>':'<span class="tit-no-geo">○ sin geo</span>'}</div></td>
+      <td><select class="tit-gsel" onchange="reassignTit('${t.ID_TITULAR}',this.value)"><option value="">Sin asignar</option>${gOpts(t.ID_GESTOR)}</select></td>
+      <td><div class="tit-act">
+        <button class="tit-btn ${t.URGENTE?'urg-on':''}" title="Urgente" onclick="toggleUrg('${t.ID_TITULAR}',${!t.URGENTE})">⚑</button>
+        <button class="tit-btn ${t.ACTIVO?'act-on':'act-off'}" title="${t.ACTIVO?'Desactivar':'Activar'}" onclick="toggleAct('${t.ID_TITULAR}',${!t.ACTIVO})">${t.ACTIVO?'◉':'○'}</button>
+      </div></td></tr>`).join('')+'</tbody></table>'+
+    (rows.length>400?`<div class="empty" style="padding:18px"><p>Mostrando 400 de ${rows.length}. Afina los filtros para ver más.</p></div>`:'');
+}
+function _findTit(id){ return TIT_ALL.find(t=>t.ID_TITULAR===id); }
+async function reassignTit(id,gestorId){
+  const t=_findTit(id); if(!t) return; const prev=t.ID_GESTOR; t.ID_GESTOR=gestorId;
+  const r=await apiCall('admin-titulares-v2','POST',{action:'reassign',id_titular:id,id_gestor:gestorId});
+  if(r&&r.success){ toast(gestorId?'Titular reasignado':'Titular desasignado'); } else { t.ID_GESTOR=prev; applyTitFilters(); toast('No se pudo reasignar'); }
+}
+async function toggleUrg(id,val){
+  const t=_findTit(id); if(!t) return; t.URGENTE=val; applyTitFilters();
+  const r=await apiCall('admin-titulares-v2','POST',{action:'toggle_urgente',id_titular:id,urgente:val});
+  if(r&&r.success){ toast(val?'Marcado como urgente':'Urgencia quitada'); } else { t.URGENTE=!val; applyTitFilters(); toast('No se pudo actualizar'); }
+}
+async function toggleAct(id,val){
+  const t=_findTit(id); if(!t) return; t.ACTIVO=val; applyTitFilters();
+  const r=await apiCall('admin-titulares-v2','POST',{action:'toggle_activo',id_titular:id,activo:val});
+  if(r&&r.success){ toast(val?'Titular activado':'Titular desactivado'); } else { t.ACTIVO=!val; applyTitFilters(); toast('No se pudo actualizar'); }
 }
 
 /* ════════ BOOT ════════ */
