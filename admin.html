@@ -1,2332 +1,574 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin — Fortaleza Contact Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" rel="stylesheet">
+<title>Fortaleza · Centro de Operaciones</title>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════════════
-   DESIGN TOKENS — DARK / LIGHT
-═══════════════════════════════════════════════ */
-:root,[data-theme="dark"]{
-  --bg:#0A1828;--bg2:#0d1f33;--bg3:#112440;
-  --surface:rgba(255,255,255,0.04);--surface2:rgba(255,255,255,0.07);
-  --border:rgba(255,255,255,0.08);--border2:rgba(23,133,130,0.3);
-  --text:#e8e8e2;--text2:rgba(232,232,226,0.6);--text3:rgba(232,232,226,0.35);
-  --teal:#178582;--teal2:#1a9e9b;--teal-dim:rgba(23,133,130,0.18);
-  --gold:#BFA181;--gold2:#d4b896;--gold-dim:rgba(191,161,129,0.15);
-  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;
-  --shadow:0 2px 16px rgba(0,0,0,0.4);
-  --sidebar-bg:rgba(10,24,40,0.97);
-  --topbar-bg:rgba(10,24,40,0.85);
-  --login-bg:#0A1828;
-  --input-bg:rgba(255,255,255,0.05);
-  --input-border:rgba(255,255,255,0.12);
+:root{
+  --navy-900:#06101B; --navy-800:#0A1828; --navy-700:#0E1F31;
+  --navy-600:#13283D; --navy-500:#1B3A55;
+  --teal:#178582; --teal-bright:#2BC4BE; --teal-dim:rgba(43,196,190,.14);
+  --gold:#BFA181; --gold-soft:#D8C4A8;
+  --amber:#E0A04A; --danger:#D9645A; --good:#5FB98E;
+  --text:#EAF1F5; --text-dim:#93A6B3; --text-faint:#5A6E7C;
+  --border:rgba(191,161,129,.13); --border-strong:rgba(191,161,129,.26);
+  --shadow:0 18px 48px -18px rgba(0,0,0,.7);
+  --serif:'Cormorant Garamond',serif; --sans:'Outfit',sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
 }
-[data-theme="light"]{
-  --bg:#F0F4F8;--bg2:#E8EEF4;--bg3:#DDE5EF;
-  --surface:rgba(255,255,255,0.9);--surface2:#FFFFFF;
-  --border:rgba(23,133,130,0.2);--border2:rgba(23,133,130,0.35);
-  --text:#0A1828;--text2:rgba(10,24,40,0.6);--text3:rgba(10,24,40,0.38);
-  --teal:#178582;--teal2:#0f6b68;--teal-dim:rgba(23,133,130,0.1);
-  --gold:#9a7a5a;--gold2:#BFA181;--gold-dim:rgba(191,161,129,0.12);
-  --green:#16a34a;--red:#dc2626;--amber:#d97706;
-  --shadow:0 2px 12px rgba(10,24,40,0.12);
-  --sidebar-bg:rgba(255,255,255,0.97);
-  --topbar-bg:rgba(240,244,248,0.92);
-  --login-bg:#F0F4F8;
-  --input-bg:rgba(10,24,40,0.04);
-  --input-border:rgba(10,24,40,0.15);
-}
-
-/* ═══════════════════════════════════════════════
-   RESET & BASE
-═══════════════════════════════════════════════ */
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);font-size:14px;transition:background .3s,color .3s}
-a{color:var(--teal2);text-decoration:none}
-button{cursor:pointer;font-family:'Outfit',sans-serif}
-input,select{font-family:'Outfit',sans-serif}
-::-webkit-scrollbar{width:4px;height:4px}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--navy-900);color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--navy-500);border-radius:6px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 
-/* ═══════════════════════════════════════════════
-   PAGE STATES
-═══════════════════════════════════════════════ */
-#loginPage,#appPage{height:100%;width:100%}
-#appPage{display:none}
-
-/* ═══════════════════════════════════════════════
-   LOGIN PAGE
-═══════════════════════════════════════════════ */
-#loginPage{
-  background:var(--login-bg);
-  display:flex;align-items:center;justify-content:center;
-  position:relative;overflow:hidden;
-}
-.login-bg-grid{
-  position:absolute;inset:0;
-  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
-  background-size:40px 40px;opacity:0.4;pointer-events:none;
-}
-.login-glow{
-  position:absolute;width:500px;height:500px;border-radius:50%;
-  background:radial-gradient(circle,rgba(23,133,130,0.12) 0%,transparent 70%);
-  top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;
-}
-.login-card{
-  background:var(--surface2);border:1px solid var(--border2);
-  border-radius:16px;padding:40px;width:380px;
-  box-shadow:var(--shadow);position:relative;z-index:1;
-  animation:fadeUp .5s ease;
-}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.login-logo{text-align:center;margin-bottom:32px}
-.login-logo-mark{font-size:10px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:4px;font-family:'Cormorant Garamond',serif}
-.login-logo-name{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;color:var(--text);line-height:1.1}
-.login-logo-sub{font-size:10px;color:var(--teal);letter-spacing:3px;text-transform:uppercase;margin-top:6px}
-.login-divider{width:40px;height:1px;background:var(--border2);margin:20px auto}
-.login-title{font-size:14px;color:var(--text2);text-align:center;margin-bottom:28px}
-.form-group{margin-bottom:16px}
-.form-label{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;font-weight:500}
-.form-input{
-  width:100%;background:var(--input-bg);border:1px solid var(--input-border);
-  border-radius:8px;padding:10px 14px;font-size:13px;color:var(--text);
-  transition:border-color .2s,background .3s;outline:none;
-}
-.form-input:focus{border-color:var(--teal2);background:var(--surface2)}
-.form-input::placeholder{color:var(--text3)}
-.btn-login{
-  width:100%;background:var(--teal);border:none;border-radius:8px;
-  padding:12px;font-size:14px;font-weight:600;color:#fff;letter-spacing:.5px;
-  transition:background .2s,transform .1s;margin-top:8px;
-}
-.btn-login:hover{background:var(--teal2)}
-.btn-login:active{transform:scale(0.99)}
-.btn-login:disabled{opacity:0.6;cursor:not-allowed}
-.login-error{
-  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
-  border-radius:6px;padding:8px 12px;font-size:12px;color:#f87171;
-  margin-top:12px;display:none;text-align:center;
-}
-.login-spinner{display:none;text-align:center;margin-top:12px;color:var(--text3);font-size:12px}
-
-/* ═══════════════════════════════════════════════
-   APP LAYOUT
-═══════════════════════════════════════════════ */
-#appPage{display:grid;grid-template-columns:220px 1fr;overflow:hidden}
-.sidebar{
-  background:var(--sidebar-bg);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;height:100vh;overflow-y:auto;
-  transition:background .3s,border-color .3s;position:sticky;top:0;
-}
-.logo-area{padding:26px 22px 22px;border-bottom:1px solid var(--border);flex-shrink:0}
-.logo-mark{font-family:'Cormorant Garamond',serif;font-size:10px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;opacity:.85;margin-bottom:3px}
-.logo-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--text);line-height:1.15}
-.logo-sub{font-size:9px;color:var(--teal);letter-spacing:2.5px;text-transform:uppercase;margin-top:4px}
-.nav{padding:16px 0;flex:1}
-.nav-section{font-size:9px;letter-spacing:2.5px;color:var(--text3);text-transform:uppercase;padding:0 22px;margin:18px 0 6px}
-.nav-item{
-  display:flex;align-items:center;gap:9px;padding:8px 22px;
-  font-size:12.5px;color:var(--text2);cursor:pointer;
-  transition:all .15s;border-left:2px solid transparent;
-  user-select:none;
-}
-.nav-item:hover{color:var(--text);background:var(--surface)}
-.nav-item.active{color:var(--teal2);background:var(--teal-dim);border-left-color:var(--teal)}
-.nav-item i{font-size:15px;width:17px;flex-shrink:0}
-.nav-badge{margin-left:auto;background:var(--teal);color:#fff;font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600}
-.nav-item.hidden{display:none}
-.sidebar-footer{padding:14px 22px;border-top:1px solid var(--border);flex-shrink:0}
-.user-pill{display:flex;align-items:center;gap:9px}
-.user-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0}
-.user-name{font-size:12px;font-weight:500;color:var(--text)}
-.user-role{font-size:9px;color:var(--teal);letter-spacing:.8px}
-.btn-logout{margin-left:auto;background:none;border:none;color:var(--text3);font-size:15px;padding:4px;border-radius:4px;transition:color .15s}
-.btn-logout:hover{color:var(--red)}
-
-/* ═══════════════════════════════════════════════
-   MAIN AREA
-═══════════════════════════════════════════════ */
-.main{display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.topbar{
-  display:flex;align-items:center;gap:12px;justify-content:space-between;
-  padding:14px 26px;border-bottom:1px solid var(--border);
-  background:var(--topbar-bg);backdrop-filter:blur(10px);
-  flex-shrink:0;transition:background .3s;z-index:20;
-}
-.topbar-left{min-width:0}
-.page-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text);line-height:1}
-.page-sub{font-size:11px;color:var(--text3);margin-top:2px}
-.topbar-controls{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.date-filter{
-  display:flex;align-items:center;gap:6px;
-  background:var(--surface);border:1px solid var(--border2);
-  border-radius:7px;padding:5px 10px;font-size:12px;color:var(--teal2);
-}
-.date-filter input[type="date"]{
-  background:none;border:none;outline:none;color:var(--teal2);
-  font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;
-  color-scheme:dark;
-}
-[data-theme="light"] .date-filter input[type="date"]{color-scheme:light}
-.btn-icon{
-  width:32px;height:32px;border-radius:7px;
-  background:var(--surface);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text2);font-size:15px;transition:all .15s;
-}
-.btn-icon:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
-.btn-text{
-  display:flex;align-items:center;gap:5px;
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:7px;padding:5px 12px;font-size:11.5px;
-  color:var(--text2);transition:all .15s;
-}
-.btn-text:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
-.theme-toggle{
-  width:32px;height:32px;border-radius:7px;
-  background:var(--surface);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--text2);font-size:16px;transition:all .15s;
-}
-.theme-toggle:hover{background:var(--gold-dim);color:var(--gold2);border-color:var(--gold)}
-
-/* ═══════════════════════════════════════════════
-   CONTENT PANELS
-═══════════════════════════════════════════════ */
-.content-area{flex:1;overflow-y:auto;padding:22px 26px}
-.panel-view{display:none}
-.panel-view.active{display:block}
-
-/* KPI GRID */
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.kpi-card{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;
-  transition:border-color .2s,box-shadow .2s;
-}
-.kpi-card:hover{border-color:var(--border2);box-shadow:var(--shadow)}
-.kpi-accent{width:3px;height:28px;border-radius:2px;position:absolute;left:0;top:16px}
-.kpi-label{font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px}
-.kpi-value{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;line-height:1}
-.kpi-sub{font-size:10px;color:var(--text3);margin-top:5px;display:flex;align-items:center;gap:4px}
-.kpi-trend{font-size:9px;padding:2px 5px;border-radius:4px;font-weight:600}
-.kpi-trend.up{background:rgba(34,197,94,0.12);color:var(--green)}
-.kpi-trend.down{background:rgba(239,68,68,0.1);color:var(--red)}
-.kpi-trend.neutral{background:var(--gold-dim);color:var(--gold2)}
-.kpi-loading{animation:shimmer 1.5s infinite}
-@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:1}}
-
-/* SECTION HEADERS */
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.section-title{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:7px}
-.section-title i{font-size:14px;color:var(--teal)}
-.section-action{
-  display:flex;align-items:center;gap:4px;font-size:11px;color:var(--teal2);cursor:pointer;
-  border:1px solid var(--border2);padding:4px 10px;border-radius:6px;
-  background:var(--teal-dim);transition:background .15s;
-}
-.section-action:hover{background:rgba(23,133,130,0.28)}
-
-/* MAIN DASHBOARD GRID */
-.dash-main-grid{display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:16px}
-.panel{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:background .3s,border-color .3s}
-.panel-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.panel-title{font-size:12.5px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px}
-.panel-title i{color:var(--teal);font-size:13px}
-
-/* MAP */
-#map{height:270px;width:100%}
-.mapboxgl-popup-content{background:var(--bg2)!important;color:var(--text)!important;border:1px solid var(--border2)!important;border-radius:8px!important;padding:10px 14px!important;font-family:'Outfit',sans-serif!important;font-size:12px!important;box-shadow:var(--shadow)!important}
-.mapboxgl-popup-tip{border-top-color:var(--border2)!important}
-.popup-nombre{font-weight:600;color:var(--text);margin-bottom:4px}
-.popup-gestor{color:var(--text2);font-size:11px;margin-bottom:4px}
-.popup-hora{color:var(--text3);font-size:10px;margin-bottom:6px}
-.popup-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
-
-/* FEED */
-.visitas-feed{overflow-y:auto;max-height:270px}
-.visita-item{
-  padding:10px 16px;border-bottom:1px solid rgba(128,128,128,0.06);
-  display:flex;align-items:center;gap:10px;
-  transition:background .15s;cursor:pointer;
-}
-.visita-item:last-child{border-bottom:none}
-.visita-item:hover{background:var(--surface)}
-.visita-avatar{
-  width:34px;height:34px;border-radius:50%;
-  background:var(--teal-dim);border:1px solid var(--border2);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:600;color:var(--teal2);flex-shrink:0;
-  font-family:'Cormorant Garamond',serif;
-}
-.visita-info{flex:1;min-width:0}
-.visita-nombre{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.visita-gestor{font-size:10px;color:var(--text3);margin-top:1px}
-.visita-right{text-align:right;flex-shrink:0}
-.visita-hora{font-size:10px;color:var(--text3)}
-.rb{font-size:9px;padding:2px 6px;border-radius:4px;margin-top:3px;font-weight:500;display:inline-block}
-.rb-localiza{background:rgba(34,197,94,0.1);color:var(--green)}
-.rb-no-localiza{background:rgba(239,68,68,0.08);color:var(--red)}
-.rb-tercero{background:rgba(245,158,11,0.1);color:var(--amber)}
-.rb-pago{background:rgba(23,133,130,0.15);color:var(--teal2)}
-.feed-empty{padding:32px;text-align:center;color:var(--text3);font-size:12px}
-
-/* BOTTOM GRID */
-.dash-bottom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-
-/* GESTORES TABLE */
-.data-table{width:100%;border-collapse:collapse}
-.data-table th{
-  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--text3);padding:7px 12px;
-  border-bottom:1px solid var(--border);text-align:left;font-weight:500;
-}
-.data-table td{
-  padding:9px 12px;border-bottom:1px solid rgba(128,128,128,0.06);
-  font-size:11.5px;color:var(--text2);
-}
-.data-table tr:last-child td{border-bottom:none}
-.data-table tbody tr:hover td{background:var(--surface);color:var(--text)}
-.status-dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
-.status-dot.on{background:var(--green)}
-.status-dot.off{background:var(--text3)}
-.count-pill{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:4px;padding:1px 6px;font-size:10px;
-  color:var(--teal2);font-weight:600;
-}
-
-/* CHART BARS */
-.chart-area{padding:14px 16px}
-.chart-bars{display:flex;align-items:flex-end;gap:6px;height:100px;margin-bottom:6px}
-.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
-.bar{width:100%;border-radius:3px 3px 0 0;transition:opacity .2s;min-height:3px;background:var(--teal)}
-.bar.gold-bar{background:var(--gold2)}
-.bar-label{font-size:9px;color:var(--text3);text-align:center}
-.bar-count{font-size:9px;color:var(--text2);text-align:center;font-weight:500;min-height:12px}
-.chart-legend{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
-.chart-legend span{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:4px}
-.legend-sq{width:8px;height:8px;border-radius:2px;display:inline-block}
-
-/* RESULTADOS */
-.resultado-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(128,128,128,0.06)}
-.resultado-row:last-child{border-bottom:none}
-.res-label{font-size:11px;color:var(--text2);width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
-.res-bar-track{flex:1;height:4px;background:rgba(128,128,128,0.1);border-radius:3px;overflow:hidden}
-.res-bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
-.res-count{font-size:12px;font-weight:600;color:var(--text);width:24px;text-align:right;font-family:'Cormorant Garamond',serif}
-.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.donut-num{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text)}
-.donut-lab{font-size:9px;color:var(--text3)}
-
-/* ═══════════════════════════════════════════════
-   GESTORES PANEL
-═══════════════════════════════════════════════ */
-.panel-body{padding:16px}
-.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.search-input{
-  flex:1;min-width:160px;background:var(--surface);border:1px solid var(--border);
-  border-radius:7px;padding:7px 12px 7px 32px;font-size:12px;color:var(--text);
-  outline:none;transition:border-color .2s;
-}
-.search-input:focus{border-color:var(--border2)}
-.search-wrap{position:relative;flex:1;min-width:160px}
-.search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px}
-.btn-primary{
-  display:flex;align-items:center;gap:5px;
-  background:var(--teal);border:none;border-radius:7px;
-  padding:7px 14px;font-size:12px;font-weight:500;color:#fff;
-  transition:background .2s;flex-shrink:0;
-}
-.btn-primary:hover{background:var(--teal2)}
-.btn-secondary{
-  display:flex;align-items:center;gap:5px;
-  background:var(--surface);border:1px solid var(--border);border-radius:7px;
-  padding:7px 12px;font-size:12px;color:var(--text2);
-  transition:all .15s;flex-shrink:0;
-}
-.btn-secondary:hover{background:var(--surface2);border-color:var(--border2);color:var(--text)}
-.btn-danger{
-  display:flex;align-items:center;gap:5px;
-  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:6px;
-  padding:5px 10px;font-size:11px;color:var(--red);transition:all .15s;
-}
-.btn-danger:hover{background:rgba(239,68,68,0.18)}
-.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
-.full-table{width:100%;border-collapse:collapse}
-.full-table th{
-  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);
-  padding:9px 14px;background:var(--surface);border-bottom:1px solid var(--border);
-  text-align:left;font-weight:500;white-space:nowrap;
-}
-.full-table td{
-  padding:10px 14px;border-bottom:1px solid rgba(128,128,128,0.06);
-  font-size:12px;color:var(--text2);vertical-align:middle;
-}
-.full-table tr:last-child td{border-bottom:none}
-.full-table tbody tr:hover td{background:var(--surface);color:var(--text)}
-.badge-active{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:600;background:rgba(34,197,94,0.1);color:var(--green);letter-spacing:.5px}
-.badge-inactive{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:600;background:rgba(239,68,68,0.1);color:var(--red);letter-spacing:.5px}
-.action-btns{display:flex;gap:6px;align-items:center}
-.btn-sm{
-  width:28px;height:28px;border-radius:6px;border:1px solid var(--border);
-  background:var(--surface);display:flex;align-items:center;justify-content:center;
-  font-size:13px;color:var(--text2);transition:all .15s;
-}
-.btn-sm:hover{background:var(--surface2);border-color:var(--border2);color:var(--text)}
-.btn-sm.danger:hover{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:var(--red)}
-.btn-sm.success:hover{background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);color:var(--green)}
-.pagination{display:flex;align-items:center;gap:6px;margin-top:12px;justify-content:flex-end}
-.pag-btn{
-  width:28px;height:28px;border-radius:6px;border:1px solid var(--border);
-  background:var(--surface);display:flex;align-items:center;justify-content:center;
-  font-size:12px;color:var(--text2);transition:all .15s;
-}
-.pag-btn:hover,.pag-btn.active{background:var(--teal);border-color:var(--teal);color:#fff}
-.pag-info{font-size:11px;color:var(--text3);margin-right:auto}
-
-/* ═══════════════════════════════════════════════
-   TITULARES
-═══════════════════════════════════════════════ */
-.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.filter-select{
-  background:var(--surface);border:1px solid var(--border);border-radius:7px;
-  padding:6px 10px;font-size:12px;color:var(--text2);outline:none;
-  transition:border-color .2s;cursor:pointer;
-}
-.filter-select:focus{border-color:var(--border2)}
-
-/* ═══════════════════════════════════════════════
-   REPORTES
-═══════════════════════════════════════════════ */
-.report-filters{
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:12px;padding:18px;margin-bottom:16px;
-  display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;
-}
-.report-filters .form-group{margin:0}
-.btn-export{
-  display:flex;align-items:center;gap:6px;
-  background:var(--gold);border:none;border-radius:7px;
-  padding:9px 16px;font-size:12.5px;font-weight:500;color:#fff;
-  transition:background .2s;white-space:nowrap;
-}
-[data-theme="light"] .btn-export{color:#0A1828}
-.btn-export:hover{background:var(--gold2)}
-
-/* ═══════════════════════════════════════════════
-   MODAL
-═══════════════════════════════════════════════ */
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,0.6);
-  display:none;align-items:center;justify-content:center;z-index:100;
-  backdrop-filter:blur(4px);
-}
-.modal-overlay.open{display:flex}
-.modal{
-  background:var(--bg2);border:1px solid var(--border2);border-radius:14px;
-  padding:28px;width:420px;max-width:95vw;
-  box-shadow:0 20px 60px rgba(0,0,0,0.5);
-  animation:modalIn .25s ease;
-}
-@keyframes modalIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
-.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-.modal-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--text)}
-.modal-close{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px;border-radius:4px;transition:color .15s}
-.modal-close:hover{color:var(--text)}
-.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:22px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-
-/* ═══════════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════════ */
-.toast-container{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:8px}
-.toast{
-  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
-  padding:10px 16px;font-size:12px;color:var(--text);
-  display:flex;align-items:center;gap:8px;
-  animation:toastIn .3s ease;box-shadow:var(--shadow);
-  min-width:240px;max-width:320px;
-}
-.toast.success{border-color:rgba(34,197,94,0.4)}
-.toast.error{border-color:rgba(239,68,68,0.4)}
-@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-.toast-icon{font-size:15px}
-.toast.success .toast-icon{color:var(--green)}
-.toast.error .toast-icon{color:var(--red)}
-.toast.info .toast-icon{color:var(--teal2)}
-
-/* ═══════════════════════════════════════════════
-   LOADING OVERLAY
-═══════════════════════════════════════════════ */
-.loading-overlay{
-  position:absolute;inset:0;background:rgba(10,24,40,0.5);
-  display:flex;align-items:center;justify-content:center;
-  z-index:10;border-radius:inherit;
-}
-[data-theme="light"] .loading-overlay{background:rgba(240,244,248,0.6)}
-.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite}
+/* ░░ LOGIN ░░ */
+.login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(120% 90% at 80% -10%,rgba(23,133,130,.18),transparent 55%),
+             radial-gradient(80% 70% at 10% 110%,rgba(191,161,129,.10),transparent 60%),var(--navy-900)}
+.login-card{width:100%;max-width:404px;background:linear-gradient(180deg,var(--navy-700),var(--navy-800));
+  border:1px solid var(--border-strong);border-radius:20px;padding:40px 36px;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:30px}
+.brand-mark{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--teal),#0E5B59);font-family:var(--serif);font-weight:700;font-size:22px;color:#fff;
+  box-shadow:0 0 0 1px var(--border-strong)}
+.brand-name{font-family:var(--serif);font-size:21px;font-weight:600;letter-spacing:.3px;line-height:1}
+.brand-sub{font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-top:3px}
+.login-h{font-family:var(--serif);font-size:30px;font-weight:600;margin-bottom:5px}
+.login-p{font-size:13.5px;color:var(--text-dim);margin-bottom:26px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-faint);margin-bottom:7px}
+.field input{width:100%;background:var(--navy-900);border:1px solid var(--border);border-radius:11px;
+  padding:13px 15px;color:var(--text);font-size:14.5px;transition:border-color .18s,box-shadow .18s}
+.field input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-dim)}
+.login-btn{width:100%;margin-top:8px;padding:14px;border-radius:11px;font-size:14.5px;font-weight:600;letter-spacing:.3px;
+  background:linear-gradient(135deg,var(--teal),#0E6360);color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:filter .18s,transform .1s}
+.login-btn:hover{filter:brightness(1.08)}
+.login-btn:active{transform:translateY(1px)}
+.login-btn:disabled{opacity:.6;cursor:default}
+.login-err{display:none;margin-top:14px;padding:11px 14px;border-radius:10px;font-size:13px;
+  background:rgba(217,100,90,.12);border:1px solid rgba(217,100,90,.32);color:#F0A59E}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ═══════════════════════════════════════════════
-   EMPTY STATES
-═══════════════════════════════════════════════ */
-.empty-state{padding:40px;text-align:center;color:var(--text3)}
-.empty-state i{font-size:36px;margin-bottom:12px;display:block;color:var(--border2)}
-.empty-state p{font-size:13px}
+/* ░░ APP SHELL ░░ */
+.app{display:none;height:100%;grid-template-columns:248px 1fr;grid-template-rows:1fr}
+.sidebar{background:var(--navy-800);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.side-brand{display:flex;align-items:center;gap:11px;padding:20px 20px 18px;border-bottom:1px solid var(--border)}
+.side-brand .brand-mark{width:36px;height:36px;font-size:18px;border-radius:9px}
+.side-brand-name{font-family:var(--serif);font-size:17px;font-weight:600;line-height:1}
+.side-brand-sub{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-top:3px}
+.nav{flex:1;overflow-y:auto;padding:14px 12px}
+.nav-group{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-faint);padding:14px 12px 7px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:var(--text-dim);
+  font-size:14px;font-weight:500;transition:background .15s,color .15s;position:relative}
+.nav-item:hover{background:var(--navy-700);color:var(--text)}
+.nav-item.active{background:var(--teal-dim);color:var(--teal-bright)}
+.nav-item.active::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--teal-bright)}
+.nav-ic{width:20px;text-align:center;font-size:16px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--gold-soft);
+  background:rgba(191,161,129,.12);padding:1px 8px;border-radius:20px}
+.nav-item.hidden{display:none}
+.side-user{border-top:1px solid var(--border);padding:14px;display:flex;align-items:center;gap:11px}
+.side-avatar{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:600;font-size:14px;
+  background:linear-gradient(135deg,var(--gold),#9C8259);color:var(--navy-900);flex-shrink:0}
+.side-user-info{min-width:0;flex:1}
+.side-user-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-user-role{font-size:11px;color:var(--text-faint)}
+.side-logout{padding:8px;border-radius:9px;color:var(--text-faint);font-size:17px;transition:color .15s,background .15s}
+.side-logout:hover{color:var(--danger);background:rgba(217,100,90,.1)}
 
-/* ═══════════════════════════════════════════════
-   CONFIG PANEL
-═══════════════════════════════════════════════ */
-.config-section{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:16px}
-.config-section h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--text);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
-.config-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(128,128,128,0.06)}
-.config-row:last-child{border-bottom:none}
-.config-label{font-size:13px;color:var(--text2)}
-.config-sub{font-size:11px;color:var(--text3);margin-top:2px}
-.toggle-switch{position:relative;width:40px;height:22px;cursor:pointer}
-.toggle-switch input{opacity:0;width:0;height:0}
-.toggle-track{position:absolute;inset:0;background:var(--surface);border:1px solid var(--border);border-radius:11px;transition:background .2s}
-.toggle-switch input:checked+.toggle-track{background:var(--teal);border-color:var(--teal)}
-.toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s}
-.toggle-switch input:checked~.toggle-thumb{transform:translateX(18px)}
+.main{display:flex;flex-direction:column;overflow:hidden;background:
+  radial-gradient(100% 60% at 100% 0%,rgba(23,133,130,.07),transparent 60%),var(--navy-900)}
+.topbar{display:flex;align-items:center;gap:18px;padding:16px 28px;border-bottom:1px solid var(--border)}
+.topbar-title{min-width:0}
+.topbar-title h1{font-family:var(--serif);font-size:25px;font-weight:600;line-height:1.05}
+.topbar-title .crumb{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-faint);margin-bottom:2px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.live{display:flex;align-items:center;gap:9px;padding:7px 13px;border-radius:30px;
+  background:var(--teal-dim);border:1px solid rgba(43,196,190,.28)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--teal-bright);box-shadow:0 0 0 0 rgba(43,196,190,.6);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(43,196,190,.55)}70%{box-shadow:0 0 0 9px rgba(43,196,190,0)}100%{box-shadow:0 0 0 0 rgba(43,196,190,0)}}
+.live-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal-bright);font-weight:600}
+.live-count{font-family:var(--mono);font-size:11px;color:var(--text-dim)}
+.date-pick{background:var(--navy-700);border:1px solid var(--border);border-radius:10px;padding:9px 13px;
+  color:var(--text);font-size:13px;font-family:var(--mono)}
+.date-pick:focus{outline:none;border-color:var(--teal)}
 
-/* Util */
-.text-teal{color:var(--teal2)}
-.text-gold{color:var(--gold)}
-.text-green{color:var(--green)}
-.text-red{color:var(--red)}
-.text-muted{color:var(--text3)}
-.fw6{font-weight:600}
-.font-serif{font-family:'Cormorant Garamond',serif}
-.mt4{margin-top:4px}
-.mt8{margin-top:8px}
-.mt12{margin-top:12px}
-.gap-8{gap:8px}
-.flex{display:flex}
-.items-center{align-items:center}
-.justify-between{justify-content:space-between}
+.panel-wrap{flex:1;overflow-y:auto;padding:24px 28px 40px}
+.panel{display:none}
+.panel.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ░░ DASHBOARD ░░ */
+.kpi-deck{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.kpi{background:linear-gradient(180deg,var(--navy-700),var(--navy-800));border:1px solid var(--border);
+  border-radius:16px;padding:20px 22px;position:relative;overflow:hidden}
+.kpi::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent,rgba(23,133,130,.16)),transparent 70%)}
+.kpi-label{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--text-faint);margin-bottom:12px}
+.kpi-num{font-family:var(--serif);font-size:46px;font-weight:600;line-height:.9;letter-spacing:-.5px}
+.kpi-sub{font-size:12px;color:var(--text-dim);margin-top:10px;display:flex;align-items:center;gap:6px}
+.kpi-chip{font-family:var(--mono);font-size:11px;font-weight:600;padding:1px 7px;border-radius:20px}
+.chip-up{color:var(--good);background:rgba(95,185,142,.13)}
+.chip-down{color:var(--danger);background:rgba(217,100,90,.13)}
+.chip-flat{color:var(--gold-soft);background:rgba(191,161,129,.12)}
+
+.deck{display:grid;grid-template-columns:1fr 360px;gap:18px}
+.card{background:linear-gradient(180deg,var(--navy-700),var(--navy-800));border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.card-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border)}
+.card-head h3{font-family:var(--serif);font-size:19px;font-weight:600;flex:1}
+.card-head .meta{font-family:var(--mono);font-size:11px;color:var(--text-faint)}
+#mapDash{height:480px;width:100%}
+.map-card{position:relative}
+.map-legend{position:absolute;left:14px;bottom:14px;z-index:5;background:rgba(6,16,27,.78);backdrop-filter:blur(8px);
+  border:1px solid var(--border);border-radius:11px;padding:11px 14px;font-size:11.5px;color:var(--text-dim)}
+.map-legend .lg{display:flex;align-items:center;gap:8px;margin-top:5px}
+.map-legend .lg:first-of-type{margin-top:8px}
+.lg-dot{width:9px;height:9px;border-radius:50%}
+
+.feed{max-height:480px;overflow-y:auto}
+.feed-item{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+.feed-item:hover{background:var(--navy-700)}
+.feed-avatar{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:13px;font-weight:600;flex-shrink:0;
+  background:var(--navy-600);color:var(--gold-soft)}
+.feed-body{min-width:0;flex:1}
+.feed-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-meta{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:2px}
+.feed-res{font-size:11.5px;margin-top:5px;display:inline-block;padding:2px 9px;border-radius:20px;font-weight:500}
+.res-pago{background:rgba(95,185,142,.14);color:var(--good)}
+.res-loc{background:rgba(43,196,190,.13);color:var(--teal-bright)}
+.res-no{background:rgba(217,100,90,.13);color:var(--danger)}
+.res-otro{background:rgba(191,161,129,.12);color:var(--gold-soft)}
+.feed-time{font-family:var(--mono);font-size:11px;color:var(--text-faint);flex-shrink:0;align-self:flex-start}
+
+.empty{padding:48px 24px;text-align:center;color:var(--text-faint)}
+.empty-ic{font-size:34px;opacity:.5;margin-bottom:10px}
+.empty p{font-size:13.5px;margin-bottom:14px}
+.btn-ghost{padding:9px 16px;border-radius:10px;border:1px solid var(--border-strong);color:var(--text-dim);font-size:13px;font-weight:500;transition:.15s}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal-bright)}
+
+.skeleton{color:transparent!important;background:linear-gradient(90deg,var(--navy-600),var(--navy-500),var(--navy-600));
+  background-size:200% 100%;border-radius:6px;animation:shim 1.3s infinite}
+@keyframes shim{to{background-position:-200% 0}}
+
+/* ░░ PLACEHOLDER PANELS ░░ */
+.stub{display:grid;place-items:center;min-height:60vh;text-align:center}
+.stub-inner{max-width:420px}
+.stub-tag{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--teal-bright);
+  border:1px solid rgba(43,196,190,.3);border-radius:20px;padding:4px 12px;display:inline-block;margin-bottom:18px}
+.stub h2{font-family:var(--serif);font-size:32px;font-weight:600;margin-bottom:10px}
+.stub p{font-size:14px;color:var(--text-dim);line-height:1.6}
+.stub ul{list-style:none;text-align:left;margin-top:18px;display:inline-block}
+.stub li{font-size:13.5px;color:var(--text-dim);padding:6px 0 6px 24px;position:relative}
+.stub li::before{content:"→";position:absolute;left:0;color:var(--gold)}
+
+/* ░░ TOAST ░░ */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);z-index:99;
+  background:var(--navy-600);border:1px solid var(--border-strong);border-radius:12px;padding:13px 20px;
+  font-size:13.5px;box-shadow:var(--shadow);opacity:0;transition:.32s}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+@media (max-width:1080px){.deck{grid-template-columns:1fr}.feed{max-height:340px}.kpi-deck{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:720px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;inset:0 auto 0 0;width:248px;z-index:50;transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow)}
+  .sidebar.open{transform:none}
+  .menu-toggle{display:grid!important}
+  .kpi-deck{grid-template-columns:repeat(2,1fr)}
+  .kpi-num{font-size:38px}
+  .panel-wrap{padding:18px 16px 36px}
+  .topbar{padding:14px 16px}
+}
+.menu-toggle{display:none;place-items:center;width:38px;height:38px;border-radius:9px;background:var(--navy-700);border:1px solid var(--border);font-size:18px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════ LOGIN PAGE ══════════════════════ -->
-<div id="loginPage">
-  <div class="login-bg-grid"></div>
-  <div class="login-glow"></div>
+<!-- ░░░░ LOGIN ░░░░ -->
+<div class="login" id="loginPage">
   <div class="login-card">
-    <div class="login-logo">
-      <div class="login-logo-mark">Fortaleza</div>
-      <div class="login-logo-name">Contact Center</div>
-      <div class="login-logo-sub">Panel Administrativo</div>
-      <div class="login-divider"></div>
-      <div class="login-title">Acceso restringido — ingresa tus credenciales</div>
+    <div class="brand">
+      <div class="brand-mark">F</div>
+      <div><div class="brand-name">Fortaleza</div><div class="brand-sub">Contact Center</div></div>
     </div>
-    <div class="form-group">
-      <label class="form-label" for="loginEmail">Correo electrónico</label>
-      <input class="form-input" type="email" id="loginEmail" placeholder="admin@fortaleza.com" autocomplete="email">
+    <div class="login-h">Centro de Operaciones</div>
+    <div class="login-p">Acceso restringido al personal autorizado.</div>
+    <div class="field">
+      <label for="email">Correo</label>
+      <input type="email" id="email" autocomplete="username" placeholder="tu@fortaleza.com" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div class="form-group">
-      <label class="form-label" for="loginPassword">Contraseña</label>
-      <input class="form-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    <div class="field">
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button class="btn-login" id="btnLogin" onclick="doLogin()">
-      <span id="loginBtnText">Iniciar sesión</span>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">
+      <span class="spin" id="loginSpin"></span>
+      <span id="loginBtnText">Entrar</span>
     </button>
-    <div class="login-error" id="loginError"></div>
-    <div class="login-spinner" id="loginSpinner"><i class="ti ti-loader-2"></i> Verificando credenciales...</div>
+    <div class="login-err" id="loginError"></div>
   </div>
 </div>
 
-<!-- ══════════════════════ APP PAGE ══════════════════════ -->
-<div id="appPage">
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="logo-area">
-      <div class="logo-mark">Fortaleza</div>
-      <div class="logo-name">Contact Center</div>
-      <div class="logo-sub">Panel Admin</div>
+<!-- ░░░░ APP ░░░░ -->
+<div class="app" id="appPage">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <div class="brand-mark">F</div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones</div></div>
     </div>
     <nav class="nav">
-      <div class="nav-section">Principal</div>
-      <div class="nav-item active" onclick="showPanel('dashboard')" id="nav-dashboard">
-        <i class="ti ti-layout-dashboard"></i>Dashboard
-        <span class="nav-badge" id="navBadgeDash">—</span>
-      </div>
-      <div class="nav-item" onclick="showPanel('mapa')" id="nav-mapa">
-        <i class="ti ti-map-2"></i>Mapa en vivo
-      </div>
-      <div class="nav-section">Gestión</div>
-      <div class="nav-item" onclick="showPanel('gestores')" id="nav-gestores">
-        <i class="ti ti-users"></i>Gestores
-      </div>
-      <div class="nav-item" onclick="showPanel('titulares')" id="nav-titulares">
-        <i class="ti ti-folder-open"></i>Titulares
-      </div>
-      <div class="nav-item" onclick="showPanel('visitas')" id="nav-visitas">
-        <i class="ti ti-calendar-check"></i>Visitas
-      </div>
-      <div class="nav-section">Reportes</div>
-      <div class="nav-item" onclick="showPanel('reportes')" id="nav-reportes">
-        <i class="ti ti-chart-bar"></i>Reportes
-      </div>
-      <div class="nav-section nav-config-section">Sistema</div>
-      <div class="nav-item nav-config-item hidden" onclick="showPanel('config')" id="nav-config">
-        <i class="ti ti-settings"></i>Configuración
-      </div>
+      <div class="nav-group">Principal</div>
+      <div class="nav-item active" id="nav-dashboard" onclick="showPanel('dashboard')"><span class="nav-ic">◆</span> Tablero <span class="nav-badge" id="badgeDash">—</span></div>
+      <div class="nav-item" id="nav-mapa" onclick="showPanel('mapa')"><span class="nav-ic">⊕</span> Mapa en vivo</div>
+      <div class="nav-group">Gestión</div>
+      <div class="nav-item" id="nav-gestores" onclick="showPanel('gestores')"><span class="nav-ic">⊚</span> Gestores</div>
+      <div class="nav-item" id="nav-titulares" onclick="showPanel('titulares')"><span class="nav-ic">▤</span> Titulares</div>
+      <div class="nav-item" id="nav-visitas" onclick="showPanel('visitas')"><span class="nav-ic">◈</span> Visitas</div>
+      <div class="nav-group">Sistema</div>
+      <div class="nav-item" id="nav-reportes" onclick="showPanel('reportes')"><span class="nav-ic">▦</span> Reportes</div>
+      <div class="nav-item hidden" id="nav-config" onclick="showPanel('config')"><span class="nav-ic">⚙</span> Configuración</div>
     </nav>
-    <div class="sidebar-footer">
-      <div class="user-pill">
-        <div class="user-avatar" id="sidebarAvatar">—</div>
-        <div>
-          <div class="user-name" id="sidebarName">—</div>
-          <div class="user-role" id="sidebarRole">—</div>
-        </div>
-        <button class="btn-logout" title="Cerrar sesión" onclick="doLogout()">
-          <i class="ti ti-logout"></i>
-        </button>
+    <div class="side-user">
+      <div class="side-avatar" id="sideAvatar">A</div>
+      <div class="side-user-info">
+        <div class="side-user-name" id="sideName">—</div>
+        <div class="side-user-role" id="sideRole">—</div>
       </div>
+      <button class="side-logout" onclick="doLogout()" title="Salir">⏻</button>
     </div>
   </aside>
 
-  <!-- MAIN -->
   <div class="main">
-    <!-- TOPBAR -->
-    <div class="topbar">
-      <div class="topbar-left">
-        <div class="page-title" id="pageTitle">Dashboard</div>
-        <div class="page-sub" id="pageSub">Resumen operativo del día</div>
+    <header class="topbar">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">
+        <div class="crumb" id="crumb">Principal</div>
+        <h1 id="panelTitle">Tablero</h1>
       </div>
-      <div class="topbar-controls">
-        <div class="date-filter">
-          <i class="ti ti-calendar" style="font-size:12px;color:var(--teal2)"></i>
-          <input type="date" id="dateFilter" onchange="onDateChange()">
+      <div class="topbar-right">
+        <div class="live" id="liveBadge">
+          <span class="live-dot"></span>
+          <span class="live-label">En vivo</span>
+          <span class="live-count" id="liveCount">60s</span>
         </div>
-        <button class="btn-text" onclick="refreshCurrentPanel()">
-          <i class="ti ti-refresh" style="font-size:13px"></i>Actualizar
-        </button>
-        <button class="btn-export" onclick="exportarExcel()" id="btnExportTop" style="display:none">
-          <i class="ti ti-download" style="font-size:13px"></i>Excel
-        </button>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
-          <i class="ti ti-sun" id="themeIcon"></i>
-        </button>
+        <input type="date" class="date-pick" id="datePick" onchange="onDateChange()">
       </div>
-    </div>
+    </header>
 
-    <!-- CONTENT -->
-    <div class="content-area" id="contentArea">
-
-      <!-- ════ DASHBOARD ════ -->
-      <div class="panel-view active" id="panel-dashboard">
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-accent" style="background:var(--teal)"></div>
-            <div class="kpi-label">Visitas hoy</div>
-            <div class="kpi-value text-teal kpi-loading" id="kpi-visitas">—</div>
-            <div class="kpi-sub" id="kpi-visitas-sub"><span class="kpi-trend neutral">...</span></div>
+    <div class="panel-wrap">
+      <!-- TABLERO -->
+      <section class="panel active" id="panel-dashboard">
+        <div class="kpi-deck">
+          <div class="kpi" style="--accent:rgba(43,196,190,.18)">
+            <div class="kpi-label">Visitas de hoy</div>
+            <div class="kpi-num skeleton" id="kpiVisitas">0</div>
+            <div class="kpi-sub" id="kpiVisitasSub">&nbsp;</div>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-accent" style="background:var(--green)"></div>
-            <div class="kpi-label">Se localizan</div>
-            <div class="kpi-value text-green kpi-loading" id="kpi-localizan">—</div>
-            <div class="kpi-sub" id="kpi-localizan-sub"><span class="kpi-trend neutral">...</span></div>
+          <div class="kpi" style="--accent:rgba(95,185,142,.18)">
+            <div class="kpi-label">Tasa de contacto</div>
+            <div class="kpi-num skeleton" id="kpiTasa">0</div>
+            <div class="kpi-sub" id="kpiTasaSub">&nbsp;</div>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-accent" style="background:var(--gold)"></div>
-            <div class="kpi-label">Promesas de pago</div>
-            <div class="kpi-value text-gold kpi-loading" id="kpi-pagos">—</div>
-            <div class="kpi-sub" id="kpi-pagos-sub"><span class="kpi-trend neutral">...</span></div>
+          <div class="kpi" style="--accent:rgba(191,161,129,.18)">
+            <div class="kpi-label">Pagos confirmados</div>
+            <div class="kpi-num skeleton" id="kpiPagos">0</div>
+            <div class="kpi-sub" id="kpiPagosSub">&nbsp;</div>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-accent" style="background:var(--amber)"></div>
-            <div class="kpi-label">Gestores activos</div>
-            <div class="kpi-value kpi-loading" id="kpi-gestores">—</div>
-            <div class="kpi-sub" id="kpi-gestores-sub"><span class="kpi-trend neutral">...</span></div>
+          <div class="kpi" style="--accent:rgba(224,160,74,.18)">
+            <div class="kpi-label">Gestores en campo</div>
+            <div class="kpi-num skeleton" id="kpiGestores">0</div>
+            <div class="kpi-sub" id="kpiGestoresSub">&nbsp;</div>
           </div>
         </div>
 
-        <div class="dash-main-grid">
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title"><i class="ti ti-map-2"></i>Ubicaciones del día</div>
-              <div class="section-action" onclick="showPanel('mapa')"><i class="ti ti-maximize" style="font-size:10px"></i>Ver completo</div>
+        <div class="deck">
+          <div class="card map-card">
+            <div class="card-head"><h3>Posición de gestores</h3><span class="meta" id="mapMeta">—</span></div>
+            <div id="mapDash"></div>
+            <div class="map-legend">
+              Última posición por gestor
+              <div class="lg"><span class="lg-dot" style="background:var(--teal-bright)"></span> Activo hoy</div>
+              <div class="lg"><span class="lg-dot" style="background:var(--gold)"></span> Más visitas</div>
             </div>
-            <div id="mapDash" style="height:270px"></div>
           </div>
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title"><i class="ti ti-activity"></i>Últimas visitas</div>
-              <span style="font-size:10px;color:var(--text3)" id="feedCount">—</span>
-            </div>
-            <div class="visitas-feed" id="visitasFeed">
-              <div class="feed-empty"><i class="ti ti-loader-2"></i><br>Cargando visitas...</div>
-            </div>
+          <div class="card">
+            <div class="card-head"><h3>Actividad reciente</h3><span class="meta" id="feedCount">—</span></div>
+            <div class="feed" id="feed"></div>
           </div>
         </div>
+      </section>
 
-        <div class="dash-bottom-grid">
-          <!-- Gestores tabla -->
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title"><i class="ti ti-users"></i>Gestores del día</div>
-              <div class="section-action" onclick="showPanel('gestores')"><i class="ti ti-arrow-right" style="font-size:10px"></i>Ver todos</div>
-            </div>
-            <div style="overflow-x:auto">
-              <table class="data-table" id="gestoresDashTable">
-                <thead><tr><th>Gestor</th><th>Visitas</th><th>Estado</th></tr></thead>
-                <tbody id="gestoresDashBody">
-                  <tr><td colspan="3" style="text-align:center;color:var(--text3);font-size:11px;padding:20px">Cargando...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <!-- Chart por hora -->
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title"><i class="ti ti-chart-bar"></i>Visitas por hora</div>
-            </div>
-            <div class="chart-area">
-              <div class="chart-bars" id="hourBars" style="height:100px"></div>
-              <div class="chart-legend">
-                <span><span class="legend-sq" style="background:var(--teal)"></span>Completadas</span>
-                <span><span class="legend-sq" style="background:var(--gold2)"></span>En progreso</span>
-              </div>
-            </div>
-          </div>
-          <!-- Resultados -->
-          <div class="panel">
-            <div class="panel-header">
-              <div class="panel-title"><i class="ti ti-target"></i>Resultados del día</div>
-            </div>
-            <div style="padding:14px 16px">
-              <div style="display:flex;justify-content:center;margin-bottom:14px">
-                <div style="position:relative;width:80px;height:80px">
-                  <svg viewBox="0 0 80 80" id="donutSvg">
-                    <circle cx="40" cy="40" r="33" fill="none" stroke="rgba(128,128,128,0.1)" stroke-width="7"/>
-                    <circle cx="40" cy="40" r="33" fill="none" stroke="var(--teal)" stroke-width="7"
-                      stroke-dasharray="207" stroke-dashoffset="83" stroke-linecap="round"
-                      transform="rotate(-90 40 40)" id="donutTeal"/>
-                    <circle cx="40" cy="40" r="33" fill="none" stroke="var(--green)" stroke-width="7"
-                      stroke-dasharray="207" stroke-dashoffset="145" stroke-linecap="round"
-                      transform="rotate(-90 40 40)" id="donutGreen" opacity=".7"/>
-                  </svg>
-                  <div class="donut-center">
-                    <span class="donut-num" id="donutNum">—</span>
-                    <span class="donut-lab">total</span>
-                  </div>
-                </div>
-              </div>
-              <div id="resultadosRows">
-                <div class="resultado-row"><div class="res-label">Cargando...</div><div class="res-bar-track"><div class="res-bar-fill" style="width:0%;background:var(--teal)"></div></div><div class="res-count">—</div></div>
-              </div>
-              <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-                <span style="font-size:10px;color:var(--text3)">Tasa de contacto</span>
-                <span class="font-serif text-teal" style="font-size:17px;font-weight:600" id="tasaContacto">—%</span>
-              </div>
-            </div>
-          </div>
+      <!-- MAPA -->
+      <section class="panel" id="panel-mapa">
+        <div class="card map-card">
+          <div class="card-head"><h3>Mapa territorial en vivo</h3><span class="meta" id="mapFullMeta">—</span></div>
+          <div id="mapFull" style="height:calc(100vh - 230px);min-height:420px"></div>
         </div>
-      </div>
+      </section>
 
-      <!-- ════ MAPA ════ -->
-      <div class="panel-view" id="panel-mapa">
-        <div class="panel" style="height:calc(100vh - 120px)">
-          <div class="panel-header">
-            <div class="panel-title"><i class="ti ti-map-2"></i>Mapa de visitas en vivo</div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <select class="filter-select" id="mapaGestorFilter" onchange="filterMapaGestor()">
-                <option value="">Todos los gestores</option>
-              </select>
-              <select class="filter-select" id="mapaResultadoFilter" onchange="filterMapaResultado()">
-                <option value="">Todos los resultados</option>
-                <option>Se localiza a domicilio</option>
-                <option>No se localiza a domicilio</option>
-                <option>Se deja carta con tercero</option>
-                <option>Realiza pago</option>
-              </select>
-            </div>
-          </div>
-          <div id="mapFull" style="height:calc(100% - 49px)"></div>
-        </div>
-      </div>
-
-      <!-- ════ GESTORES ════ -->
-      <div class="panel-view" id="panel-gestores">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="ti ti-users"></i>Gestores</div>
-          </div>
-          <div class="panel-body">
-            <div class="toolbar">
-              <div class="search-wrap">
-                <i class="ti ti-search"></i>
-                <input class="search-input" type="text" placeholder="Buscar gestor..." id="gestorSearch" oninput="filterGestores()">
-              </div>
-              <select class="filter-select" id="gestorStatusFilter" onchange="filterGestores()">
-                <option value="">Todos</option>
-                <option value="TRUE">Activos</option>
-                <option value="FALSE">Inactivos</option>
-              </select>
-              <button class="btn-primary" id="btnAgregarGestor" onclick="openModalGestor()">
-                <i class="ti ti-plus"></i>Agregar gestor
-              </button>
-            </div>
-            <div class="table-wrap">
-              <table class="full-table">
-                <thead>
-                  <tr>
-                    <th>ID</th><th>Nombre</th><th>Usuario Telegram</th><th>Telegram ID</th><th>Estado</th><th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody id="gestoresTableBody">
-                  <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text3)">Cargando gestores...</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="pagination" id="gestoresPag"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ TITULARES ════ -->
-      <div class="panel-view" id="panel-titulares">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="ti ti-folder-open"></i>Titulares</div>
-          </div>
-          <div class="panel-body">
-            <div class="toolbar">
-              <div class="search-wrap">
-                <i class="ti ti-search"></i>
-                <input class="search-input" type="text" placeholder="Buscar titular..." id="titularSearch" oninput="filterTitulares()">
-              </div>
-              <select class="filter-select" id="titularGestorFilter" onchange="filterTitulares()">
-                <option value="">Todos los gestores</option>
-              </select>
-              <select class="filter-select" id="titularEstadoFilter" onchange="filterTitulares()">
-                <option value="">Todos los estados</option>
-              </select>
-              <button class="btn-primary" id="btnImportTitulares" onclick="document.getElementById('excelInput').click()">
-                <i class="ti ti-upload"></i>Importar Excel
-              </button>
-              <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarExcel(this)">
-            </div>
-            <div class="table-wrap">
-              <table class="full-table">
-                <thead>
-                  <tr>
-                    <th>ID</th><th>Nombre</th><th>Dirección</th><th>Estado</th><th>Municipio</th><th>Cartera</th><th>Gestor</th><th>Activo</th>
-                  </tr>
-                </thead>
-                <tbody id="titularesTableBody">
-                  <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Cargando titulares...</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="pagination" id="titularesPag"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ VISITAS ════ -->
-      <div class="panel-view" id="panel-visitas">
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="ti ti-calendar-check"></i>Visitas</div>
-          </div>
-          <div class="panel-body">
-            <div class="toolbar">
-              <div class="search-wrap">
-                <i class="ti ti-search"></i>
-                <input class="search-input" type="text" placeholder="Buscar visita..." id="visitaSearch" oninput="filterVisitas()">
-              </div>
-              <select class="filter-select" id="visitaGestorFilter" onchange="filterVisitas()">
-                <option value="">Todos los gestores</option>
-              </select>
-              <select class="filter-select" id="visitaResultadoFilter" onchange="filterVisitas()">
-                <option value="">Todos los resultados</option>
-                <option>Se localiza a domicilio</option>
-                <option>No se localiza a domicilio</option>
-                <option>Se deja carta con tercero</option>
-                <option>Realiza pago</option>
-              </select>
-              <button class="btn-secondary" onclick="exportarExcel()">
-                <i class="ti ti-download"></i>Exportar
-              </button>
-            </div>
-            <div class="table-wrap">
-              <table class="full-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th><th>Hora</th><th>Titular</th><th>Gestor</th><th>Resultado</th><th>Observaciones</th><th>Foto</th>
-                  </tr>
-                </thead>
-                <tbody id="visitasTableBody">
-                  <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3)">Cargando visitas...</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="pagination" id="visitasPag"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ REPORTES ════ -->
-      <div class="panel-view" id="panel-reportes">
-        <div class="report-filters">
-          <div class="form-group">
-            <label class="form-label">Fecha inicio</label>
-            <input class="form-input" type="date" id="reportFechaInicio">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Fecha fin</label>
-            <input class="form-input" type="date" id="reportFechaFin">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Gestor</label>
-            <select class="form-input" id="reportGestor">
-              <option value="">Todos los gestores</option>
-            </select>
-          </div>
-          <button class="btn-export" onclick="generarReporte()">
-            <i class="ti ti-download"></i>Exportar Excel
-          </button>
-        </div>
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><i class="ti ti-table"></i>Vista previa del reporte</div>
-            <span style="font-size:11px;color:var(--text3)" id="reporteCount">0 registros</span>
-          </div>
-          <div style="overflow-x:auto;max-height:calc(100vh - 320px);overflow-y:auto">
-            <table class="full-table" id="reporteTable">
-              <thead>
-                <tr><th>Fecha</th><th>Hora</th><th>Titular</th><th>Gestor</th><th>Resultado</th><th>Municipio</th><th>Promesa</th><th>Observaciones</th></tr>
-              </thead>
-              <tbody id="reporteBody">
-                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Aplica filtros y genera el reporte</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ CONFIG ════ -->
-      <div class="panel-view" id="panel-config">
-        <div class="config-section">
-          <h3>Conexión N8N / Google Sheets</h3>
-          <div class="config-row">
-            <div><div class="config-label">URL base N8N</div><div class="config-sub" id="cfgN8nUrl">—</div></div>
-            <span style="font-size:11px;color:var(--green)">Conectado</span>
-          </div>
-          <div class="config-row">
-            <div><div class="config-label">Google Sheet ID</div><div class="config-sub">14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc</div></div>
-          </div>
-        </div>
-        <div class="config-section">
-          <h3>Apariencia</h3>
-          <div class="config-row">
-            <div><div class="config-label">Modo oscuro</div><div class="config-sub">Tema predeterminado del panel</div></div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="themeToggleConfig" onchange="toggleTheme()">
-              <span class="toggle-track"></span>
-              <span class="toggle-thumb"></span>
-            </label>
-          </div>
-        </div>
-        <div class="config-section">
-          <h3>Gestión de admins</h3>
-          <div class="toolbar" style="margin-bottom:14px">
-            <button class="btn-primary" onclick="openModalAdmin()"><i class="ti ti-plus"></i>Nuevo admin</button>
-          </div>
-          <div class="table-wrap">
-            <table class="full-table">
-              <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
-              <tbody id="adminsTableBody">
-                <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">Cargando...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /content-area -->
-  </div><!-- /main -->
-</div><!-- /appPage -->
-
-<!-- ══════════════════ MODAL GESTOR ══════════════════ -->
-<div class="modal-overlay" id="modalGestor">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="modalGestorTitle">Agregar gestor</div>
-      <button class="modal-close" onclick="closeModal('modalGestor')"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Nombre completo</label>
-        <input class="form-input" type="text" id="mgNombre" placeholder="Juan Pérez">
-      </div>
-      <div class="form-group">
-        <label class="form-label">ID Gestor</label>
-        <input class="form-input" type="text" id="mgId" placeholder="G001">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group" style="margin-top:12px">
-        <label class="form-label">Usuario Telegram</label>
-        <input class="form-input" type="text" id="mgTelegramUser" placeholder="@usuario">
-      </div>
-      <div class="form-group" style="margin-top:12px">
-        <label class="form-label">Telegram ID</label>
-        <input class="form-input" type="text" id="mgTelegramId" placeholder="12345678">
-      </div>
-    </div>
-    <div class="form-group" style="margin-top:12px">
-      <label class="form-label">Estado</label>
-      <select class="form-input" id="mgActivo">
-        <option value="TRUE">Activo</option>
-        <option value="FALSE">Inactivo</option>
-      </select>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('modalGestor')">Cancelar</button>
-      <button class="btn-primary" onclick="guardarGestor()"><i class="ti ti-check"></i>Guardar</button>
+      <!-- PLACEHOLDERS FASE 2/3 -->
+      <section class="panel" id="panel-gestores">
+        <div class="stub"><div class="stub-inner">
+          <span class="stub-tag">FASE 2</span><h2>Gestores</h2>
+          <p>Alta, edición y desactivación de gestores, con su gamificación real (XP, nivel, racha) ya conectada a la hoja.</p>
+        </div></div>
+      </section>
+      <section class="panel" id="panel-titulares">
+        <div class="stub"><div class="stub-inner">
+          <span class="stub-tag">FASE 2</span><h2>Titulares</h2>
+          <p>El módulo grande de esta v2. Lo que viene:</p>
+          <ul>
+            <li>Importar Excel de nuevas bases con geolocalización automática (Mapbox Geocoding)</li>
+            <li>Reasignar titulares entre gestores</li>
+            <li>Desasignar / desactivar titulares</li>
+            <li>Marcar como urgente</li>
+            <li>Filtros por estado y municipio</li>
+          </ul>
+        </div></div>
+      </section>
+      <section class="panel" id="panel-visitas">
+        <div class="stub"><div class="stub-inner">
+          <span class="stub-tag">FASE 3</span><h2>Visitas</h2>
+          <p>Detalle de cada visita con sus fotos de Drive, mapa del punto y acciones de seguimiento.</p>
+        </div></div>
+      </section>
+      <section class="panel" id="panel-reportes">
+        <div class="stub"><div class="stub-inner">
+          <span class="stub-tag">FASE 4</span><h2>Reportes</h2>
+          <p>Exportación a Excel por rango de fechas y gestor, con métricas de productividad.</p>
+        </div></div>
+      </section>
+      <section class="panel" id="panel-config">
+        <div class="stub"><div class="stub-inner">
+          <span class="stub-tag">SISTEMA</span><h2>Configuración</h2>
+          <p>Conexión N8N, hoja de cálculo y parámetros del panel.</p>
+        </div></div>
+      </section>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ MODAL ADMIN ══════════════════ -->
-<div class="modal-overlay" id="modalAdmin">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Nuevo administrador</div>
-      <button class="modal-close" onclick="closeModal('modalAdmin')"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Nombre</label>
-        <input class="form-input" type="text" id="maName" placeholder="Nombre completo">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input class="form-input" type="email" id="maEmail" placeholder="email@fortaleza.com">
-      </div>
-    </div>
-    <div class="form-row" style="margin-top:12px">
-      <div class="form-group">
-        <label class="form-label">Contraseña</label>
-        <input class="form-input" type="password" id="maPass" placeholder="••••••••">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Rol</label>
-        <select class="form-input" id="maRol">
-          <option>Admin</option>
-          <option>Supervisor</option>
-          <option>Admin Master</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('modalAdmin')">Cancelar</button>
-      <button class="btn-primary" onclick="guardarAdmin()"><i class="ti ti-check"></i>Crear admin</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ MODAL DESGLOSE VISITA ══════════════════ -->
-<div class="modal-overlay" id="modalDesglose" style="align-items:flex-start;padding:20px;overflow-y:auto">
-  <div class="modal" style="width:780px;max-width:98vw;padding:0;overflow:hidden">
-
-    <!-- Header -->
-    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)">
-      <div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text)" id="dsgTitulo">Desglose de visita</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="dsgSubtitulo">—</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span id="dsgBadge" class="rb" style="font-size:11px;padding:4px 10px">—</span>
-        <button class="modal-close" onclick="closeModal('modalDesglose')"><i class="ti ti-x"></i></button>
-      </div>
-    </div>
-
-    <!-- Body grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
-
-      <!-- Columna izquierda -->
-      <div style="padding:20px 24px;border-right:1px solid var(--border)">
-
-        <!-- Info titular -->
-        <div style="margin-bottom:18px">
-          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Información del titular</div>
-          <div style="display:flex;flex-direction:column;gap:8px" id="dsgInfoTitular"></div>
-        </div>
-
-        <!-- Resultado -->
-        <div style="margin-bottom:18px">
-          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Resultado de la visita</div>
-          <div style="display:flex;flex-direction:column;gap:8px" id="dsgResultado"></div>
-        </div>
-
-        <!-- Observaciones -->
-        <div>
-          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Observaciones</div>
-          <div id="dsgObservaciones" style="font-size:12px;color:var(--text2);line-height:1.6;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;min-height:60px"></div>
-        </div>
-      </div>
-
-      <!-- Columna derecha -->
-      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px">
-
-        <!-- Foto -->
-        <div>
-          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Fotografía del domicilio</div>
-          <div id="dsgFotoWrap" style="border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--surface);min-height:160px;display:flex;align-items:center;justify-content:center">
-            <span style="color:var(--text3);font-size:12px">Sin fotografía</span>
-          </div>
-        </div>
-
-        <!-- Mini mapa -->
-        <div>
-          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Geolocalización</div>
-          <div id="dsgMapWrap" style="border-radius:10px;overflow:hidden;border:1px solid var(--border);height:180px;background:var(--surface);display:flex;align-items:center;justify-content:center">
-            <span style="color:var(--text3);font-size:12px">Sin coordenadas</span>
-          </div>
-          <div id="dsgCoords" style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center"></div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)">
-      <div style="font-size:11px;color:var(--text3)" id="dsgFooterInfo">—</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn-secondary" onclick="closeModal('modalDesglose')" style="font-size:12px;padding:6px 14px">Cerrar</button>
-        <button class="btn-primary" onclick="exportarDesgloseExcel()" style="font-size:12px;padding:6px 14px"><i class="ti ti-download" style="font-size:12px"></i>Exportar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<style>
-/* ── DESGLOSE INFO ROW ── */
-.dsg-row{display:flex;align-items:flex-start;gap:8px;font-size:12px}
-.dsg-label{color:var(--text3);min-width:90px;flex-shrink:0;font-size:11px;padding-top:1px}
-.dsg-val{color:var(--text);font-weight:500;flex:1}
-.dsg-val.mono{font-family:monospace;font-size:11px;color:var(--teal2)}
-</style>
-
+<div class="toast" id="toast"></div>
 
 <script>
-/* ══════════════════════════════════════════════════════
-   CONFIGURACIÓN GLOBAL
-══════════════════════════════════════════════════════ */
+/* ════════ CONFIG ════════ */
 const CFG = {
   N8N_BASE: 'https://n8n.fortalezacontactcenter.com',
-  MAPBOX_TOKEN: 'pk.eyJ1IjoiZm9ydGFsZXphY2MiLCJhIjoiY20xMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQifQ.YOUR_TOKEN_HERE',
-  SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
-  PAGE_SIZE: 25,
+  MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
+  REFRESH_MS: 60000,
 };
-
-// ⚠️  REEMPLAZA este token con el tuyo real de Mapbox
-// Está disponible en: https://account.mapbox.com
-// El token actual del sitio funciona — cópialo desde index.html
-const MAPBOX_TOKEN_REAL = 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w';
-
-/* ══════════════════════════════════════════════════════
-   ESTADO DE LA APP
-══════════════════════════════════════════════════════ */
-let STATE = {
-  user: null,
-  token: null,
-  theme: 'dark',
-  selectedDate: new Date().toISOString().split('T')[0],
-  currentPanel: 'dashboard',
-  // datos cacheados
-  visitas: [],
-  gestores: [],
-  titulares: [],
-  admins: [],
-  // paginación
-  gestoresPage: 1,
-  titularesPage: 1,
-  visitasPage: 1,
-  // filtros aplicados
-  gestoresFiltrados: [],
-  titularesFiltrados: [],
-  visitasFiltradas: [],
-  // maps
-  mapDash: null,
-  mapFull: null,
-  mapMarkers: [],
+const PANEL_TITLES = {
+  dashboard:['Principal','Tablero'], mapa:['Principal','Mapa en vivo'],
+  gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], visitas:['Gestión','Visitas'],
+  reportes:['Sistema','Reportes'], config:['Sistema','Configuración'],
 };
+const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:null, mapDash:null, mapFull:null, markers:[], refreshTimer:null, countdown:60 };
 
-/* ══════════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-  // fecha default = hoy
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('dateFilter').value = today;
-  document.getElementById('reportFechaInicio').value = today;
-  document.getElementById('reportFechaFin').value = today;
+/* ════════ HELPERS ════════ */
+function todayLocal(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function initials(n){ if(!n) return '?'; return n.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+function fixCoord(v){ let n=parseFloat(v); if(!isFinite(n)) return null; if(Math.abs(n)>180) n=n/1000000; return n; }
+function resClass(r){ r=(r||'').toLowerCase(); if(r.includes('pago'))return'res-pago'; if(r.includes('localiza a domicilio')&&!r.includes('no'))return'res-loc'; if(r.startsWith('no')||r.includes('no se localiza'))return'res-no'; return'res-otro'; }
+function resShort(r){ if(!r)return'—'; return r.length>26?r.slice(0,25)+'…':r; }
 
-  // tema guardado
-  const savedTheme = localStorage.getItem('fcc_theme') || 'dark';
-  applyTheme(savedTheme);
+/* ════════ AUTH ════════ */
+async function doLogin(){
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('password').value;
+  const errEl=document.getElementById('loginError'); errEl.style.display='none';
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ return showLoginError('Escribe un correo válido.'); }
+  if(!pass){ return showLoginError('Escribe tu contraseña.'); }
 
-  // sesión guardada
-  const savedSession = localStorage.getItem('fcc_session');
-  if (savedSession) {
-    try {
-      const s = JSON.parse(savedSession);
-      if (s.token && s.user) {
-        STATE.user = s.user;
-        STATE.token = s.token;
-        startApp();
-        return;
-      }
-    } catch(e){}
-  }
-  // Enter en password
-  document.getElementById('loginPassword').addEventListener('keypress', e => {
-    if (e.key === 'Enter') doLogin();
-  });
-});
-
-/* ══════════════════════════════════════════════════════
-   AUTENTICACIÓN
-══════════════════════════════════════════════════════ */
-async function doLogin() {
-  const email    = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const errEl    = document.getElementById('loginError');
-  const btnEl    = document.getElementById('btnLogin');
-  const spinEl   = document.getElementById('loginSpinner');
-
-  errEl.style.display = 'none';
-  if (!email || !password) {
-    showLoginError('Por favor completa todos los campos');
-    return;
-  }
-
-  btnEl.disabled = true;
-  document.getElementById('loginBtnText').textContent = 'Verificando...';
-  spinEl.style.display = 'block';
-
-  try {
-    const res = await fetch(`${CFG.N8N_BASE}/webhook/admin-auth`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-
-    if (data.success && data.token) {
-      STATE.token = data.token;
-      STATE.user  = data.user;
-      localStorage.setItem('fcc_session', JSON.stringify({ token: data.token, user: data.user }));
+  const btn=document.getElementById('loginBtn'), spin=document.getElementById('loginSpin');
+  btn.disabled=true; spin.style.display='block'; document.getElementById('loginBtnText').textContent='Verificando…';
+  try{
+    const res=await fetch(`${CFG.N8N_BASE}/webhook/admin-auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const data=await res.json();
+    if(data && data.success && data.token){
+      STATE.token=data.token; STATE.user=data.user;
+      localStorage.setItem('fcc_session',JSON.stringify({token:data.token,user:data.user}));
       startApp();
-    } else {
-      showLoginError(data.message || 'Credenciales incorrectas');
+    }else{
+      showLoginError(data && data.message ? data.message : 'Credenciales incorrectas.');
     }
-  } catch(e) {
-    // DEMO MODE — sin N8N activo, permite login demo
-    if (email === 'admin@fortaleza.com' && password === 'admin123') {
-      STATE.token = 'demo_token_local';
-      STATE.user  = { nombre:'Admin Demo', email, rol:'Admin Master', id:'ADM001' };
-      localStorage.setItem('fcc_session', JSON.stringify({ token: STATE.token, user: STATE.user }));
-      startApp();
-    } else {
-      showLoginError('Error de conexión con el servidor. En modo demo usa: admin@fortaleza.com / admin123');
-    }
-  } finally {
-    btnEl.disabled = false;
-    document.getElementById('loginBtnText').textContent = 'Iniciar sesión';
-    spinEl.style.display = 'none';
+  }catch(e){
+    // Falla en CERRADO: sin demo, sin acceso de respaldo
+    showLoginError('No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.');
+    console.warn('Login falló:',e.message);
+  }finally{
+    btn.disabled=false; spin.style.display='none'; document.getElementById('loginBtnText').textContent='Entrar';
   }
 }
-
-function showLoginError(msg) {
-  const el = document.getElementById('loginError');
-  el.textContent = msg;
-  el.style.display = 'block';
+function showLoginError(m){ const el=document.getElementById('loginError'); el.textContent=m; el.style.display='block'; }
+function doLogout(){
+  localStorage.removeItem('fcc_session'); STATE.token=null; STATE.user=null;
+  if(STATE.refreshTimer) clearInterval(STATE.refreshTimer);
+  document.getElementById('appPage').style.display='none';
+  document.getElementById('loginPage').style.display='flex';
 }
 
-function doLogout() {
-  localStorage.removeItem('fcc_session');
-  STATE.user = null;
-  STATE.token = null;
-  STATE.mapDash = null;
-  STATE.mapFull = null;
-  document.getElementById('appPage').style.display = 'none';
-  document.getElementById('loginPage').style.display = 'flex';
-}
-
-/* ══════════════════════════════════════════════════════
-   START APP
-══════════════════════════════════════════════════════ */
-function startApp() {
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appPage').style.display = 'grid';
-
-  // sidebar usuario
-  const u = STATE.user;
-  document.getElementById('sidebarName').textContent = u.nombre || u.email;
-  document.getElementById('sidebarRole').textContent = u.rol;
-  document.getElementById('sidebarAvatar').textContent = getInitials(u.nombre || u.email);
-  document.getElementById('cfgN8nUrl').textContent = CFG.N8N_BASE;
-
-  // permisos de menú
-  applyRolePermissions(u.rol);
-
-  // cargar datos iniciales
+/* ════════ START ════════ */
+function startApp(){
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('appPage').style.display='grid';
+  const u=STATE.user||{};
+  document.getElementById('sideName').textContent=u.nombre||u.email||'Admin';
+  document.getElementById('sideRole').textContent=u.rol||'—';
+  document.getElementById('sideAvatar').textContent=initials(u.nombre||u.email);
+  // Config solo para Admin Master
+  document.getElementById('nav-config').classList.toggle('hidden', (u.rol!=='Admin Master'));
+  STATE.selectedDate=todayLocal();
+  document.getElementById('datePick').value=STATE.selectedDate;
+  showPanel('dashboard');
   loadDashboard();
-  setTimeout(initMapDash, 300);
+  setTimeout(()=>initMap('mapDash','mapDash'),250);
+  startRefresh();
+}
+function restoreSession(){
+  try{ const s=JSON.parse(localStorage.getItem('fcc_session')||'null'); if(s && s.token){ STATE.token=s.token; STATE.user=s.user; startApp(); } }catch(e){}
 }
 
-function applyRolePermissions(rol) {
-  const isSuper = rol === 'Supervisor';
-  const isMaster = rol === 'Admin Master';
-
-  // Config solo Admin Master
-  if (isMaster) {
-    document.querySelector('.nav-config-item').classList.remove('hidden');
-  }
-  // Importar titulares — no supervisor
-  if (isSuper) {
-    const btnImp = document.getElementById('btnImportTitulares');
-    if (btnImp) btnImp.style.display = 'none';
-    const btnAdd = document.getElementById('btnAgregarGestor');
-    if (btnAdd) btnAdd.style.display = 'none';
-  }
-}
-
-/* ══════════════════════════════════════════════════════
-   API LAYER — N8N WEBHOOKS
-══════════════════════════════════════════════════════ */
-async function apiCall(endpoint, method='GET', body=null) {
-  const opts = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${STATE.token}`,
-    },
-  };
-  if (body) opts.body = JSON.stringify(body);
-
-  try {
-    const res = await fetch(`${CFG.N8N_BASE}/webhook/${endpoint}`, opts);
-    if (res.status === 401) { doLogout(); return null; }
-    return await res.json();
-  } catch(e) {
-    console.warn('API error, usando datos demo:', e);
-    return null;
-  }
-}
-
-/* ══════════════════════════════════════════════════════
-   DATOS DEMO (fallback cuando N8N no responde)
-══════════════════════════════════════════════════════ */
-function getDemoVisitas(fecha) {
-  return [
-    {ID_VISITA:'V001',ID_TITULAR:'T001',NOMBRE_TITULAR:'María López Herrera',ID_GESTOR:'G001',NOMBRE_GESTOR:'Carlos Mendoza',FECHA_VISITA:fecha,HORA_VISITA:'14:32',RESULTADO:'Realiza pago',FOTO_URL:'',LATITUD:'19.4326',LONGITUD:'-99.1332',CONTACTO_TERCERO:'No',NOMBRE_TERCERO:'',OBSERVACIONES:'Pagó con transferencia',MONTO_PROMESA:'5000',FECHA_PROMESA:''},
-    {ID_VISITA:'V002',ID_TITULAR:'T002',NOMBRE_TITULAR:'Jorge Ramírez Cruz',ID_GESTOR:'G002',NOMBRE_GESTOR:'Ana García',FECHA_VISITA:fecha,HORA_VISITA:'13:48',RESULTADO:'Se localiza a domicilio',FOTO_URL:'',LATITUD:'19.4521',LONGITUD:'-99.1458',CONTACTO_TERCERO:'No',NOMBRE_TERCERO:'',OBSERVACIONES:'Se compromete a pagar',MONTO_PROMESA:'3500',FECHA_PROMESA:''},
-    {ID_VISITA:'V003',ID_TITULAR:'T003',NOMBRE_TITULAR:'Pedro Torres Vega',ID_GESTOR:'G003',NOMBRE_GESTOR:'Luis Sánchez',FECHA_VISITA:fecha,HORA_VISITA:'13:15',RESULTADO:'Se deja carta con tercero',FOTO_URL:'',LATITUD:'19.4890',LONGITUD:'-99.0543',CONTACTO_TERCERO:'Si',NOMBRE_TERCERO:'Esposa',OBSERVACIONES:'Dejó carta con esposa',MONTO_PROMESA:'',FECHA_PROMESA:''},
-    {ID_VISITA:'V004',ID_TITULAR:'T004',NOMBRE_TITULAR:'Sara Flores Medina',ID_GESTOR:'G001',NOMBRE_GESTOR:'Carlos Mendoza',FECHA_VISITA:fecha,HORA_VISITA:'12:50',RESULTADO:'Se localiza a domicilio',FOTO_URL:'',LATITUD:'19.3980',LONGITUD:'-99.1200',CONTACTO_TERCERO:'No',NOMBRE_TERCERO:'',OBSERVACIONES:'Pide prórroga',MONTO_PROMESA:'',FECHA_PROMESA:''},
-    {ID_VISITA:'V005',ID_TITULAR:'T005',NOMBRE_TITULAR:'Roberto Gutiérrez',ID_GESTOR:'G004',NOMBRE_GESTOR:'Martín López',FECHA_VISITA:fecha,HORA_VISITA:'12:10',RESULTADO:'No se localiza a domicilio',FOTO_URL:'',LATITUD:'19.4650',LONGITUD:'-99.0280',CONTACTO_TERCERO:'No',NOMBRE_TERCERO:'',OBSERVACIONES:'Domicilio cerrado',MONTO_PROMESA:'',FECHA_PROMESA:''},
-    {ID_VISITA:'V006',ID_TITULAR:'T006',NOMBRE_TITULAR:'Carmen Molina Ruiz',ID_GESTOR:'G002',NOMBRE_GESTOR:'Ana García',FECHA_VISITA:fecha,HORA_VISITA:'11:33',RESULTADO:'Realiza pago',FOTO_URL:'',LATITUD:'19.3820',LONGITUD:'-99.1580',CONTACTO_TERCERO:'No',NOMBRE_TERCERO:'',OBSERVACIONES:'Pago completo en efectivo',MONTO_PROMESA:'8000',FECHA_PROMESA:''},
-    {ID_VISITA:'V007',ID_TITULAR:'T007',NOMBRE_TITULAR:'Alicia Vargas Soto',ID_GESTOR:'G003',NOMBRE_GESTOR:'Luis Sánchez',FECHA_VISITA:fecha,HORA_VISITA:'10:55',RESULTADO:'Se localiza a domicilio',FOTO_URL:'',LATITUD:'19.4100',LONGITUD:'-99.0950',CONTACTO_TERCERO:'No',NOMBRE_TERCERO:'',OBSERVACIONES:'Acordaron visita la próxima semana',MONTO_PROMESA:'',FECHA_PROMESA:''},
-    {ID_VISITA:'V008',ID_TITULAR:'T008',NOMBRE_TITULAR:'Daniel Reyes Mora',ID_GESTOR:'G005',NOMBRE_GESTOR:'Rosa Torres',FECHA_VISITA:fecha,HORA_VISITA:'10:20',RESULTADO:'No se localiza a domicilio',FOTO_URL:'',LATITUD:'19.4780',LONGITUD:'-99.1610',CONTACTO_TERCERO:'No',NOMBRE_TERCERO:'',OBSERVACIONES:'Vecinos dicen que viajó',MONTO_PROMESA:'',FECHA_PROMESA:''},
-  ];
-}
-
-function getDemoGestores() {
-  return [
-    {ID_GESTOR:'G001',NOMBRE:'Carlos Mendoza',USUARIO_TELEGRAM:'@cmendoza',TELEGRAM_ID:'11111111',ACTIVO:'TRUE'},
-    {ID_GESTOR:'G002',NOMBRE:'Ana García',USUARIO_TELEGRAM:'@agarcia',TELEGRAM_ID:'22222222',ACTIVO:'TRUE'},
-    {ID_GESTOR:'G003',NOMBRE:'Luis Sánchez',USUARIO_TELEGRAM:'@lsanchez',TELEGRAM_ID:'33333333',ACTIVO:'TRUE'},
-    {ID_GESTOR:'G004',NOMBRE:'Martín López',USUARIO_TELEGRAM:'@mlopez',TELEGRAM_ID:'44444444',ACTIVO:'TRUE'},
-    {ID_GESTOR:'G005',NOMBRE:'Rosa Torres',USUARIO_TELEGRAM:'@rtorres',TELEGRAM_ID:'55555555',ACTIVO:'TRUE'},
-    {ID_GESTOR:'G006',NOMBRE:'Javier Cruz',USUARIO_TELEGRAM:'@jcruz',TELEGRAM_ID:'66666666',ACTIVO:'FALSE'},
-    {ID_GESTOR:'G007',NOMBRE:'Patricia Vega',USUARIO_TELEGRAM:'@pvega',TELEGRAM_ID:'77777777',ACTIVO:'FALSE'},
-    {ID_GESTOR:'G008',NOMBRE:'Miguel Ortiz',USUARIO_TELEGRAM:'@mortiz',TELEGRAM_ID:'88888888',ACTIVO:'TRUE'},
-  ];
-}
-
-function getDemoTitulares() {
-  const t = [];
-  const nombres = ['Juan García','María Pérez','Roberto Soto','Elena Ruiz','Carlos Díaz','Ana Torres','Felipe Mora','Lucia Vega','Pablo Cruz','Isabel Reyes'];
-  const estados = ['CDMX','Estado de México','Morelos','Jalisco'];
-  const municipios = {CDMX:['Iztapalapa','Gustavo A. Madero','Tlalpan'],'Estado de México':['Ecatepec','Nezahualcóyotl','Chimalhuacán'],Morelos:['Cuernavaca','Jiutepec'],Jalisco:['Guadalajara','Zapopan']};
-  const gestores = getDemoGestores().filter(g=>g.ACTIVO==='TRUE');
-  for(let i=1;i<=50;i++){
-    const est = estados[i%4];
-    const mun = municipios[est][(i)%municipios[est].length];
-    const g = gestores[i%gestores.length];
-    t.push({ID_TITULAR:`T${String(i).padStart(3,'0')}`,NOMBRE:nombres[i%10]+` #${i}`,DIRECCION:`Calle ${i}, Col. Centro`,ESTADO:est,MUNICIPIO:mun,CARTERA:`C${String(Math.ceil(i/10)).padStart(2,'0')}`,ID_GESTOR:g.ID_GESTOR,ACTIVO:'TRUE'});
-  }
-  return t;
-}
-
-/* ══════════════════════════════════════════════════════
-   DASHBOARD
-══════════════════════════════════════════════════════ */
-async function loadDashboard() {
-  const fecha = STATE.selectedDate;
-
-  // Intenta N8N, fallback a demo
-  let visitas = null;
-  let gestores = null;
-
-  const [vRes, gRes] = await Promise.all([
-    apiCall(`admin-dashboard?fecha=${fecha}`),
-    apiCall('admin-gestores', 'POST', {action:'list'}),
-  ]);
-
-  visitas  = (vRes && vRes.visitas)  ? vRes.visitas  : getDemoVisitas(fecha);
-  gestores = (gRes && gRes.gestores) ? gRes.gestores : getDemoGestores();
-
-  STATE.visitas  = visitas;
-  STATE.gestores = gestores;
-
-  updateKPIs(visitas, gestores);
-  renderFeed(visitas);
-  renderGestoresDash(visitas, gestores);
-  renderHourChart(visitas);
-  renderResultados(visitas);
-  updateMapMarkers(visitas);
-
-  // badge sidebar
-  document.getElementById('navBadgeDash').textContent = visitas.length;
-
-  // llenar selects de gestores globales
-  populateGestorSelects(gestores);
-}
-
-function updateKPIs(visitas, gestores) {
-  const total = visitas.length;
-  const localizan = visitas.filter(v=>v.RESULTADO && v.RESULTADO.toLowerCase().includes('localiza a')).length;
-  const pagos = visitas.filter(v=>v.RESULTADO && v.RESULTADO.toLowerCase().includes('pago')).length;
-  const activos = gestores.filter(g=>g.ACTIVO==='TRUE').length;
-  const conActividad = [...new Set(visitas.map(v=>v.ID_GESTOR))].length;
-  const tasa = total > 0 ? Math.round((localizan/total)*100) : 0;
-
-  animateNum('kpi-visitas', total);
-  animateNum('kpi-localizan', localizan);
-  animateNum('kpi-pagos', pagos);
-  document.getElementById('kpi-gestores').textContent = `${conActividad}/${activos}`;
-
-  document.getElementById('kpi-visitas-sub').innerHTML = `<span class="kpi-trend ${total>5?'up':'neutral'}">${total} registros</span> hoy`;
-  document.getElementById('kpi-localizan-sub').innerHTML = `<span class="kpi-trend ${tasa>50?'up':'down'}">${tasa}%</span> tasa contacto`;
-  document.getElementById('kpi-pagos-sub').innerHTML = `<span class="kpi-trend ${pagos>0?'up':'neutral'}">${pagos}</span> pagos confirmados`;
-  document.getElementById('kpi-gestores-sub').innerHTML = `<span class="kpi-trend neutral">${activos} activos</span> en nómina`;
-
-  // quitar shimmer
-  ['kpi-visitas','kpi-localizan','kpi-pagos','kpi-gestores'].forEach(id=>{
-    document.getElementById(id).classList.remove('kpi-loading');
-  });
-}
-
-function animateNum(id, target) {
-  const el = document.getElementById(id);
-  const start = 0;
-  const dur = 600;
-  const startTime = performance.now();
-  function step(now) {
-    const p = Math.min((now-startTime)/dur,1);
-    el.textContent = Math.round(p*target);
-    if(p<1) requestAnimationFrame(step);
-    else el.textContent = target;
-  }
-  requestAnimationFrame(step);
-}
-
-function renderFeed(visitas) {
-  const el = document.getElementById('visitasFeed');
-  const count = document.getElementById('feedCount');
-  const sorted = [...visitas].sort((a,b)=>b.HORA_VISITA?.localeCompare(a.HORA_VISITA));
-  count.textContent = `${sorted.length} visitas`;
-
-  if(!sorted.length){
-    el.innerHTML = '<div class="feed-empty"><i class="ti ti-calendar-off"></i><br>Sin visitas para esta fecha</div>';
-    return;
-  }
-  el.innerHTML = sorted.slice(0,12).map((v,i)=>{
-    const ini = getInitials(v.NOMBRE_TITULAR);
-    const rb  = getBadgeClass(v.RESULTADO);
-    const label = getResultadoShort(v.RESULTADO);
-    const idx = STATE.visitas.indexOf(v);
-    return `<div class="visita-item" onclick="openDesglose(${idx})" style="cursor:pointer">
-      <div class="visita-avatar">${ini}</div>
-      <div class="visita-info">
-        <div class="visita-nombre">${v.NOMBRE_TITULAR||'—'}</div>
-        <div class="visita-gestor"><i class="ti ti-user" style="font-size:9px"></i> ${v.NOMBRE_GESTOR||'—'}</div>
-      </div>
-      <div class="visita-right">
-        <div class="visita-hora">${v.HORA_VISITA||'—'}</div>
-        <div class="rb ${rb}">${label}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderGestoresDash(visitas, gestores) {
-  const counts = {};
-  visitas.forEach(v=>{ counts[v.ID_GESTOR] = (counts[v.ID_GESTOR]||0)+1; });
-  const sorted = gestores.filter(g=>g.ACTIVO==='TRUE').sort((a,b)=>(counts[b.ID_GESTOR]||0)-(counts[a.ID_GESTOR]||0));
-
-  document.getElementById('gestoresDashBody').innerHTML = sorted.map(g=>`
-    <tr>
-      <td><span class="status-dot on"></span>${g.NOMBRE}</td>
-      <td><span class="count-pill">${counts[g.ID_GESTOR]||0}</span></td>
-      <td style="font-size:10px;color:${counts[g.ID_GESTOR]?'var(--green)':'var(--text3)'}">${counts[g.ID_GESTOR]?'Activo':'Sin actividad'}</td>
-    </tr>
-  `).join('') + gestores.filter(g=>g.ACTIVO!=='TRUE').map(g=>`
-    <tr>
-      <td><span class="status-dot off"></span>${g.NOMBRE}</td>
-      <td><span class="count-pill" style="color:var(--text3)">0</span></td>
-      <td style="font-size:10px;color:var(--text3)">Inactivo</td>
-    </tr>
-  `).join('');
-}
-
-function renderHourChart(visitas) {
-  const hours = {};
-  for(let h=8;h<=18;h++) hours[h]=0;
-  visitas.forEach(v=>{
-    if(v.HORA_VISITA){
-      const h = parseInt(v.HORA_VISITA.split(':')[0]);
-      if(h>=8&&h<=18) hours[h]=(hours[h]||0)+1;
-    }
-  });
-  const max = Math.max(...Object.values(hours),1);
-  const nowH = new Date().getHours();
-  const cont = document.getElementById('hourBars');
-  cont.innerHTML = Object.entries(hours).map(([h,c])=>{
-    const pct = Math.round((c/max)*100);
-    const isCurrent = parseInt(h)===nowH;
-    const cls = isCurrent ? 'gold-bar' : 'bar';
-    return `<div class="bar-wrap">
-      <div class="bar-count">${c||''}</div>
-      <div class="bar ${cls}" style="height:${pct||3}%"></div>
-      <div class="bar-label">${h}h</div>
-    </div>`;
-  }).join('');
-}
-
-function renderResultados(visitas) {
-  const total = visitas.length;
-  const cats = {
-    'Se localiza': {count:0,color:'var(--green)',key:'localiza a'},
-    'No localiza': {count:0,color:'var(--red)',key:'no se localiza'},
-    'Con tercero': {count:0,color:'var(--amber)',key:'tercero'},
-    'Realizó pago': {count:0,color:'var(--teal2)',key:'pago'},
-  };
-  visitas.forEach(v=>{
-    const r = (v.RESULTADO||'').toLowerCase();
-    for(const [,cat] of Object.entries(cats)){
-      if(r.includes(cat.key)) cat.count++;
-    }
-  });
-  document.getElementById('donutNum').textContent = total;
-
-  const localizan = cats['Se localiza'].count;
-  const pagos = cats['Realizó pago'].count;
-  const circum = 207;
-  const tealOff = total>0 ? circum - (pagos/total)*circum : circum*0.6;
-  const greenOff = total>0 ? circum - (localizan/total)*circum : circum*0.3;
-  document.getElementById('donutTeal').setAttribute('stroke-dashoffset', tealOff.toFixed(1));
-  document.getElementById('donutGreen').setAttribute('stroke-dashoffset', greenOff.toFixed(1));
-
-  document.getElementById('resultadosRows').innerHTML = Object.entries(cats).map(([label,cat])=>{
-    const pct = total>0 ? Math.round((cat.count/total)*100) : 0;
-    return `<div class="resultado-row">
-      <div class="res-label">${label}</div>
-      <div class="res-bar-track"><div class="res-bar-fill" style="width:${pct}%;background:${cat.color}"></div></div>
-      <div class="res-count" style="color:${cat.color}">${cat.count}</div>
-    </div>`;
-  }).join('');
-
-  const contactados = localizan + pagos;
-  const tasa = total>0 ? Math.round((contactados/total)*100) : 0;
-  document.getElementById('tasaContacto').textContent = `${tasa}%`;
-}
-
-/* ══════════════════════════════════════════════════════
-   MAPBOX
-══════════════════════════════════════════════════════ */
-function initMapDash() {
-  if(STATE.mapDash) return;
-  // Verifica si mapboxgl está disponible
-  if(typeof mapboxgl === 'undefined') { console.warn('Mapbox GL no cargado'); return; }
-
-  mapboxgl.accessToken = MAPBOX_TOKEN_REAL;
-  try {
-    STATE.mapDash = new mapboxgl.Map({
-      container: 'mapDash',
-      style: 'mapbox://styles/mapbox/satellite-v9',
-      center: [-99.1332, 19.4326],
-      zoom: 10,
-    });
-    STATE.mapDash.addControl(new mapboxgl.NavigationControl(),'top-right');
-    STATE.mapDash.on('load', ()=>updateMapMarkers(STATE.visitas));
-  } catch(e) { console.warn('Mapbox init error:', e); }
-}
-
-function initMapFull() {
-  if(STATE.mapFull) return;
-  if(typeof mapboxgl === 'undefined') return;
-  mapboxgl.accessToken = MAPBOX_TOKEN_REAL;
-  try {
-    STATE.mapFull = new mapboxgl.Map({
-      container: 'mapFull',
-      style: 'mapbox://styles/mapbox/satellite-v9',
-      center: [-99.1332, 19.4326],
-      zoom: 10,
-    });
-    STATE.mapFull.addControl(new mapboxgl.NavigationControl(),'top-right');
-    STATE.mapFull.on('load',()=>updateMapMarkers(STATE.visitas, true));
-  } catch(e) { console.warn('Mapbox init error:', e); }
-}
-
-function updateMapMarkers(visitas, fullMap=false) {
-  const map = fullMap ? STATE.mapFull : STATE.mapDash;
-  if(!map) return;
-
-  // limpiar marcadores previos
-  STATE.mapMarkers.forEach(m=>m.remove());
-  STATE.mapMarkers = [];
-
-  const colors = {
-    'localiza a':'#22c55e',
-    'no se localiza':'#ef4444',
-    'tercero':'#f59e0b',
-    'pago':'#1a9e9b',
-  };
-
-  visitas.forEach(v=>{
-    if(!v.LATITUD || !v.LONGITUD) return;
-let lat = parseFloat(v.LATITUD);
-let lon = parseFloat(v.LONGITUD);
-if(isNaN(lat)||isNaN(lon)) return;
-if(Math.abs(lat) > 90)  lat = lat / 1000000;
-if(Math.abs(lon) > 180) lon = lon / 1000000;
-
-    const r = (v.RESULTADO||'').toLowerCase();
-    let color = '#888';
-    for(const [key,c] of Object.entries(colors)){
-      if(r.includes(key)){ color=c; break; }
-    }
-
-    const el = document.createElement('div');
-    el.style.cssText = `width:12px;height:12px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,.8);cursor:pointer;box-shadow:0 0 0 3px ${color}40`;
-
-    const popup = new mapboxgl.Popup({offset:15,closeButton:false}).setHTML(`
-      <div class="popup-nombre">${v.NOMBRE_TITULAR}</div>
-      <div class="popup-gestor">Gestor: ${v.NOMBRE_GESTOR}</div>
-      <div class="popup-hora">Hora: ${v.HORA_VISITA}</div>
-      <span class="popup-badge" style="background:${color}22;color:${color}">${v.RESULTADO}</span>
-    `);
-
-    const marker = new mapboxgl.Marker(el).setLngLat([lon,lat]).setPopup(popup).addTo(map);
-    STATE.mapMarkers.push(marker);
-  });
-}
-
-function filterMapaGestor() {
-  const g = document.getElementById('mapaGestorFilter').value;
-  const r = document.getElementById('mapaResultadoFilter').value;
-  let filtered = STATE.visitas;
-  if(g) filtered = filtered.filter(v=>v.ID_GESTOR===g||v.NOMBRE_GESTOR===g);
-  if(r) filtered = filtered.filter(v=>v.RESULTADO===r);
-  updateMapMarkers(filtered, true);
-}
-function filterMapaResultado() { filterMapaGestor(); }
-
-/* ══════════════════════════════════════════════════════
-   GESTORES PANEL
-══════════════════════════════════════════════════════ */
-async function loadGestores() {
-  const res = await apiCall('admin-gestores', 'POST', {action:'list'});
-  let gestores = (res && res.gestores) ? res.gestores : getDemoGestores();
-  // Normalizar ACTIVO — puede llegar como booleano true o string "TRUE"
-  gestores = gestores.map(g => ({
-    ...g,
-    ACTIVO: (g.ACTIVO === true || g.ACTIVO === 'TRUE' || g.ACTIVO === 'true') ? 'TRUE' : 'FALSE'
-  }));
-  STATE.gestores = gestores;
-  STATE.gestoresFiltrados = [...STATE.gestores];
-  renderGestoresTable();
-}
-
-function filterGestores() {
-  const q     = document.getElementById('gestorSearch').value.toLowerCase();
-  const status = document.getElementById('gestorStatusFilter').value;
-  STATE.gestoresFiltrados = STATE.gestores.filter(g=>{
-    const matchQ = !q || g.NOMBRE.toLowerCase().includes(q) || (g.USUARIO_TELEGRAM||'').toLowerCase().includes(q);
-    const matchS = !status || g.ACTIVO === status;
-    return matchQ && matchS;
-  });
-  STATE.gestoresPage = 1;
-  renderGestoresTable();
-}
-
-function renderGestoresTable() {
-  const paged = paginate(STATE.gestoresFiltrados, STATE.gestoresPage, CFG.PAGE_SIZE);
-  const body = document.getElementById('gestoresTableBody');
-  if(!paged.items.length){
-    body.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="ti ti-users-off"></i><p>No se encontraron gestores</p></div></td></tr>';
-  } else {
-    body.innerHTML = paged.items.map(g=>`
-      <tr>
-        <td style="color:var(--text3)">${g.ID_GESTOR}</td>
-        <td><span class="status-dot ${g.ACTIVO==='TRUE'?'on':'off'}"></span>${g.NOMBRE}</td>
-        <td>${g.USUARIO_TELEGRAM||'—'}</td>
-        <td style="color:var(--text3);font-size:11px">${g.TELEGRAM_ID||'—'}</td>
-        <td><span class="badge-${g.ACTIVO==='TRUE'?'active':'inactive'}">${g.ACTIVO==='TRUE'?'Activo':'Inactivo'}</span></td>
-        <td>
-          <div class="action-btns">
-            <button class="btn-sm" onclick="openModalGestor(${JSON.stringify(g).replace(/"/g,'&quot;')})" title="Editar"><i class="ti ti-edit"></i></button>
-            <button class="btn-sm ${g.ACTIVO==='TRUE'?'danger':'success'}" onclick="toggleGestor('${g.ID_GESTOR}','${g.ACTIVO==='TRUE'?'FALSE':'TRUE'}')" title="${g.ACTIVO==='TRUE'?'Desactivar':'Activar'}">
-              <i class="ti ti-${g.ACTIVO==='TRUE'?'user-off':'user-check'}"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-  }
-  renderPagination('gestoresPag', paged, (p)=>{ STATE.gestoresPage=p; renderGestoresTable(); });
-}
-
-function openModalGestor(gestor=null) {
-  const isEdit = gestor !== null;
-  document.getElementById('modalGestorTitle').textContent = isEdit ? 'Editar gestor' : 'Agregar gestor';
-  document.getElementById('mgId').value       = isEdit ? gestor.ID_GESTOR : '';
-  document.getElementById('mgNombre').value   = isEdit ? gestor.NOMBRE : '';
-  document.getElementById('mgTelegramUser').value = isEdit ? (gestor.USUARIO_TELEGRAM||'') : '';
-  document.getElementById('mgTelegramId').value   = isEdit ? (gestor.TELEGRAM_ID||'') : '';
-  document.getElementById('mgActivo').value   = isEdit ? gestor.ACTIVO : 'TRUE';
-  document.getElementById('mgId').disabled    = isEdit;
-  openModal('modalGestor');
-}
-
-async function guardarGestor() {
-  const payload = {
-    action: document.getElementById('mgId').disabled ? 'update' : 'create',
-    id:          document.getElementById('mgId').value.trim(),
-    nombre:      document.getElementById('mgNombre').value.trim(),
-    telegramUser:document.getElementById('mgTelegramUser').value.trim(),
-    telegramId:  document.getElementById('mgTelegramId').value.trim(),
-    activo:      document.getElementById('mgActivo').value,
-  };
-  if(!payload.id||!payload.nombre){ showToast('Completa los campos requeridos','error'); return; }
-
-  const res = await apiCall('admin-gestores', 'POST', payload);
-  if(res && res.success){
-    showToast(`Gestor ${payload.action==='create'?'agregado':'actualizado'} correctamente`,'success');
-    closeModal('modalGestor');
-    loadGestores();
-  } else {
-    // demo: actualizar localmente
-    if(payload.action==='create'){
-      STATE.gestores.push({ID_GESTOR:payload.id,NOMBRE:payload.nombre,USUARIO_TELEGRAM:payload.telegramUser,TELEGRAM_ID:payload.telegramId,ACTIVO:payload.activo});
-    } else {
-      const idx = STATE.gestores.findIndex(g=>g.ID_GESTOR===payload.id);
-      if(idx>=0) STATE.gestores[idx] = {...STATE.gestores[idx],...payload};
-    }
-    STATE.gestoresFiltrados = [...STATE.gestores];
-    renderGestoresTable();
-    showToast('Guardado localmente (modo demo)','info');
-    closeModal('modalGestor');
-  }
-}
-
-async function toggleGestor(id, nuevoEstado) {
-  const res = await apiCall('admin-gestores','POST',{action:'toggle',id,activo:nuevoEstado});
-  const idx = STATE.gestores.findIndex(g=>g.ID_GESTOR===id);
-  if(idx>=0) STATE.gestores[idx].ACTIVO = nuevoEstado;
-  STATE.gestoresFiltrados = [...STATE.gestores].filter(g=>{
-    const q = document.getElementById('gestorSearch').value.toLowerCase();
-    const s = document.getElementById('gestorStatusFilter').value;
-    return (!q||g.NOMBRE.toLowerCase().includes(q)) && (!s||g.ACTIVO===s);
-  });
-  renderGestoresTable();
-  showToast(`Gestor ${nuevoEstado==='TRUE'?'activado':'desactivado'}`,'success');
-}
-
-/* ══════════════════════════════════════════════════════
-   TITULARES PANEL
-══════════════════════════════════════════════════════ */
-async function loadTitulares() {
-  const res = await apiCall('admin-titulares', 'POST', {action:'list'});
-  let titulares = (res && res.titulares) ? res.titulares : getDemoTitulares();
-  // Normalizar ACTIVO booleano
-  titulares = titulares.map(t => ({
-    ...t,
-    ACTIVO: (t.ACTIVO === true || t.ACTIVO === 'TRUE' || t.ACTIVO === 'true') ? 'TRUE' : 'FALSE'
-  }));
-  STATE.titulares = titulares;
-  STATE.titularesFiltrados = [...STATE.titulares];
-
-  // Llenar filtros
-  const estados = [...new Set(STATE.titulares.map(t=>t.ESTADO).filter(Boolean))].sort();
-  const selEst = document.getElementById('titularEstadoFilter');
-  selEst.innerHTML = '<option value="">Todos los estados</option>' + estados.map(e=>`<option>${e}</option>`).join('');
-
-  renderTitularesTable();
-}
-
-function filterTitulares() {
-  const q = document.getElementById('titularSearch').value.toLowerCase();
-  const g = document.getElementById('titularGestorFilter').value;
-  const e = document.getElementById('titularEstadoFilter').value;
-  STATE.titularesFiltrados = STATE.titulares.filter(t=>{
-    const mq = !q || t.NOMBRE.toLowerCase().includes(q) || (t.ID_TITULAR||'').toLowerCase().includes(q);
-    const mg = !g || t.ID_GESTOR===g;
-    const me = !e || t.ESTADO===e;
-    return mq && mg && me;
-  });
-  STATE.titularesPage = 1;
-  renderTitularesTable();
-}
-
-function renderTitularesTable() {
-  const paged = paginate(STATE.titularesFiltrados, STATE.titularesPage, CFG.PAGE_SIZE);
-  const body = document.getElementById('titularesTableBody');
-  if(!paged.items.length){
-    body.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="ti ti-folder-off"></i><p>No se encontraron titulares</p></div></td></tr>';
-  } else {
-    // buscar nombre gestor
-    const gestorMap = {};
-    STATE.gestores.forEach(g=>{ gestorMap[g.ID_GESTOR]=g.NOMBRE; });
-    body.innerHTML = paged.items.map(t=>`
-      <tr>
-        <td style="color:var(--text3);font-size:11px">${t.ID_TITULAR}</td>
-        <td>${t.NOMBRE}</td>
-        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.DIRECCION}">${t.DIRECCION||'—'}</td>
-        <td>${t.ESTADO||'—'}</td>
-        <td>${t.MUNICIPIO||'—'}</td>
-        <td><span class="count-pill">${t.CARTERA||'—'}</span></td>
-        <td style="font-size:11px;color:var(--teal2)">${gestorMap[t.ID_GESTOR]||t.ID_GESTOR||'—'}</td>
-        <td><span class="badge-${t.ACTIVO==='TRUE'?'active':'inactive'}">${t.ACTIVO==='TRUE'?'Sí':'No'}</span></td>
-      </tr>
-    `).join('');
-  }
-  renderPagination('titularesPag', paged, (p)=>{ STATE.titularesPage=p; renderTitularesTable(); });
-}
-
-async function importarExcel(input) {
-  const file = input.files[0];
-  if(!file){ return; }
-  showToast('Procesando Excel...','info');
-  try {
-    const ab = await file.arrayBuffer();
-    const wb = XLSX.read(ab);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws,{defval:''});
-
-    if(!rows.length){ showToast('El archivo está vacío','error'); return; }
-
-    // Enviar a N8N
-    const res = await apiCall('admin-titulares','POST',{ action:'import', titulares:rows });
-    if(res && res.success){
-      showToast(`${rows.length} titulares importados`,'success');
-      loadTitulares();
-    } else {
-      // demo: agregar localmente
-      STATE.titulares.push(...rows.map((r,i)=>({
-        ID_TITULAR: r.ID_TITULAR || `IMP${i+1}`,
-        NOMBRE: r.NOMBRE || r.nombre || '',
-        DIRECCION: r.DIRECCION || r.direccion || '',
-        ESTADO: r.ESTADO || r.estado || '',
-        MUNICIPIO: r.MUNICIPIO || r.municipio || '',
-        CARTERA: r.CARTERA || r.cartera || '',
-        ID_GESTOR: r.ID_GESTOR || r.id_gestor || '',
-        ACTIVO: r.ACTIVO || 'TRUE',
-      })));
-      STATE.titularesFiltrados = [...STATE.titulares];
-      renderTitularesTable();
-      showToast(`${rows.length} titulares importados (modo demo)`,'success');
-    }
-  } catch(e){
-    showToast('Error al leer el archivo Excel','error');
-    console.error(e);
-  }
-  input.value = '';
-}
-
-/* ══════════════════════════════════════════════════════
-   VISITAS PANEL
-══════════════════════════════════════════════════════ */
-async function loadVisitas() {
-  const fecha = STATE.selectedDate;
-  const res = await apiCall(`admin-dashboard?fecha=${fecha}`);
-  STATE.visitas = (res && res.visitas) ? res.visitas : getDemoVisitas(fecha);
-  STATE.visitasFiltradas = [...STATE.visitas];
-
-  // llenar filtro gestor
-  const gestores = [...new Set(STATE.visitas.map(v=>v.NOMBRE_GESTOR).filter(Boolean))].sort();
-  const sel = document.getElementById('visitaGestorFilter');
-  sel.innerHTML = '<option value="">Todos los gestores</option>' + gestores.map(g=>`<option>${g}</option>`).join('');
-
-  renderVisitasTable();
-}
-
-function filterVisitas() {
-  const q = document.getElementById('visitaSearch').value.toLowerCase();
-  const g = document.getElementById('visitaGestorFilter').value;
-  const r = document.getElementById('visitaResultadoFilter').value;
-  STATE.visitasFiltradas = STATE.visitas.filter(v=>{
-    const mq = !q || (v.NOMBRE_TITULAR||'').toLowerCase().includes(q) || (v.NOMBRE_GESTOR||'').toLowerCase().includes(q);
-    const mg = !g || v.NOMBRE_GESTOR===g;
-    const mr = !r || v.RESULTADO===r;
-    return mq && mg && mr;
-  });
-  STATE.visitasPage = 1;
-  renderVisitasTable();
-}
-
-function renderVisitasTable() {
-  const paged = paginate(STATE.visitasFiltradas, STATE.visitasPage, CFG.PAGE_SIZE);
-  const body = document.getElementById('visitasTableBody');
-  if(!paged.items.length){
-    body.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="ti ti-calendar-off"></i><p>No hay visitas para los filtros seleccionados</p></div></td></tr>';
-  } else {
-    body.innerHTML = paged.items.map((v,i)=>{
-      const globalIdx = STATE.visitas.indexOf(v);
-      return `<tr onclick="openDesglose(${globalIdx})" style="cursor:pointer">
-        <td>${v.FECHA_VISITA||'—'}</td>
-        <td>${v.HORA_VISITA||'—'}</td>
-        <td>${v.NOMBRE_TITULAR||'—'}</td>
-        <td style="color:var(--teal2)">${v.NOMBRE_GESTOR||'—'}</td>
-        <td><span class="rb ${getBadgeClass(v.RESULTADO)}">${getResultadoShort(v.RESULTADO)}</span></td>
-        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text3)" title="${v.OBSERVACIONES}">${v.OBSERVACIONES||'—'}</td>
-        <td>${v.FOTO_URL ? `<span style="color:var(--teal2);font-size:12px"><i class="ti ti-photo"></i> Ver</span>` : '<span style="color:var(--text3);font-size:11px">—</span>'}</td>
-      </tr>`;
-    }).join('');
-  }
-  renderPagination('visitasPag', paged, (p)=>{ STATE.visitasPage=p; renderVisitasTable(); });
-}
-
-/* ══════════════════════════════════════════════════════
-   REPORTES
-══════════════════════════════════════════════════════ */
-async function generarReporte() {
-  const fechaIni = document.getElementById('reportFechaInicio').value;
-  const fechaFin = document.getElementById('reportFechaFin').value;
-  const gestor   = document.getElementById('reportGestor').value;
-
-  if(!fechaIni||!fechaFin){ showToast('Selecciona el rango de fechas','error'); return; }
-
-  showToast('Generando reporte...','info');
-
-  const res = await apiCall('admin-reportes','POST',{ fechaIni, fechaFin, gestor });
-  let datos = (res && res.visitas) ? res.visitas : STATE.visitas.filter(v=>{
-    const f = v.FECHA_VISITA||'';
-    const mg = !gestor || v.NOMBRE_GESTOR===gestor || v.ID_GESTOR===gestor;
-    return f>=fechaIni && f<=fechaFin && mg;
-  });
-
-  document.getElementById('reporteCount').textContent = `${datos.length} registros`;
-  document.getElementById('reporteBody').innerHTML = datos.map(v=>`
-    <tr>
-      <td>${v.FECHA_VISITA||'—'}</td>
-      <td>${v.HORA_VISITA||'—'}</td>
-      <td>${v.NOMBRE_TITULAR||'—'}</td>
-      <td style="color:var(--teal2)">${v.NOMBRE_GESTOR||'—'}</td>
-      <td><span class="rb ${getBadgeClass(v.RESULTADO)}">${getResultadoShort(v.RESULTADO)}</span></td>
-      <td>${v.ESTADO||v.MUNICIPIO||'—'}</td>
-      <td style="color:var(--gold2)">${v.MONTO_PROMESA ? '$'+Number(v.MONTO_PROMESA).toLocaleString('es-MX') : '—'}</td>
-      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px" title="${v.OBSERVACIONES}">${v.OBSERVACIONES||'—'}</td>
-    </tr>
-  `).join('') || '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">Sin resultados para el período</td></tr>';
-
-  // guardar para export
-  STATE.reporteDatos = datos;
-  showToast(`${datos.length} registros cargados`,'success');
-}
-
-function exportarExcel() {
-  const datos = STATE.reporteDatos || STATE.visitasFiltradas || STATE.visitas;
-  if(!datos||!datos.length){ showToast('No hay datos para exportar','error'); return; }
-
-  const rows = datos.map(v=>({
-    'ID Visita':      v.ID_VISITA||'',
-    'Fecha':          v.FECHA_VISITA||'',
-    'Hora':           v.HORA_VISITA||'',
-    'ID Titular':     v.ID_TITULAR||'',
-    'Titular':        v.NOMBRE_TITULAR||'',
-    'ID Gestor':      v.ID_GESTOR||'',
-    'Gestor':         v.NOMBRE_GESTOR||'',
-    'Resultado':      v.RESULTADO||'',
-    'Foto URL':       v.FOTO_URL||'',
-    'Latitud':        v.LATITUD||'',
-    'Longitud':       v.LONGITUD||'',
-    'Contacto Tercero': v.CONTACTO_TERCERO||'',
-    'Nombre Tercero': v.NOMBRE_TERCERO||'',
-    'Monto Promesa':  v.MONTO_PROMESA||'',
-    'Fecha Promesa':  v.FECHA_PROMESA||'',
-    'Observaciones':  v.OBSERVACIONES||'',
-  }));
-
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,'Visitas',ws);
-
-  // ancho de columnas
-  ws['!cols'] = Object.keys(rows[0]).map(k=>({wch:Math.max(k.length+2,14)}));
-
-  const fname = `Fortaleza_Visitas_${STATE.selectedDate}.xlsx`;
-  XLSX.writeFile(wb, fname);
-  showToast(`Exportado: ${fname}`,'success');
-}
-
-/* ══════════════════════════════════════════════════════
-   ADMINS
-══════════════════════════════════════════════════════ */
-async function loadAdmins() {
-  const res = await apiCall('admin-gestores?action=list-admins');
-  STATE.admins = (res && res.admins) ? res.admins : [
-    {ID_ADMIN:'ADM001',NOMBRE:'Admin Root',EMAIL:'admin@fortaleza.com',ROL:'Admin Master',ACTIVO:'TRUE'},
-  ];
-  document.getElementById('adminsTableBody').innerHTML = STATE.admins.map(a=>`
-    <tr>
-      <td>${a.NOMBRE}</td>
-      <td style="color:var(--teal2)">${a.EMAIL}</td>
-      <td><span class="count-pill">${a.ROL}</span></td>
-      <td><span class="badge-${a.ACTIVO==='TRUE'?'active':'inactive'}">${a.ACTIVO==='TRUE'?'Activo':'Inactivo'}</span></td>
-      <td>
-        <div class="action-btns">
-          <button class="btn-sm danger" title="Deshabilitar"><i class="ti ti-user-off"></i></button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function openModalAdmin() { openModal('modalAdmin'); }
-async function guardarAdmin() {
-  const payload={
-    action:'create-admin',
-    nombre:document.getElementById('maName').value.trim(),
-    email:document.getElementById('maEmail').value.trim(),
-    password:document.getElementById('maPass').value,
-    rol:document.getElementById('maRol').value,
-  };
-  if(!payload.nombre||!payload.email||!payload.password){ showToast('Completa todos los campos','error'); return; }
-  const res = await apiCall('admin-gestores','POST',payload);
-  showToast(res?.success ? 'Admin creado' : 'Admin guardado (demo)','success');
-  closeModal('modalAdmin');
-  loadAdmins();
-}
-
-/* ══════════════════════════════════════════════════════
-   NAVEGACIÓN
-══════════════════════════════════════════════════════ */
-const PAGE_META = {
-  dashboard:  { title:'Dashboard',    sub:'Resumen operativo del día',      showExport:false },
-  mapa:       { title:'Mapa en vivo', sub:'Ubicaciones de visitas en tiempo real', showExport:false },
-  gestores:   { title:'Gestores',     sub:'Gestión de equipo de campo',     showExport:false },
-  titulares:  { title:'Titulares',    sub:'Cartera de clientes asignada',   showExport:false },
-  visitas:    { title:'Visitas',      sub:'Registro de visitas domiciliarias', showExport:true },
-  reportes:   { title:'Reportes',     sub:'Análisis y exportación de datos', showExport:false },
-  config:     { title:'Configuración',sub:'Ajustes del sistema',            showExport:false },
-};
-
-function showPanel(id) {
-  // desactivar todos
-  document.querySelectorAll('.panel-view').forEach(p=>p.classList.remove('active'));
+/* ════════ NAV ════════ */
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  const nav=document.getElementById('nav-'+id); if(nav) nav.classList.add('active');
+  const t=PANEL_TITLES[id]||['',''];
+  document.getElementById('crumb').textContent=t[0];
+  document.getElementById('panelTitle').textContent=t[1];
+  document.getElementById('sidebar').classList.remove('open');
+  if(id==='mapa'){ setTimeout(()=>{ if(!STATE.mapFull) initMap('mapFull','mapFull'); else STATE.mapFull.resize(); paintMarkers(STATE.mapFull,'mapFullMeta'); },200); }
+}
+function onDateChange(){ STATE.selectedDate=document.getElementById('datePick').value||todayLocal(); loadDashboard(); resetCountdown(); }
 
-  // activar panel
-  document.getElementById(`panel-${id}`).classList.add('active');
-  const navEl = document.getElementById(`nav-${id}`);
-  if(navEl) navEl.classList.add('active');
+/* ════════ AUTO-REFRESH ════════ */
+function startRefresh(){
+  if(STATE.refreshTimer) clearInterval(STATE.refreshTimer);
+  resetCountdown();
+  STATE.refreshTimer=setInterval(()=>{
+    STATE.countdown--;
+    if(STATE.countdown<=0){ loadDashboard(); resetCountdown(); }
+    document.getElementById('liveCount').textContent=STATE.countdown+'s';
+  },1000);
+}
+function resetCountdown(){ STATE.countdown=CFG.REFRESH_MS/1000; document.getElementById('liveCount').textContent=STATE.countdown+'s'; }
 
-  const meta = PAGE_META[id] || {};
-  document.getElementById('pageTitle').textContent = meta.title || id;
-  document.getElementById('pageSub').textContent   = meta.sub || '';
-  document.getElementById('btnExportTop').style.display = meta.showExport ? 'flex' : 'none';
-
-  STATE.currentPanel = id;
-
-  // cargar datos según panel
-  if(id==='mapa')       { setTimeout(initMapFull,200); }
-  if(id==='gestores')   { loadGestores(); }
-  if(id==='titulares')  { loadTitulares(); }
-  if(id==='visitas')    { loadVisitas(); }
-  if(id==='config')     { loadAdmins(); }
+/* ════════ API ════════ */
+async function apiCall(endpoint,method='GET',body=null){
+  const opts={method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${STATE.token}`}};
+  if(body) opts.body=JSON.stringify(body);
+  try{
+    const res=await fetch(`${CFG.N8N_BASE}/webhook/${endpoint}`,opts);
+    if(res.status===401){ doLogout(); return null; }
+    return await res.json();
+  }catch(e){ console.warn('API error:',endpoint,e.message); return null; }
 }
 
-function refreshCurrentPanel() {
-  showPanel(STATE.currentPanel);
-  if(STATE.currentPanel==='dashboard') loadDashboard();
+/* ════════ DASHBOARD ════════ */
+async function loadDashboard(){
+  const fecha=STATE.selectedDate;
+  const [vRes,gRes]=await Promise.all([ apiCall(`admin-dashboard?fecha=${fecha}`), apiCall('admin-gestores','POST',{action:'list'}) ]);
+  STATE.visitas = (vRes && vRes.visitas) ? vRes.visitas : [];
+  STATE.gestores= (gRes && gRes.gestores)? gRes.gestores: [];
+  updateKPIs(); renderFeed(); paintMarkers(STATE.mapDash,'mapMeta'); if(STATE.mapFull) paintMarkers(STATE.mapFull,'mapFullMeta');
+  document.getElementById('badgeDash').textContent=STATE.visitas.length;
+}
+function num(id,val){
+  const el=document.getElementById(id); el.classList.remove('skeleton');
+  const start=0,dur=600,t0=performance.now();
+  (function step(now){ const p=Math.min((now-t0)/dur,1); el.textContent=Math.round(p*val); if(p<1)requestAnimationFrame(step); else el.textContent=val; })(performance.now());
+}
+function updateKPIs(){
+  const v=STATE.visitas, g=STATE.gestores;
+  const total=v.length;
+  const localizan=v.filter(x=>(x.RESULTADO||'').toLowerCase().includes('localiza a')&&!(x.RESULTADO||'').toLowerCase().startsWith('no')).length;
+  const pagos=v.filter(x=>(x.RESULTADO||'').toLowerCase().includes('pago')).length;
+  const activos=g.filter(x=>x.ACTIVO===true||x.ACTIVO==='TRUE'||x.ACTIVO==='SI').length;
+  const enCampo=[...new Set(v.map(x=>x.ID_GESTOR))].filter(Boolean).length;
+  const tasa=total>0?Math.round(localizan/total*100):0;
+  num('kpiVisitas',total); document.getElementById('kpiVisitas').classList.remove('skeleton');
+  document.getElementById('kpiTasa').classList.remove('skeleton'); document.getElementById('kpiTasa').textContent=tasa+'%';
+  num('kpiPagos',pagos);
+  document.getElementById('kpiGestores').classList.remove('skeleton'); document.getElementById('kpiGestores').textContent=enCampo;
+  document.getElementById('kpiVisitasSub').innerHTML=`<span class="kpi-chip ${total>5?'chip-up':'chip-flat'}">${total}</span> registros hoy`;
+  document.getElementById('kpiTasaSub').innerHTML=`<span class="kpi-chip ${tasa>=50?'chip-up':'chip-down'}">${localizan}</span> con contacto`;
+  document.getElementById('kpiPagosSub').innerHTML=`<span class="kpi-chip ${pagos>0?'chip-up':'chip-flat'}">${pagos}</span> confirmados`;
+  document.getElementById('kpiGestoresSub').innerHTML=`<span class="kpi-chip chip-flat">${activos}</span> activos en nómina`;
+}
+function renderFeed(){
+  const el=document.getElementById('feed');
+  const sorted=[...STATE.visitas].sort((a,b)=>(b.HORA_VISITA||'').localeCompare(a.HORA_VISITA||''));
+  document.getElementById('feedCount').textContent=`${sorted.length} visitas`;
+  if(!sorted.length){ el.innerHTML=`<div class="empty"><div class="empty-ic">◈</div><p>Sin visitas para esta fecha.</p><button class="btn-ghost" onclick="loadDashboard()">Actualizar</button></div>`; return; }
+  el.innerHTML=sorted.slice(0,14).map(v=>`
+    <div class="feed-item">
+      <div class="feed-avatar">${initials(v.NOMBRE_TITULAR)}</div>
+      <div class="feed-body">
+        <div class="feed-name">${v.NOMBRE_TITULAR||'—'}</div>
+        <div class="feed-meta">${v.NOMBRE_GESTOR||v.ID_GESTOR||'—'} · ${v.ID_TITULAR||''}</div>
+        <span class="feed-res ${resClass(v.RESULTADO)}">${resShort(v.RESULTADO)}</span>
+      </div>
+      <div class="feed-time">${v.HORA_VISITA||''}</div>
+    </div>`).join('');
 }
 
-function onDateChange() {
-  STATE.selectedDate = document.getElementById('dateFilter').value;
-  if(STATE.currentPanel==='dashboard') loadDashboard();
-  if(STATE.currentPanel==='visitas')   loadVisitas();
+/* ════════ MAPA ════════ */
+function initMap(elId,which){
+  if(typeof mapboxgl==='undefined'){ console.warn('Mapbox no cargó'); return; }
+  mapboxgl.accessToken=CFG.MAPBOX_TOKEN;
+  const map=new mapboxgl.Map({ container:elId, style:'mapbox://styles/mapbox/satellite-streets-v12', center:[-99.13,19.43], zoom:9, attributionControl:false });
+  map.addControl(new mapboxgl.NavigationControl(),'top-right');
+  if(which==='mapDash'){ STATE.mapDash=map; map.on('load',()=>paintMarkers(map,'mapMeta')); }
+  else { STATE.mapFull=map; map.on('load',()=>paintMarkers(map,'mapFullMeta')); }
 }
-
-/* ══════════════════════════════════════════════════════
-   TEMA
-══════════════════════════════════════════════════════ */
-function toggleTheme() {
-  const newTheme = STATE.theme === 'dark' ? 'light' : 'dark';
-  applyTheme(newTheme);
-}
-
-function applyTheme(theme) {
-  STATE.theme = theme;
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('fcc_theme', theme);
-  const icon = document.getElementById('themeIcon');
-  if(icon) icon.className = theme==='dark' ? 'ti ti-sun' : 'ti ti-moon';
-  const cfg = document.getElementById('themeToggleConfig');
-  if(cfg) cfg.checked = theme==='light';
-}
-
-/* ══════════════════════════════════════════════════════
-   HELPERS
-══════════════════════════════════════════════════════ */
-function getInitials(name='') {
-  return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-}
-
-function getBadgeClass(resultado='') {
-  const r = resultado.toLowerCase();
-  if(r.includes('localiza a'))  return 'rb-localiza';
-  if(r.includes('no se localiza')) return 'rb-no-localiza';
-  if(r.includes('tercero'))     return 'rb-tercero';
-  if(r.includes('pago'))        return 'rb-pago';
-  return 'rb-tercero';
-}
-
-function getResultadoShort(resultado='') {
-  if(!resultado) return '—';
-  const r = resultado.toLowerCase();
-  if(r.includes('localiza a'))  return 'Se localiza';
-  if(r.includes('no se localiza')) return 'No localiza';
-  if(r.includes('tercero'))     return 'Con tercero';
-  if(r.includes('pago'))        return 'Realizó pago';
-  return resultado.substring(0,14);
-}
-
-function paginate(items, page, size) {
-  const total = items.length;
-  const pages = Math.ceil(total/size) || 1;
-  const p = Math.min(Math.max(page,1), pages);
-  return { items: items.slice((p-1)*size, p*size), page:p, pages, total };
-}
-
-function renderPagination(containerId, paged, onPage) {
-  const el = document.getElementById(containerId);
-  if(!el) return;
-  if(paged.pages<=1){ el.innerHTML=''; return; }
-  const btns = [];
-  btns.push(`<span class="pag-info">${paged.total} registros</span>`);
-  const prev = `<button class="pag-btn" onclick="(${onPage.toString()})(${paged.page-1})" ${paged.page<=1?'disabled style="opacity:.4"':''}><i class="ti ti-chevron-left" style="font-size:12px"></i></button>`;
-  btns.push(prev);
-  const start = Math.max(1, paged.page-2);
-  const end   = Math.min(paged.pages, paged.page+2);
-  for(let i=start;i<=end;i++){
-    btns.push(`<button class="pag-btn ${i===paged.page?'active':''}" onclick="(${onPage.toString()})(${i})">${i}</button>`);
+// Última posición por gestor a partir de las visitas
+function gestorPositions(){
+  const byG={};
+  for(const v of STATE.visitas){
+    const lat=fixCoord(v.LATITUD), lon=fixCoord(v.LONGITUD);
+    if(lat===null||lon===null||Math.abs(lat)>90) continue;
+    const k=v.ID_GESTOR||'?';
+    if(!byG[k]||(v.HORA_VISITA||'')>(byG[k].hora||'')){ byG[k]={lat,lon,hora:v.HORA_VISITA,nombre:v.NOMBRE_GESTOR||k,count:0}; }
   }
-  const next = `<button class="pag-btn" onclick="(${onPage.toString()})(${paged.page+1})" ${paged.page>=paged.pages?'disabled style="opacity:.4"':''}><i class="ti ti-chevron-right" style="font-size:12px"></i></button>`;
-  btns.push(next);
-  el.innerHTML = btns.join('');
+  // contar visitas por gestor
+  const counts={}; STATE.visitas.forEach(v=>{counts[v.ID_GESTOR]=(counts[v.ID_GESTOR]||0)+1;});
+  let topG=null,topN=0; Object.keys(counts).forEach(k=>{ if(counts[k]>topN){topN=counts[k];topG=k;} });
+  Object.keys(byG).forEach(k=>byG[k].count=counts[k]||0);
+  return {list:Object.entries(byG).map(([id,d])=>({id,...d})), topG};
 }
-
-function populateGestorSelects(gestores) {
-  const selects = ['mapaGestorFilter','titularGestorFilter','reportGestor'];
-  selects.forEach(id=>{
-    const el = document.getElementById(id);
-    if(!el) return;
-    const val = el.value;
-    el.innerHTML = `<option value="">Todos los gestores</option>` +
-      gestores.map(g=>`<option value="${g.ID_GESTOR}">${g.NOMBRE}</option>`).join('');
-    el.value = val;
+function paintMarkers(map,metaId){
+  if(!map||!map.loaded||!map.loaded()) { if(map) map.once('load',()=>paintMarkers(map,metaId)); return; }
+  STATE.markers.forEach(m=>m.remove()); STATE.markers=[];
+  const {list,topG}=gestorPositions();
+  const metaEl=document.getElementById(metaId); if(metaEl) metaEl.textContent=`${list.length} gestor(es) ubicado(s)`;
+  if(!list.length) return;
+  const bounds=new mapboxgl.LngLatBounds();
+  list.forEach(g=>{
+    const isTop=g.id===topG;
+    const el=document.createElement('div');
+    el.style.cssText=`width:16px;height:16px;border-radius:50%;border:2px solid #06101B;cursor:pointer;background:${isTop?'#BFA181':'#2BC4BE'};box-shadow:0 0 0 4px ${isTop?'rgba(191,161,129,.3)':'rgba(43,196,190,.3)'}`;
+    const popup=new mapboxgl.Popup({offset:14,closeButton:false}).setHTML(`<div style="font-family:Outfit,sans-serif"><b>${g.nombre}</b><br><span style="font-family:JetBrains Mono,monospace;font-size:11px;color:#93A6B3">${g.count} visita(s) · ${g.hora||''}</span></div>`);
+    const mk=new mapboxgl.Marker({element:el}).setLngLat([g.lon,g.lat]).setPopup(popup).addTo(map);
+    STATE.markers.push(mk); bounds.extend([g.lon,g.lat]);
   });
+  try{ map.fitBounds(bounds,{padding:70,maxZoom:13,duration:600}); }catch(e){}
 }
 
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// Cerrar modal al click fuera
-document.addEventListener('click', e=>{
-  if(e.target.classList.contains('modal-overlay')) {
-    e.target.classList.remove('open');
-  }
-});
-
-/* ══════════════════════════════════════════════════════
-   DESGLOSE DE VISITA
-══════════════════════════════════════════════════════ */
-let STATE_desgloseVisita = null;
-
-function openDesglose(idx) {
-  const v = STATE.visitas[idx];
-  if(!v) return;
-  STATE_desgloseVisita = v;
-
-  const color = getResultadoColor(v.RESULTADO);
-  const rb    = getBadgeClass(v.RESULTADO);
-
-  // Header
-  document.getElementById('dsgTitulo').textContent = v.NOMBRE_TITULAR || '—';
-  document.getElementById('dsgSubtitulo').textContent = `Visita ${v.ID_VISITA||''} • ${v.FECHA_VISITA||''} a las ${v.HORA_VISITA||''}`;
-  const badge = document.getElementById('dsgBadge');
-  badge.textContent = getResultadoShort(v.RESULTADO);
-  badge.className = `rb ${rb}`;
-  badge.style.fontSize = '11px';
-  badge.style.padding = '4px 10px';
-
-  // Info titular
-  document.getElementById('dsgInfoTitular').innerHTML = `
-    <div class="dsg-row"><span class="dsg-label">ID Titular</span><span class="dsg-val mono">${v.ID_TITULAR||'—'}</span></div>
-    <div class="dsg-row"><span class="dsg-label">Nombre</span><span class="dsg-val">${v.NOMBRE_TITULAR||'—'}</span></div>
-    <div class="dsg-row"><span class="dsg-label">Gestor</span><span class="dsg-val" style="color:var(--teal2)">${v.NOMBRE_GESTOR||'—'} <span style="color:var(--text3);font-weight:400">(${v.ID_GESTOR||''})</span></span></div>
-    <div class="dsg-row"><span class="dsg-label">Fecha</span><span class="dsg-val">${v.FECHA_VISITA||'—'}</span></div>
-    <div class="dsg-row"><span class="dsg-label">Hora</span><span class="dsg-val">${v.HORA_VISITA||'—'}</span></div>
-  `;
-
-  // Resultado detalle
-  const esTercero = (v.CONTACTO_TERCERO||'').toLowerCase() === 'si' || v.CONTACTO_TERCERO === true;
-  const tienePago = v.MONTO_PROMESA && v.MONTO_PROMESA !== '';
-  document.getElementById('dsgResultado').innerHTML = `
-    <div class="dsg-row"><span class="dsg-label">Resultado</span><span class="dsg-val" style="color:${color}">${v.RESULTADO||'—'}</span></div>
-    ${esTercero ? `<div class="dsg-row"><span class="dsg-label">Con tercero</span><span class="dsg-val">${v.NOMBRE_TERCERO||'—'}</span></div>` : ''}
-    ${v.HORARIO_INDICADO ? `<div class="dsg-row"><span class="dsg-label">Horario</span><span class="dsg-val">${v.HORARIO_INDICADO}</span></div>` : ''}
-    ${tienePago ? `<div class="dsg-row"><span class="dsg-label">Promesa</span><span class="dsg-val" style="color:var(--gold2)">$${Number(v.MONTO_PROMESA).toLocaleString('es-MX')} — ${v.FECHA_PROMESA||'sin fecha'}</span></div>` : ''}
-  `;
-
-  // Observaciones
-  document.getElementById('dsgObservaciones').textContent = v.OBSERVACIONES || 'Sin observaciones registradas.';
-
-  // Foto
-  const fotoWrap = document.getElementById('dsgFotoWrap');
-  if(v.FOTO_URL && v.FOTO_URL.trim() !== '') {
-    fotoWrap.innerHTML = `
-      <img src="${v.FOTO_URL}" alt="Foto domicilio"
-        style="width:100%;max-height:220px;object-fit:cover;display:block;cursor:pointer"
-        onclick="window.open('${v.FOTO_URL}','_blank')"
-        onerror="this.style.display='none';this.parentElement.querySelector('.foto-error').style.display='flex'"
-      >
-      <div class="foto-error" style="display:none;padding:20px;text-align:center;color:var(--text3);font-size:12px;flex-direction:column;align-items:center;gap:6px"><i class="ti ti-photo-off" style="font-size:24px"></i>No se pudo cargar la imagen</div>
-      <div style="padding:6px 10px;font-size:10px;color:var(--text3);background:var(--surface);border-top:1px solid var(--border)">
-        <i class="ti ti-external-link" style="font-size:10px"></i> Clic para ampliar
-      </div>`;
-  } else {
-    fotoWrap.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text3)"><i class="ti ti-camera-off" style="font-size:28px;display:block;margin-bottom:8px"></i><span style="font-size:12px">Sin fotografía registrada</span></div>`;
-  }
-
-  // Mini mapa
-  const mapWrap = document.getElementById('dsgMapWrap');
-  const coords  = document.getElementById('dsgCoords');
-  const lat_raw = parseFloat(v.LATITUD);
-  const lon_raw = parseFloat(v.LONGITUD);
-  // Corregir coords en formato entero: 19314837 → 19.314837
-  const lat = (!isNaN(lat_raw) && Math.abs(lat_raw) > 90)  ? lat_raw / 1000000 : lat_raw;
-  const lon = (!isNaN(lon_raw) && Math.abs(lon_raw) > 180) ? lon_raw / 1000000 : lon_raw;
-
-  if(!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
-    mapWrap.innerHTML = '<div id="dsgMap" style="width:100%;height:100%"></div>';
-    coords.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-
-    setTimeout(() => {
-      if(typeof mapboxgl === 'undefined') {
-        mapWrap.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lon}" target="_blank" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--teal2);font-size:12px;gap:6px"><i class="ti ti-map-pin" style="font-size:24px"></i>Ver en Google Maps</a>`;
-        return;
-      }
-      mapboxgl.accessToken = MAPBOX_TOKEN_REAL;
-      try {
-        const miniMap = new mapboxgl.Map({
-          container: 'dsgMap',
-          style: 'mapbox://styles/mapbox/satellite-v9',
-          center: [lon, lat],
-          zoom: 16,
-          interactive: true,
-        });
-        miniMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
-        miniMap.on('load', () => {
-          const color2 = getResultadoColor(v.RESULTADO);
-          const el2 = document.createElement('div');
-          el2.style.cssText = `width:16px;height:16px;border-radius:50%;background:${color2};border:3px solid rgba(255,255,255,.9);box-shadow:0 0 0 4px ${color2}55`;
-          new mapboxgl.Marker(el2).setLngLat([lon,lat]).addTo(miniMap);
-        });
-      } catch(e) {
-        mapWrap.innerHTML = `<a href="https://maps.google.com/?q=${lat},${lon}" target="_blank" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--teal2);font-size:12px;gap:6px"><i class="ti ti-map-pin" style="font-size:24px"></i>Ver en Google Maps</a>`;
-      }
-    }, 200);
-  } else {
-    mapWrap.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text3)"><i class="ti ti-map-off" style="font-size:28px;display:block;margin-bottom:8px"></i><span style="font-size:12px">Sin coordenadas GPS</span></div>`;
-    coords.textContent = '';
-  }
-
-  // Footer
-  document.getElementById('dsgFooterInfo').textContent = `ID Visita: ${v.ID_VISITA||'—'} • Registrada el ${v.FECHA_VISITA||'—'} a las ${v.HORA_VISITA||'—'}`;
-
-  openModal('modalDesglose');
-}
-
-function getResultadoColor(resultado='') {
-  const r = resultado.toLowerCase();
-  if(r.includes('localiza a'))   return 'var(--green)';
-  if(r.includes('no se localiza')) return 'var(--red)';
-  if(r.includes('tercero'))       return 'var(--amber)';
-  if(r.includes('pago'))          return 'var(--teal2)';
-  return 'var(--text2)';
-}
-
-function exportarDesgloseExcel() {
-  const v = STATE_desgloseVisita;
-  if(!v) return;
-  const rows = [{
-    'ID Visita':       v.ID_VISITA||'',
-    'Fecha':           v.FECHA_VISITA||'',
-    'Hora':            v.HORA_VISITA||'',
-    'ID Titular':      v.ID_TITULAR||'',
-    'Titular':         v.NOMBRE_TITULAR||'',
-    'ID Gestor':       v.ID_GESTOR||'',
-    'Gestor':          v.NOMBRE_GESTOR||'',
-    'Resultado':       v.RESULTADO||'',
-    'Contacto Tercero':v.CONTACTO_TERCERO||'',
-    'Nombre Tercero':  v.NOMBRE_TERCERO||'',
-    'Horario Indicado':v.HORARIO_INDICADO||'',
-    'Monto Promesa':   v.MONTO_PROMESA||'',
-    'Fecha Promesa':   v.FECHA_PROMESA||'',
-    'Latitud':         v.LATITUD||'',
-    'Longitud':        v.LONGITUD||'',
-    'Foto URL':        v.FOTO_URL||'',
-    'Observaciones':   v.OBSERVACIONES||'',
-  }];
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = Object.keys(rows[0]).map(k=>({wch:Math.max(k.length+2,18)}));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,'Visita',ws);
-  XLSX.writeFile(wb,`Visita_${v.ID_VISITA||'desglose'}_${v.FECHA_VISITA||''}.xlsx`);
-  showToast('Visita exportada','success');
-}
-function showToast(msg, type='info') {
-  const container = document.getElementById('toastContainer');
-  const icons = { success:'ti-circle-check', error:'ti-circle-x', info:'ti-info-circle' };
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `<i class="ti ${icons[type]||icons.info} toast-icon"></i>${msg}`;
-  container.appendChild(toast);
-  setTimeout(()=>{ toast.style.opacity='0'; toast.style.transform='translateX(20px)'; setTimeout(()=>toast.remove(),300); }, 3500);
-}
+/* ════════ BOOT ════════ */
+restoreSession();
 </script>
 </body>
 </html>
