@@ -2766,6 +2766,21 @@ async function registrarVisita() {
     estatus:            'CONCLUIDA',
   };
 
+  // ── 1) MARCAR COMO VISITADO AL INSTANTE (optimista) ──
+  // Esto actualiza la lista visualmente antes de que Sheets confirme
+  if(t.ID_TITULAR) VISITAS_HOY_IDS.add(t.ID_TITULAR);
+
+  // ── 2) AGREGAR XP LOCAL ──
+  if(STATE.user) {
+    const xpBonus = CAPTURA.resultado === 'Realiza pago' ? 100 : 50;
+    STATE.user.xp         = (STATE.user.xp      || 0) + xpBonus;
+    STATE.user.visitas    = (STATE.user.visitas  || 0) + 1;
+    STATE.user.visitasHoy = (STATE.user.visitasHoy || 0) + 1;
+    localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+    addXP(0, '');
+  }
+
+  // ── 3) ENVIAR A N8N (en segundo plano) ──
   try {
     const res = await fetch(`${N8N_BASE}/webhook/field-registrar-visita`, {
       method: 'POST',
@@ -2773,27 +2788,20 @@ async function registrarVisita() {
       body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if(!data.success) throw new Error(data.message);
+    if(!data.success) throw new Error(data.message || 'Error en servidor');
+    console.log('✅ Visita registrada en Sheets');
   } catch(e) {
-    // En demo o error de red — guardar localmente
+    // Guardar offline si N8N falla
     const pendientes = JSON.parse(localStorage.getItem('ff_visitas_pendientes') || '[]');
-    pendientes.push({ ...payload, _pendiente: true });
+    pendientes.push({ ...payload, _pendiente: true, _ts: Date.now() });
     localStorage.setItem('ff_visitas_pendientes', JSON.stringify(pendientes));
-    console.warn('Visita guardada localmente:', e.message);
+    console.warn('⚠️ Visita guardada offline:', e.message);
+    showToast('⚠️', 'Sin conexión', 'Visita guardada localmente');
   }
 
-  // Agregar XP
-  if(STATE.user) {
-    const xpBonus = CAPTURA.resultado === 'Realiza pago' ? 100 : 50;
-    STATE.user.xp      = (STATE.user.xp || 0) + xpBonus;
-    STATE.user.visitas = (STATE.user.visitas || 0) + 1;
-    STATE.user.visitasHoy = (STATE.user.visitasHoy || 0) + 1;
-    localStorage.setItem('ff_session', JSON.stringify(STATE.user));
-    addXP(0, ''); // actualizar render sin sumar de nuevo
-  }
-
-  // Marcar como visitado
-  if(t.ID_TITULAR) VISITAS_HOY_IDS.add(t.ID_TITULAR);
+  // ── 4) RE-CARGAR LISTA MISIONES EN FONDO ──
+  // Para que al volver, el badge "Visitado hoy" aparezca actualizado
+  loadMisiones().catch(() => {});  // silencioso, no bloquea UI
 
   // Mostrar éxito
   btn.style.display = 'none';
