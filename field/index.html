@@ -2400,10 +2400,11 @@ function initCaptura() {
     if(hn) hn.textContent = t.NOMBRE;
 
     // ── BLOQUEO DE DUPLICADOS ──
-    // Si ya tiene visita CONCLUIDA hoy, mostrar alerta
+    // Bloqueo duro: si ya tiene visita hoy, no permitir capturar
     if(VISITAS_HOY_IDS.has(t.ID_TITULAR)) {
-      // Permitir continuar pero con aviso
-      showToast('⚠️', 'Este titular ya fue visitado hoy', 'Se registrará como visita adicional');
+      showToast('🔒', 'Titular ya visitado hoy', 'No se permite otra visita hoy');
+      goTo('misiones');
+      return;
     }
   } else {
     const hn = document.getElementById('capturaHeaderName');
@@ -2471,6 +2472,40 @@ function actualizarProgreso() {
   if(badge) badge.textContent = `${p}/5`;
 }
 
+// ── Validación del Paso 3 (Tipo de contacto) ──
+// Bloquea "Continuar" hasta que los campos NO opcionales estén llenos
+function validarPaso3() {
+  if (!CAPTURA.contacto) return false;
+  const s = CAPTURA.subDatos || {};
+  const txt = v => typeof v === 'string' && v.trim().length > 0;
+
+  switch (CAPTURA.contacto) {
+    case 'titular':
+      // Horario requerido · Teléfono es opcional
+      return txt(s.horario);
+
+    case 'tercero':
+      // Nombre, ¿conoce?, horario y respuesta a ¿proporcionó teléfono? son requeridos
+      if (!txt(s.nombreTercero)) return false;
+      if (!s.conoce)            return false;
+      if (!txt(s.horario))      return false;
+      if (!s.telefono)          return false;       // debe elegir Sí/No
+      if (s.telefono === 'si')  return false;       // dijo Sí pero aún no escribe el número
+      return true;                                  // 'no' o número capturado
+
+    case 'vecino':
+      // Horario y ¿conoce? requeridos · seña particular opcional
+      return txt(s.horario) && !!s.conoce;
+
+    case 'nadie':
+      // Debe indicar si hubo contacto con algún vecino
+      return !!s.vecino;
+
+    default:
+      return false;
+  }
+}
+
 // ── Botón continuar ──
 function actualizarBotonPaso() {
   const btn = document.getElementById('btnPaso');
@@ -2480,7 +2515,7 @@ function actualizarBotonPaso() {
 
   if(p === 1) habilitado = !!(CAPTURA.lat && CAPTURA.lon);
   if(p === 2) habilitado = !!CAPTURA.fotos[0];
-  if(p === 3) habilitado = !!CAPTURA.contacto;
+  if(p === 3) habilitado = validarPaso3();
   if(p === 4) habilitado = !!CAPTURA.resultado;
   if(p === 5) habilitado = CAPTURA.observaciones.length >= 10;
 
@@ -2689,6 +2724,8 @@ function seleccionarContacto(tipo) {
   if(html) {
     sp.innerHTML = html;
     sp.style.display = 'flex';
+    // Revalidar el botón Continuar conforme se escriben los sub-datos
+    sp.querySelectorAll('input').forEach(inp => inp.addEventListener('input', actualizarBotonPaso));
   }
 
   actualizarBotonPaso();
@@ -2706,6 +2743,7 @@ function setSiNo(campo, valor, btn) {
     const tg = document.getElementById('sp-tel-group');
     if(tg) tg.style.display = valor === 'si' ? 'block' : 'none';
   }
+  actualizarBotonPaso();
 }
 
 // ── PASO 4: RESULTADO ──
@@ -2983,10 +3021,14 @@ async function abrirFicha(idTitular) {
   const btn = document.getElementById('btnIniciarVisita');
   if (visitadoHoy) {
     btn.className = 'btn-iniciar-visita ya-visitado';
-    btn.innerHTML = '<span>✅</span> Registrar otra visita · <span>+50 XP</span>';
+    btn.innerHTML = '<span>✅</span> Ya visitado hoy';
+    btn.style.opacity = '0.55';
+    btn.style.pointerEvents = 'none';
   } else {
     btn.className = 'btn-iniciar-visita';
     btn.innerHTML = '<span>📸</span> Iniciar visita · <span id="btnXpLabel">+50 XP</span>';
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
   }
 
   // Historial
@@ -3055,8 +3097,8 @@ function iniciarVisita() {
   const yaVisitado = VISITAS_HOY_IDS.has(TITULAR_ACTIVO.ID_TITULAR);
 
   if (yaVisitado) {
-    // Mostrar modal de confirmación de duplicado
-    mostrarConfirmDuplicado();
+    // Bloqueo duro: no se permite registrar otra visita hoy
+    showToast('🔒', 'Titular ya visitado hoy', 'No se permite registrar otra visita hoy');
     return;
   }
 
