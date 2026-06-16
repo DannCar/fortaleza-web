@@ -2791,7 +2791,8 @@ async function registrarVisita() {
 
   const t = STATE.titularEnVisita || {};
   const ahora = new Date();
-  const fecha = ahora.toISOString().split('T')[0];
+  // Fecha LOCAL (no UTC) para que coincida con la hora y el día real del gestor
+  const fecha = `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,'0')}-${String(ahora.getDate()).padStart(2,'0')}`;
   const hora  = ahora.toTimeString().slice(0,5);
 
   const payload = {
@@ -2922,7 +2923,7 @@ async function loadMisiones() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id_gestor:   STATE.user.idGestor   || 'G001',
-        fecha_hoy:   new Date().toISOString().split('T')[0],
+        fecha_hoy:   (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })(),
       }),
     });
     const data = await res.json();
