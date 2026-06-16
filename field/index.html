@@ -2097,29 +2097,9 @@ async function doLogin() {
     errEl.textContent = data.message || 'Usuario no encontrado. Verifica tu @usuario de Telegram.';
 
   } catch(e) {
-    // DEMO MODE — sin N8N activo
-    if (user && user.length > 1) {
-      STATE.user = {
-        nombre:      user.replace('@',''),
-        email:       user,
-        telegramUser:user,
-        idGestor:    'G001',
-        rol:         'Gestor',
-        xp:          0,
-        streak:      0,
-        streakMax:   0,
-        visitas:     0,
-        visitasHoy:  0,
-        ranking:     '—',
-        avatar:      '🧭',
-        badges:      [],
-      };
-      STATE.avatar = '🧭';
-      localStorage.setItem('ff_session', JSON.stringify(STATE.user));
-      startApp();
-    } else {
-      errEl.textContent = 'Error de conexión. Intenta de nuevo.';
-    }
+    // Falla en CERRADO: si el servidor no responde, no logueamos a nadie
+    errEl.textContent = 'No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.';
+    console.warn('Login falló:', e.message);
   } finally {
     btn.disabled = false;
     btn.textContent = 'Iniciar misión';
@@ -2934,8 +2914,8 @@ async function loadMisiones() {
     VISITAS_HOY_IDS = new Set(['MX01060059']);
   }
 
-  TITULARES_FILTRADOS = [...TITULARES_DATA];
-  renderTitularesList();
+  // Respeta el filtro activo (Pendientes/Visitados/etc.) en vez de mostrar todos
+  aplicarFiltros();
 }
 
 function getDemoTitulares() {
