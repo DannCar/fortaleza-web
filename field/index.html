@@ -2842,6 +2842,31 @@ async function registrarVisita() {
     const data = await res.json();
     if(!data.success) throw new Error(data.message || 'Error en servidor');
     console.log('✅ Visita registrada en Sheets');
+
+    // ── Actualizar GAMIFICACION real y reconciliar XP local ──
+    try {
+      const gres = await fetch(`${N8N_BASE}/webhook/field-gamificacion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_gestor: STATE.user?.idGestor || '',
+          resultado: CAPTURA.resultado || '',
+          fecha:     fecha,
+        }),
+      });
+      const gdata = await gres.json();
+      if (gdata && gdata.success && gdata.gamificacion && STATE.user) {
+        const g = gdata.gamificacion;
+        STATE.user.xp         = Number(g.XP_TOTAL)      || STATE.user.xp;
+        STATE.user.visitas    = Number(g.VISITAS_TOTAL) || STATE.user.visitas;
+        STATE.user.visitasHoy = Number(g.VISITAS_HOY)   || STATE.user.visitasHoy;
+        STATE.user.streak     = Number(g.STREAK_ACTUAL) || 0;
+        STATE.user.streakMax  = Number(g.STREAK_MAX)    || STATE.user.streakMax;
+        localStorage.setItem('ff_session', JSON.stringify(STATE.user));
+      }
+    } catch(ge) {
+      console.warn('Gamificación no actualizada:', ge.message);
+    }
   } catch(e) {
     // Guardar offline si N8N falla
     const pendientes = JSON.parse(localStorage.getItem('ff_visitas_pendientes') || '[]');
