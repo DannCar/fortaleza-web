@@ -2172,8 +2172,9 @@ function renderHome() {
   document.getElementById('streakValue').textContent = `${u.streak||0} días`;
   document.getElementById('visitasHoy').textContent  = u.visitasHoy || 0;
 
-  // Ranking
+  // Ranking — pinta fallback al instante y luego trae el real del webhook
   renderRanking();
+  loadLeaderboard();
 
   // Misiones
   renderMissions();
@@ -2189,25 +2190,58 @@ function getRank(xp) {
   return { ...rankDef, nivel, xpNext };
 }
 
-function renderRanking() {
-  const mock = [
-    { nombre:'Carlos Mendoza', xp:1240, avatar:'⚡', me:false },
-    { nombre: STATE.user?.nombre || 'Tú', xp: STATE.user?.xp||320, avatar: STATE.avatar, me:true },
-    { nombre:'DOCA Team',       xp:280,  avatar:'🗺️', me:false },
-  ].sort((a,b) => b.xp - a.xp);
+// Ranking real desde el webhook field-leaderboard
+let LEADERBOARD = [];
 
+async function loadLeaderboard() {
+  try {
+    const res = await fetch(`${N8N_BASE}/webhook/field-leaderboard`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_gestor: STATE.user?.idGestor || '' }),
+    });
+    const data = await res.json();
+    if (data && Array.isArray(data.leaderboard)) {
+      LEADERBOARD = data.leaderboard;
+    }
+  } catch (e) {
+    console.warn('No se pudo cargar el leaderboard:', e.message);
+  }
+  renderRanking();
+}
+
+function renderRanking() {
+  const el = document.getElementById('rankingList');
+  if (!el) return;
+
+  let lista = LEADERBOARD;
+  // Fallback mientras carga o si no hay datos: solo el agente actual
+  if (!lista || !lista.length) {
+    lista = [{
+      id_gestor: STATE.user?.idGestor,
+      nombre:    STATE.user?.nombre || 'Tú',
+      xp:        STATE.user?.xp || 0,
+      avatar:    STATE.avatar,
+    }];
+  }
+
+  const miId = STATE.user?.idGestor;
   const posClasses = ['gold','silver','bronze'];
-  document.getElementById('rankingList').innerHTML = mock.map((g,i) => `
-    <div class="ranking-item ${g.me?'me':''}">
-      <div class="rank-pos ${posClasses[i]||''}">${i+1}</div>
-      <div class="rank-avatar">${g.avatar}</div>
+
+  el.innerHTML = lista.slice(0, 10).map((g, i) => {
+    const me = g.id_gestor && miId && String(g.id_gestor) === String(miId);
+    const xp = Number(g.xp) || 0;
+    return `
+    <div class="ranking-item ${me ? 'me' : ''}">
+      <div class="rank-pos ${posClasses[i] || ''}">${i + 1}</div>
+      <div class="rank-avatar">${g.avatar || '🧭'}</div>
       <div class="rank-info">
-        <div class="rank-name-text">${g.nombre}${g.me?' (tú)':''}</div>
-        <div class="rank-sub">${getRank(g.xp).nombre}</div>
+        <div class="rank-name-text">${g.nombre || '—'}${me ? ' (tú)' : ''}</div>
+        <div class="rank-sub">${getRank(xp).nombre}</div>
       </div>
-      <div class="rank-xp">${g.xp.toLocaleString()} XP</div>
-    </div>
-  `).join('');
+      <div class="rank-xp">${xp.toLocaleString()} XP</div>
+    </div>`;
+  }).join('');
 }
 
 function renderMissions() {
