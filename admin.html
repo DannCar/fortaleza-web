@@ -202,6 +202,20 @@ input{font-family:inherit}
 .tit-btn.act-on{color:var(--good)}
 .tit-btn.act-off{color:var(--danger);background:rgba(217,100,90,.1)}
 .urg-tag{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.5px;background:rgba(224,160,74,.16);color:var(--amber);padding:1px 6px;border-radius:5px;margin-left:6px;vertical-align:middle}
+.tit-tools{display:flex;gap:10px;margin-bottom:14px}
+.tit-tool{display:inline-flex;align-items:center;gap:8px;background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:9px 15px;color:var(--text);font-size:13px;font-weight:500;transition:.14s}
+.tit-tool:hover{border-color:var(--teal);color:var(--teal-bright)}
+.tit-tool:disabled{opacity:.4;cursor:not-allowed}
+.tit-tool-n{font-family:var(--mono);font-size:11px;background:var(--teal);color:#04141a;border-radius:20px;padding:1px 8px;font-weight:700}
+.geo-overlay{position:fixed;inset:0;background:rgba(4,12,20,.78);backdrop-filter:blur(6px);z-index:200;display:none;place-items:center}
+.geo-overlay.show{display:grid}
+.geo-modal{width:min(440px,90vw);background:var(--navy-800);border:1px solid var(--border-strong);border-radius:18px;padding:30px 32px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.geo-title{font-family:var(--serif);font-size:24px;color:var(--text);margin-bottom:5px}
+.geo-sub{font-size:13px;color:var(--text-dim);margin-bottom:22px}
+.geo-bar{height:9px;background:var(--navy-600);border-radius:20px;overflow:hidden;margin-bottom:12px}
+.geo-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--teal-bright));border-radius:20px;transition:width .25s}
+.geo-stats{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--text-faint)}
+.geo-close{margin-top:22px;width:100%;background:var(--teal);color:#04141a;border-radius:11px;padding:11px;font-weight:600;font-size:14px}
 
 /* ░░ TOAST ░░ */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);z-index:99;
@@ -364,6 +378,9 @@ input{font-family:inherit}
           <label class="tit-chk"><input type="checkbox" id="titUrg" onchange="applyTitFilters()"> Solo urgentes</label>
           <span class="tit-count" id="titCount">—</span>
         </div>
+        <div class="tit-tools">
+          <button class="tit-tool" id="btnGeo" onclick="geocodificarExistentes()">◎ Geocodificar sin coords <span id="geoPend" class="tit-tool-n">0</span></button>
+        </div>
         <div class="card"><div class="tit-wrap" id="titWrap">
           <div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>
         </div></div>
@@ -391,6 +408,16 @@ input{font-family:inherit}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="geo-overlay" id="geoOverlay">
+  <div class="geo-modal">
+    <div class="geo-title" id="geoTitle">Geocodificando…</div>
+    <div class="geo-sub" id="geoSub">Consultando direcciones en Mapbox</div>
+    <div class="geo-bar"><div class="geo-bar-fill" id="geoBarFill"></div></div>
+    <div class="geo-stats"><span id="geoStatDone">0 / 0</span><span id="geoStatFail">0 fallidas</span></div>
+    <button class="geo-close" id="geoClose" onclick="cerrarGeo()" style="display:none">Cerrar</button>
+  </div>
+</div>
 
 <script>
 /* ════════ CONFIG ════════ */
@@ -613,7 +640,7 @@ async function loadTitulares(force){
     return;
   }
   TIT_ALL=res.titulares||[]; TIT_GESTORES=res.gestores||[]; TIT_LOADED=true;
-  populateTitFilters(); applyTitFilters();
+  populateTitFilters(); applyTitFilters(); updateGeoPending();
 }
 function populateTitFilters(){
   const estados=[...new Set(TIT_ALL.map(t=>t.ESTADO).filter(Boolean))].sort();
@@ -675,6 +702,53 @@ async function toggleAct(id,val){
   const r=await apiCall('admin-titulares-v2','POST',{action:'toggle_activo',id_titular:id,activo:val});
   if(r&&r.success){ toast(val?'Titular activado':'Titular desactivado'); } else { t.ACTIVO=!val; applyTitFilters(); toast('No se pudo actualizar'); }
 }
+
+/* ──── Geocodificación (Mapbox) ──── */
+const _sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function countSinGeo(){ return TIT_ALL.filter(t=>!(t.LATITUD&&t.LONGITUD)&&t.DIRECCION).length; }
+function updateGeoPending(){ const n=countSinGeo(); const el=document.getElementById('geoPend'); if(el)el.textContent=n; const b=document.getElementById('btnGeo'); if(b)b.disabled=(n===0); }
+
+async function geocodeOne(t){
+  const q=encodeURIComponent([t.DIRECCION,t.MUNICIPIO,t.ESTADO,'México'].filter(Boolean).join(', '));
+  const url=`https://api.mapbox.com/geocoding/v5/mapbox.places/${q}.json?country=mx&limit=1&language=es&access_token=${CFG.MAPBOX_TOKEN}`;
+  try{
+    const r=await fetch(url); if(!r.ok) return null;
+    const f=((await r.json()).features||[])[0];
+    if(!f||!f.center) return null;
+    return { lng:+(+f.center[0]).toFixed(6), lat:+(+f.center[1]).toFixed(6) };
+  }catch(e){ return null; }
+}
+async function geocodificarExistentes(){
+  const targets=TIT_ALL.filter(t=>!(t.LATITUD&&t.LONGITUD)&&t.DIRECCION);
+  if(!targets.length){ toast('No hay titulares sin coordenadas'); return; }
+  if(!confirm(`Se geocodificarán ${targets.length} titulares con Mapbox. ¿Continuar?`)) return;
+  openGeo(targets.length);
+  let done=0, fail=0; const ok=[]; let idx=0; const CONC=5;
+  async function worker(){
+    while(idx<targets.length){
+      const t=targets[idx++];
+      const res=await geocodeOne(t);
+      if(res){ t.LATITUD=res.lat; t.LONGITUD=res.lng; ok.push({id_titular:t.ID_TITULAR,lat:res.lat,lng:res.lng}); } else { fail++; }
+      done++; updateGeo(done,targets.length,fail);
+      await _sleep(120);
+    }
+  }
+  await Promise.all(Array.from({length:CONC},()=>worker()));
+  setGeoTitle('Guardando coordenadas…','Escribiendo en la hoja');
+  let saved=0;
+  for(let i=0;i<ok.length;i+=200){
+    const lote=ok.slice(i,i+200);
+    const r=await apiCall('admin-titulares-geo','POST',{rows:lote});
+    if(r&&r.success) saved+=(r.updated||lote.length);
+  }
+  finishGeo(saved,fail);
+  applyTitFilters(); updateGeoPending();
+}
+function openGeo(total){ document.getElementById('geoOverlay').classList.add('show'); document.getElementById('geoClose').style.display='none'; setGeoTitle('Geocodificando…','Consultando direcciones en Mapbox'); updateGeo(0,total,0); }
+function setGeoTitle(t,s){ document.getElementById('geoTitle').textContent=t; document.getElementById('geoSub').textContent=s; }
+function updateGeo(done,total,fail){ const pct=total?Math.round(done/total*100):0; document.getElementById('geoBarFill').style.width=pct+'%'; document.getElementById('geoStatDone').textContent=`${done} / ${total}`; document.getElementById('geoStatFail').textContent=`${fail} fallidas`; }
+function finishGeo(saved,fail){ setGeoTitle('Listo','Coordenadas guardadas en la hoja'); document.getElementById('geoBarFill').style.width='100%'; document.getElementById('geoStatDone').textContent=`${saved} guardadas`; document.getElementById('geoStatFail').textContent=`${fail} sin resultado`; document.getElementById('geoClose').style.display='block'; }
+function cerrarGeo(){ document.getElementById('geoOverlay').classList.remove('show'); }
 
 /* ════════ BOOT ════════ */
 restoreSession();
