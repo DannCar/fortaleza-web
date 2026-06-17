@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fortaleza · Centro de Operaciones</title>
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -216,6 +217,17 @@ input{font-family:inherit}
 .geo-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--teal-bright));border-radius:20px;transition:width .25s}
 .geo-stats{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--text-faint)}
 .geo-close{margin-top:22px;width:100%;background:var(--teal);color:#04141a;border-radius:11px;padding:11px;font-weight:600;font-size:14px}
+.imp-body{margin:6px 0 4px;font-size:13px;color:var(--text-dim);max-height:46vh;overflow:auto}
+.imp-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)}
+.imp-row b{color:var(--text)}
+.imp-map{font-family:var(--mono);font-size:11px;color:var(--text-faint)}
+.imp-ok{color:var(--good)} .imp-warn{color:var(--amber)} .imp-bad{color:var(--danger)}
+.imp-head{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin:16px 0 6px}
+.imp-sample{font-family:var(--mono);font-size:11px;background:var(--navy-700);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-dim);white-space:pre-wrap;word-break:break-word}
+.imp-actions{display:flex;gap:10px;margin-top:20px}
+.imp-cancel{flex:1;background:var(--navy-600);border:1px solid var(--border);color:var(--text-dim);border-radius:11px;padding:11px;font-size:14px}
+.imp-go{flex:2;background:var(--teal);color:#04141a;border-radius:11px;padding:11px;font-weight:600;font-size:14px}
+.imp-go:disabled{opacity:.4;cursor:not-allowed}
 
 /* ░░ TOAST ░░ */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);z-index:99;
@@ -379,6 +391,8 @@ input{font-family:inherit}
           <span class="tit-count" id="titCount">—</span>
         </div>
         <div class="tit-tools">
+          <button class="tit-tool" id="btnImport" onclick="document.getElementById('impFile').click()">⬆ Importar Excel</button>
+          <input type="file" id="impFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="onImportFile(this)">
           <button class="tit-tool" id="btnGeo" onclick="geocodificarExistentes()">◎ Geocodificar sin coords <span id="geoPend" class="tit-tool-n">0</span></button>
         </div>
         <div class="card"><div class="tit-wrap" id="titWrap">
@@ -416,6 +430,18 @@ input{font-family:inherit}
     <div class="geo-bar"><div class="geo-bar-fill" id="geoBarFill"></div></div>
     <div class="geo-stats"><span id="geoStatDone">0 / 0</span><span id="geoStatFail">0 fallidas</span></div>
     <button class="geo-close" id="geoClose" onclick="cerrarGeo()" style="display:none">Cerrar</button>
+  </div>
+</div>
+
+<div class="geo-overlay" id="impOverlay">
+  <div class="geo-modal" style="width:min(560px,92vw)">
+    <div class="geo-title">Importar titulares</div>
+    <div class="geo-sub" id="impFileName">—</div>
+    <div class="imp-body" id="impBody"></div>
+    <div class="imp-actions">
+      <button class="imp-cancel" onclick="cerrarImp()">Cancelar</button>
+      <button class="imp-go" id="impGo" onclick="confirmarImport()">Geocodificar e importar</button>
+    </div>
   </div>
 </div>
 
@@ -749,6 +775,98 @@ function setGeoTitle(t,s){ document.getElementById('geoTitle').textContent=t; do
 function updateGeo(done,total,fail){ const pct=total?Math.round(done/total*100):0; document.getElementById('geoBarFill').style.width=pct+'%'; document.getElementById('geoStatDone').textContent=`${done} / ${total}`; document.getElementById('geoStatFail').textContent=`${fail} fallidas`; }
 function finishGeo(saved,fail){ setGeoTitle('Listo','Coordenadas guardadas en la hoja'); document.getElementById('geoBarFill').style.width='100%'; document.getElementById('geoStatDone').textContent=`${saved} guardadas`; document.getElementById('geoStatFail').textContent=`${fail} sin resultado`; document.getElementById('geoClose').style.display='block'; }
 function cerrarGeo(){ document.getElementById('geoOverlay').classList.remove('show'); }
+
+/* ──── Importar Excel ──── */
+let IMP_ROWS=[], IMP_MAP={}, IMP_FILE='', IMP_VALID=[];
+const _normH=s=>String(s||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\s.]+/g,'_');
+const IMP_ALIASES={
+  ID_TITULAR:['ID_TITULAR','ID','FOLIO','CUENTA','NO_CUENTA','NUM_CUENTA','CREDITO'],
+  NOMBRE:['NOMBRE','TITULAR','CLIENTE','NOMBRE_TITULAR','NOMBRE_COMPLETO','DEUDOR'],
+  DIRECCION:['DIRECCION','DOMICILIO','CALLE','DIRECCION_COMPLETA','DOM'],
+  ESTADO:['ESTADO','ENTIDAD','ENTIDAD_FEDERATIVA'],
+  MUNICIPIO:['MUNICIPIO','DELEGACION','ALCALDIA','CIUDAD'],
+  CARTERA:['CARTERA','PRODUCTO','CAMPANA','CAMPAÑA','CARTERA_TIPO'],
+  ID_GESTOR:['ID_GESTOR','GESTOR','ASIGNADO','ID_GESTOR_ASIGNADO']
+};
+function buildMapping(headers){
+  const normPairs=headers.map(h=>({raw:h,n:_normH(h)}));
+  const map={};
+  for(const target in IMP_ALIASES){
+    const hit=normPairs.find(p=>IMP_ALIASES[target].includes(p.n));
+    if(hit) map[target]=hit.raw;
+  }
+  return map;
+}
+function mapRow(raw,mapping){
+  const g=t=>{ const h=mapping[t]; return h!=null ? String(raw[h]??'').trim() : ''; };
+  return { ID_TITULAR:g('ID_TITULAR'), NOMBRE:g('NOMBRE'), DIRECCION:g('DIRECCION'), ESTADO:g('ESTADO'), MUNICIPIO:g('MUNICIPIO'), CARTERA:g('CARTERA'), ID_GESTOR:g('ID_GESTOR') };
+}
+async function onImportFile(input){
+  const file=input.files&&input.files[0]; input.value='';
+  if(!file) return;
+  if(typeof XLSX==='undefined'){ toast('La librería de Excel no cargó'); return; }
+  try{
+    const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+    const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+    if(!raw.length){ toast('El archivo no tiene filas'); return; }
+    IMP_MAP=buildMapping(Object.keys(raw[0]));
+    IMP_ROWS=raw.map(r=>mapRow(r,IMP_MAP));
+    IMP_FILE=file.name;
+    renderImpPreview();
+  }catch(e){ toast('No se pudo leer el archivo'); console.warn(e); }
+}
+function renderImpPreview(){
+  document.getElementById('impOverlay').classList.add('show');
+  document.getElementById('impFileName').textContent=`${IMP_FILE} · ${IMP_ROWS.length} filas`;
+  const req=['ID_TITULAR','NOMBRE','DIRECCION'], opt=['ESTADO','MUNICIPIO','CARTERA','ID_GESTOR'];
+  const mapLine=t=>{ const h=IMP_MAP[t], need=req.includes(t);
+    return `<div class="imp-row"><b>${t}</b><span class="imp-map ${h?'imp-ok':(need?'imp-bad':'imp-warn')}">${h?('← '+h):(need?'NO ENCONTRADA':'opcional')}</span></div>`; };
+  IMP_VALID=IMP_ROWS.filter(r=>r.ID_TITULAR&&r.NOMBRE&&r.DIRECCION);
+  const existing=new Set(TIT_ALL.map(t=>t.ID_TITULAR));
+  const dup=IMP_VALID.filter(r=>existing.has(r.ID_TITULAR)).length;
+  const reqOk=req.every(t=>IMP_MAP[t]);
+  const sample=IMP_VALID[0]?JSON.stringify(IMP_VALID[0],null,1):'(sin filas válidas)';
+  document.getElementById('impBody').innerHTML=
+    `<div class="imp-head">Mapeo de columnas</div>${[...req,...opt].map(mapLine).join('')}`+
+    `<div class="imp-head">Resumen</div>`+
+    `<div class="imp-row"><b>Filas válidas</b><span class="imp-ok">${IMP_VALID.length}</span></div>`+
+    `<div class="imp-row"><b>Descartadas (faltan datos)</b><span class="${IMP_ROWS.length-IMP_VALID.length?'imp-warn':''}">${IMP_ROWS.length-IMP_VALID.length}</span></div>`+
+    `<div class="imp-row"><b>Ya existen (se actualizan)</b><span>${dup}</span></div>`+
+    `<div class="imp-head">Ejemplo (primera fila válida)</div><div class="imp-sample">${sample}</div>`;
+  const go=document.getElementById('impGo');
+  go.disabled=!(reqOk&&IMP_VALID.length);
+  go.textContent=reqOk?`Geocodificar e importar ${IMP_VALID.length}`:'Faltan columnas requeridas';
+}
+function cerrarImp(){ document.getElementById('impOverlay').classList.remove('show'); }
+async function confirmarImport(){
+  cerrarImp();
+  const rows=IMP_VALID.slice();
+  if(!rows.length) return;
+  openGeo(rows.length);
+  let done=0, fail=0, idx=0; const CONC=5;
+  async function worker(){
+    while(idx<rows.length){
+      const r=rows[idx++];
+      const res=await geocodeOne(r);
+      if(res){ r.LATITUD=res.lat; r.LONGITUD=res.lng; } else { r.LATITUD=''; r.LONGITUD=''; fail++; }
+      done++; updateGeo(done,rows.length,fail); await _sleep(120);
+    }
+  }
+  await Promise.all(Array.from({length:CONC},()=>worker()));
+  setGeoTitle('Guardando en la hoja…','Importando titulares');
+  const payload=rows.map(r=>({ ID_TITULAR:r.ID_TITULAR, NOMBRE:r.NOMBRE, DIRECCION:r.DIRECCION, ESTADO:r.ESTADO, MUNICIPIO:r.MUNICIPIO, CARTERA:r.CARTERA, ID_GESTOR:r.ID_GESTOR, ACTIVO:'SI', URGENTE:'FALSE', LATITUD:r.LATITUD, LONGITUD:r.LONGITUD }));
+  let saved=0;
+  for(let i=0;i<payload.length;i+=150){
+    const resp=await apiCall('admin-titulares-import','POST',{rows:payload.slice(i,i+150)});
+    if(resp&&resp.success) saved+=(resp.saved||0);
+  }
+  setGeoTitle('Importación lista','Titulares guardados');
+  document.getElementById('geoBarFill').style.width='100%';
+  document.getElementById('geoStatDone').textContent=`${saved} importados`;
+  document.getElementById('geoStatFail').textContent=`${fail} sin geo`;
+  document.getElementById('geoClose').style.display='block';
+  await loadTitulares(true);
+}
 
 /* ════════ BOOT ════════ */
 restoreSession();
