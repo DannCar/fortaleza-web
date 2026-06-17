@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.3 · 2026-06-17 · multiselect + popup oscuro + filtro estatus -->
+<!-- FCC Admin · build v2.3.1 · 2026-06-17 · fix TIT_SEL (carga de titulares) -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -309,7 +309,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.3</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.3.1</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -701,6 +701,7 @@ function paintMarkers(map,metaId){
 /* ════════ TITULARES ════════ */
 let TIT_ALL=[], TIT_GESTORES=[], TIT_LOADED=false;
 let TIT_VIEW='tabla', TIT_MAP=null, TIT_FILTERED=[];
+let TIT_SEL=new Set();
 
 async function loadTitulares(force){
   if(TIT_LOADED && !force) return;
