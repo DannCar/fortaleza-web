@@ -214,6 +214,26 @@ input{font-family:inherit}
 .map-card{padding:0;overflow:hidden;position:relative}
 .tit-map{width:100%;height:calc(100vh - 250px);min-height:420px}
 .tit-map-meta{position:absolute;top:14px;right:14px;background:rgba(6,16,27,.82);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:9px;padding:6px 12px;font-family:var(--mono);font-size:11px;color:var(--text-dim);z-index:2}
+/* Selección múltiple */
+.tit-cbx{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;vertical-align:middle}
+.tit-chkcol{width:40px;text-align:center}
+.tit-table tr.is-sel{background:rgba(43,196,190,.10)}
+.off-tag{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.5px;background:rgba(217,100,90,.16);color:var(--danger);padding:1px 6px;border-radius:5px;margin-left:6px;vertical-align:middle}
+.tit-bulk{display:none;align-items:center;gap:16px;background:var(--navy-700);border:1px solid var(--border-strong);border-radius:13px;padding:12px 18px;margin-bottom:14px}
+.tit-bulk-n{font-family:var(--mono);font-size:13px;color:var(--text-dim)}
+.tit-bulk-n b{color:var(--teal-bright);font-size:15px}
+.tit-bulk-off{background:var(--danger);color:#fff;border-radius:10px;padding:9px 18px;font-weight:600;font-size:13px}
+.tit-bulk-off:hover{filter:brightness(1.08)}
+.tit-bulk-clear{margin-left:auto;color:var(--text-dim);font-size:13px;background:none}
+.tit-bulk-clear:hover{color:var(--text)}
+/* Popups del mapa — paleta oscura legible */
+.mapboxgl-popup-content{background:var(--navy-800)!important;border:1px solid var(--border-strong);border-radius:13px!important;padding:13px 16px!important;box-shadow:0 18px 44px rgba(0,0,0,.55)!important;color:var(--text)!important}
+.mapboxgl-popup-close-button{color:var(--text-faint)!important;font-size:18px!important;padding:2px 8px!important}
+.mapboxgl-popup-close-button:hover{background:transparent!important;color:var(--text)!important}
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip,.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip{border-bottom-color:var(--navy-800)!important}
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip{border-top-color:var(--navy-800)!important}
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip{border-right-color:var(--navy-800)!important}
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip{border-left-color:var(--navy-800)!important}
 .geo-overlay{position:fixed;inset:0;background:rgba(4,12,20,.78);backdrop-filter:blur(6px);z-index:200;display:none;place-items:center}
 .geo-overlay.show{display:grid}
 .geo-modal{width:min(440px,90vw);background:var(--navy-800);border:1px solid var(--border-strong);border-radius:18px;padding:30px 32px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
@@ -393,6 +413,11 @@ input{font-family:inherit}
           <select class="tit-sel" id="titEstado" onchange="onEstadoChange()"><option value="">Estado · todos</option></select>
           <select class="tit-sel" id="titMuni" onchange="applyTitFilters()"><option value="">Municipio · todos</option></select>
           <select class="tit-sel" id="titGestorF" onchange="applyTitFilters()"><option value="">Gestor · todos</option></select>
+          <select class="tit-sel" id="titEstatus" onchange="applyTitFilters()">
+            <option value="activos" selected>Activos</option>
+            <option value="inactivos">Inactivos</option>
+            <option value="todos">Todos</option>
+          </select>
           <label class="tit-chk"><input type="checkbox" id="titUrg" onchange="applyTitFilters()"> Solo urgentes</label>
           <span class="tit-count" id="titCount">—</span>
         </div>
@@ -404,6 +429,11 @@ input{font-family:inherit}
             <button class="tv-btn active" id="tvTabla" onclick="setTitView('tabla')">▤ Tabla</button>
             <button class="tv-btn" id="tvMapa" onclick="setTitView('mapa')">◉ Mapa</button>
           </div>
+        </div>
+        <div class="tit-bulk" id="titBulk" style="display:none">
+          <span class="tit-bulk-n">▸ <b id="titBulkCount">0 seleccionados</b></span>
+          <button class="tit-bulk-off" onclick="bulkSetActivo(false)">⊘ Desactivar seleccionados</button>
+          <button class="tit-bulk-clear" onclick="limpiarSel()">Limpiar selección</button>
         </div>
         <div class="card" id="titTableCard"><div class="tit-wrap" id="titWrap">
           <div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>
@@ -700,7 +730,10 @@ function applyTitFilters(){
   const q=(document.getElementById('titSearch').value||'').toLowerCase().trim();
   const est=document.getElementById('titEstado').value, mun=document.getElementById('titMuni').value;
   const ges=document.getElementById('titGestorF').value, soloUrg=document.getElementById('titUrg').checked;
+  const estatus=document.getElementById('titEstatus').value;
   const rows=TIT_ALL.filter(t=>{
+    if(estatus==='activos' && !t.ACTIVO) return false;
+    if(estatus==='inactivos' && t.ACTIVO) return false;
     if(est && t.ESTADO!==est) return false;
     if(mun && t.MUNICIPIO!==mun) return false;
     if(ges==='__none__'){ if(t.ID_GESTOR) return false; } else if(ges){ if(t.ID_GESTOR!==ges) return false; }
@@ -715,12 +748,16 @@ function applyTitFilters(){
 function renderTit(rows){
   document.getElementById('titCount').textContent=`${rows.length} de ${TIT_ALL.length}`;
   const wrap=document.getElementById('titWrap');
-  if(!rows.length){ wrap.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>Sin titulares para estos filtros.</p></div>'; return; }
+  if(!rows.length){ wrap.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>Sin titulares para estos filtros.</p></div>'; updateBulkBar(); return; }
   const cap=rows.slice(0,400);
+  const allSel=cap.length>0 && cap.every(t=>TIT_SEL.has(t.ID_TITULAR));
   const gOpts=g=>TIT_GESTORES.map(x=>`<option value="${x.ID_GESTOR}" ${x.ID_GESTOR===g?'selected':''}>${x.NOMBRE}</option>`).join('');
-  wrap.innerHTML='<table class="tit-table"><thead><tr><th>Titular</th><th>Ubicación</th><th>Gestor</th><th style="text-align:right">Acciones</th></tr></thead><tbody>'+
-    cap.map(t=>`<tr class="${t.ACTIVO?'':'is-inactive'}">
-      <td><div class="tit-name">${t.NOMBRE||'—'}${t.URGENTE?'<span class="urg-tag">URGENTE</span>':''}</div><div class="tit-id">${t.ID_TITULAR}</div></td>
+  wrap.innerHTML='<table class="tit-table"><thead><tr>'+
+    `<th class="tit-chkcol"><input type="checkbox" class="tit-cbx" id="titSelAll" ${allSel?'checked':''} onclick="toggleSelAll(this.checked)"></th>`+
+    '<th>Titular</th><th>Ubicación</th><th>Gestor</th><th style="text-align:right">Acciones</th></tr></thead><tbody>'+
+    cap.map(t=>`<tr class="${t.ACTIVO?'':'is-inactive'} ${TIT_SEL.has(t.ID_TITULAR)?'is-sel':''}">
+      <td class="tit-chkcol"><input type="checkbox" class="tit-cbx" ${TIT_SEL.has(t.ID_TITULAR)?'checked':''} onclick="toggleSel('${t.ID_TITULAR}',this.checked)"></td>
+      <td><div class="tit-name">${t.NOMBRE||'—'}${t.URGENTE?'<span class="urg-tag">URGENTE</span>':''}${t.ACTIVO?'':'<span class="off-tag">INACTIVO</span>'}</div><div class="tit-id">${t.ID_TITULAR}</div></td>
       <td><div class="tit-loc">${t.MUNICIPIO||'—'}, ${t.ESTADO||'—'}</div><div class="tit-loc" style="color:var(--text-faint)">${t.DIRECCION||''}${(t.LATITUD&&t.LONGITUD)?'<span class="tit-geo">● geo</span>':'<span class="tit-no-geo">○ sin geo</span>'}</div></td>
       <td><select class="tit-gsel" onchange="reassignTit('${t.ID_TITULAR}',this.value)"><option value="">Sin asignar</option>${gOpts(t.ID_GESTOR)}</select></td>
       <td><div class="tit-act">
@@ -728,6 +765,30 @@ function renderTit(rows){
         <button class="tit-btn ${t.ACTIVO?'act-on':'act-off'}" title="${t.ACTIVO?'Desactivar':'Activar'}" onclick="toggleAct('${t.ID_TITULAR}',${!t.ACTIVO})">${t.ACTIVO?'◉':'○'}</button>
       </div></td></tr>`).join('')+'</tbody></table>'+
     (rows.length>400?`<div class="empty" style="padding:18px"><p>Mostrando 400 de ${rows.length}. Afina los filtros para ver más.</p></div>`:'');
+  updateBulkBar();
+}
+function toggleSel(id,checked){ if(checked) TIT_SEL.add(id); else TIT_SEL.delete(id);
+  const tr=event&&event.target?event.target.closest('tr'):null; if(tr) tr.classList.toggle('is-sel',checked);
+  const sa=document.getElementById('titSelAll'); if(sa){ const cap=TIT_FILTERED.slice(0,400); sa.checked=cap.length>0&&cap.every(t=>TIT_SEL.has(t.ID_TITULAR)); }
+  updateBulkBar();
+}
+function toggleSelAll(checked){ const cap=TIT_FILTERED.slice(0,400); cap.forEach(t=>{ if(checked) TIT_SEL.add(t.ID_TITULAR); else TIT_SEL.delete(t.ID_TITULAR); }); renderTit(TIT_FILTERED); }
+function limpiarSel(){ TIT_SEL.clear(); renderTit(TIT_FILTERED); }
+function updateBulkBar(){
+  const bar=document.getElementById('titBulk'); if(!bar) return;
+  const n=TIT_SEL.size;
+  bar.style.display=n?'flex':'none';
+  const c=document.getElementById('titBulkCount'); if(c) c.textContent=`${n} seleccionado${n!==1?'s':''}`;
+}
+async function bulkSetActivo(activo){
+  const ids=[...TIT_SEL]; if(!ids.length) return;
+  if(!confirm(`${activo?'Activar':'Desactivar'} ${ids.length} titular(es)?`)) return;
+  // optimista
+  ids.forEach(id=>{ const t=_findTit(id); if(t) t.ACTIVO=activo; });
+  applyTitFilters();
+  const r=await apiCall('admin-titulares-bulk','POST',{ids,activo});
+  if(r&&r.success){ toast(`${r.updated||ids.length} titular(es) ${activo?'activados':'desactivados'}`); TIT_SEL.clear(); applyTitFilters(); }
+  else { ids.forEach(id=>{ const t=_findTit(id); if(t) t.ACTIVO=!activo; }); applyTitFilters(); toast('No se pudo completar la acción'); }
 }
 function _findTit(id){ return TIT_ALL.find(t=>t.ID_TITULAR===id); }
 async function reassignTit(id,gestorId){
