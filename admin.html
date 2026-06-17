@@ -208,6 +208,12 @@ input{font-family:inherit}
 .tit-tool:hover{border-color:var(--teal);color:var(--teal-bright)}
 .tit-tool:disabled{opacity:.4;cursor:not-allowed}
 .tit-tool-n{font-family:var(--mono);font-size:11px;background:var(--teal);color:#04141a;border-radius:20px;padding:1px 8px;font-weight:700}
+.tit-view{margin-left:auto;display:flex;gap:4px;background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:3px}
+.tv-btn{padding:7px 14px;border-radius:8px;font-size:13px;color:var(--text-dim);transition:.14s}
+.tv-btn.active{background:var(--teal);color:#04141a;font-weight:600}
+.map-card{padding:0;overflow:hidden;position:relative}
+.tit-map{width:100%;height:calc(100vh - 250px);min-height:420px}
+.tit-map-meta{position:absolute;top:14px;right:14px;background:rgba(6,16,27,.82);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:9px;padding:6px 12px;font-family:var(--mono);font-size:11px;color:var(--text-dim);z-index:2}
 .geo-overlay{position:fixed;inset:0;background:rgba(4,12,20,.78);backdrop-filter:blur(6px);z-index:200;display:none;place-items:center}
 .geo-overlay.show{display:grid}
 .geo-modal{width:min(440px,90vw);background:var(--navy-800);border:1px solid var(--border-strong);border-radius:18px;padding:30px 32px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
@@ -394,10 +400,18 @@ input{font-family:inherit}
           <button class="tit-tool" id="btnImport" onclick="document.getElementById('impFile').click()">⬆ Importar Excel</button>
           <input type="file" id="impFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="onImportFile(this)">
           <button class="tit-tool" id="btnGeo" onclick="geocodificarExistentes()">◎ Geocodificar sin coords <span id="geoPend" class="tit-tool-n">0</span></button>
+          <div class="tit-view">
+            <button class="tv-btn active" id="tvTabla" onclick="setTitView('tabla')">▤ Tabla</button>
+            <button class="tv-btn" id="tvMapa" onclick="setTitView('mapa')">◉ Mapa</button>
+          </div>
         </div>
-        <div class="card"><div class="tit-wrap" id="titWrap">
+        <div class="card" id="titTableCard"><div class="tit-wrap" id="titWrap">
           <div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>
         </div></div>
+        <div class="card map-card" id="titMapCard" style="display:none">
+          <div id="titMap" class="tit-map"></div>
+          <div class="tit-map-meta" id="titMapMeta">—</div>
+        </div>
       </section>
       <section class="panel" id="panel-visitas">
         <div class="stub"><div class="stub-inner">
@@ -463,7 +477,7 @@ const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:nul
 function todayLocal(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function initials(n){ if(!n) return '?'; return n.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
-function fixCoord(v){ let n=parseFloat(v); if(!isFinite(n)) return null; if(Math.abs(n)>180) n=n/1000000; return n; }
+function fixCoord(v){ let n=parseFloat(String(v==null?'':v).replace(',','.')); if(!isFinite(n)) return null; if(Math.abs(n)>180) n=n/1000000; return n; }
 function resClass(r){ r=(r||'').toLowerCase(); if(r.includes('pago'))return'res-pago'; if(r.includes('localiza a domicilio')&&!r.includes('no'))return'res-loc'; if(r.startsWith('no')||r.includes('no se localiza'))return'res-no'; return'res-otro'; }
 function resShort(r){ if(!r)return'—'; return r.length>26?r.slice(0,25)+'…':r; }
 
@@ -655,6 +669,7 @@ function paintMarkers(map,metaId){
 /* ════════ BOOT ════════ */
 /* ════════ TITULARES ════════ */
 let TIT_ALL=[], TIT_GESTORES=[], TIT_LOADED=false;
+let TIT_VIEW='tabla', TIT_MAP=null, TIT_FILTERED=[];
 
 async function loadTitulares(force){
   if(TIT_LOADED && !force) return;
@@ -693,7 +708,9 @@ function applyTitFilters(){
     if(q && !((t.NOMBRE+' '+t.ID_TITULAR+' '+t.DIRECCION).toLowerCase().includes(q))) return false;
     return true;
   });
+  TIT_FILTERED=rows;
   renderTit(rows);
+  if(TIT_VIEW==='mapa') paintTitMap();
 }
 function renderTit(rows){
   document.getElementById('titCount').textContent=`${rows.length} de ${TIT_ALL.length}`;
@@ -866,6 +883,57 @@ async function confirmarImport(){
   document.getElementById('geoStatFail').textContent=`${fail} sin geo`;
   document.getElementById('geoClose').style.display='block';
   await loadTitulares(true);
+}
+
+/* ──── Mapa de titulares ──── */
+function setTitView(mode){
+  TIT_VIEW=mode;
+  document.getElementById('tvTabla').classList.toggle('active',mode==='tabla');
+  document.getElementById('tvMapa').classList.toggle('active',mode==='mapa');
+  document.getElementById('titTableCard').style.display=(mode==='tabla')?'':'none';
+  document.getElementById('titMapCard').style.display=(mode==='mapa')?'':'none';
+  if(mode==='mapa'){
+    setTimeout(()=>{ if(!TIT_MAP) initTitMap(); else { TIT_MAP.resize(); paintTitMap(); } },180);
+  }
+}
+function initTitMap(){
+  if(typeof mapboxgl==='undefined'){ console.warn('Mapbox no cargó'); return; }
+  mapboxgl.accessToken=CFG.MAPBOX_TOKEN;
+  TIT_MAP=new mapboxgl.Map({ container:'titMap', style:'mapbox://styles/mapbox/satellite-streets-v12', center:[-99.13,19.43], zoom:8, attributionControl:false });
+  TIT_MAP.addControl(new mapboxgl.NavigationControl(),'top-right');
+  TIT_MAP.on('load',()=>{
+    TIT_MAP.addSource('tit',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    TIT_MAP.addLayer({ id:'tit-pts', type:'circle', source:'tit',
+      paint:{
+        'circle-radius':['interpolate',['linear'],['zoom'],7,3.5,12,6,15,9],
+        'circle-color':['case',['get','urg'],'#E0A04A',['get','act'],'#2BC4BE','#7A8A98'],
+        'circle-stroke-width':1.5,'circle-stroke-color':'#06101B','circle-opacity':.9
+      }
+    });
+    TIT_MAP.on('click','tit-pts',e=>{
+      const p=e.features[0].properties, c=e.features[0].geometry.coordinates.slice();
+      new mapboxgl.Popup({offset:12,closeButton:false}).setLngLat(c).setHTML(
+        `<div style="font-family:Outfit,sans-serif;max-width:230px"><b>${p.nombre}</b>${p.urg==='true'||p.urg===true?' <span style="color:#E0A04A;font-size:11px">⚑ URGENTE</span>':''}<br><span style="font-family:JetBrains Mono,monospace;font-size:10px;color:#93A6B3">${p.id}</span><br><span style="font-size:12px;color:#B9C6D0">${p.dir||''}</span><br><span style="font-size:11px;color:#7A8A98">Gestor: ${p.gestor||'Sin asignar'}</span></div>`
+      ).addTo(TIT_MAP);
+    });
+    TIT_MAP.on('mouseenter','tit-pts',()=>TIT_MAP.getCanvas().style.cursor='pointer');
+    TIT_MAP.on('mouseleave','tit-pts',()=>TIT_MAP.getCanvas().style.cursor='');
+    paintTitMap();
+  });
+}
+function paintTitMap(){
+  if(!TIT_MAP||!TIT_MAP.getSource||!TIT_MAP.getSource('tit')) return;
+  const feats=[]; const bounds=new mapboxgl.LngLatBounds(); let n=0;
+  for(const t of TIT_FILTERED){
+    const lat=fixCoord(t.LATITUD), lon=fixCoord(t.LONGITUD);
+    if(lat===null||lon===null||Math.abs(lat)>90||Math.abs(lon)>180) continue;
+    feats.push({ type:'Feature', geometry:{type:'Point',coordinates:[lon,lat]},
+      properties:{ nombre:t.NOMBRE||'—', id:t.ID_TITULAR, dir:t.DIRECCION||'', gestor:t.NOMBRE_GESTOR||'', urg:!!t.URGENTE, act:!!t.ACTIVO } });
+    bounds.extend([lon,lat]); n++;
+  }
+  TIT_MAP.getSource('tit').setData({type:'FeatureCollection',features:feats});
+  const meta=document.getElementById('titMapMeta'); if(meta) meta.textContent=`${n} titular(es) en el mapa`;
+  if(n) { try{ TIT_MAP.fitBounds(bounds,{padding:60,maxZoom:14,duration:600}); }catch(e){} }
 }
 
 /* ════════ BOOT ════════ */
