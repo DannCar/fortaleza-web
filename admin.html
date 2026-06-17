@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.3.1 · 2026-06-17 · fix TIT_SEL (carga de titulares) -->
+<!-- FCC Admin · build v2.4 · 2026-06-17 · estatus derivados (activo/asignado/visitado/inactivo) + activar masivo -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -227,6 +227,14 @@ input{font-family:inherit}
 .tit-bulk-off:hover{filter:brightness(1.08)}
 .tit-bulk-clear{margin-left:auto;color:var(--text-dim);font-size:13px;background:none}
 .tit-bulk-clear:hover{color:var(--text)}
+.tit-bulk-on{background:var(--good);color:#06140d;border-radius:10px;padding:9px 16px;font-weight:600;font-size:13px}
+.tit-bulk-on:hover{filter:brightness(1.08)}
+/* Insignias de estatus */
+.st-badge{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.5px;padding:2px 7px;border-radius:5px;margin-left:7px;vertical-align:middle;font-weight:600}
+.st-activo{background:rgba(147,166,179,.16);color:#B9C6D0}
+.st-asignado{background:var(--teal-dim);color:var(--teal-bright)}
+.st-visitado{background:rgba(95,185,142,.18);color:var(--good)}
+.st-inactivo{background:rgba(217,100,90,.16);color:var(--danger)}
 /* Popups del mapa — paleta oscura legible */
 .mapboxgl-popup-content{background:var(--navy-800)!important;border:1px solid var(--border-strong);border-radius:13px!important;padding:13px 16px!important;box-shadow:0 18px 44px rgba(0,0,0,.55)!important;color:var(--text)!important}
 .mapboxgl-popup-close-button{color:var(--text-faint)!important;font-size:18px!important;padding:2px 8px!important}
@@ -309,7 +317,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.3.1</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.4</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -415,7 +423,10 @@ input{font-family:inherit}
           <select class="tit-sel" id="titMuni" onchange="applyTitFilters()"><option value="">Municipio · todos</option></select>
           <select class="tit-sel" id="titGestorF" onchange="applyTitFilters()"><option value="">Gestor · todos</option></select>
           <select class="tit-sel" id="titEstatus" onchange="applyTitFilters()">
-            <option value="activos" selected>Activos</option>
+            <option value="activos" selected>Activos (todos)</option>
+            <option value="activo">Sin asignar</option>
+            <option value="asignado">Asignados</option>
+            <option value="visitado">Visitados</option>
             <option value="inactivos">Inactivos</option>
             <option value="todos">Todos</option>
           </select>
@@ -433,7 +444,8 @@ input{font-family:inherit}
         </div>
         <div class="tit-bulk" id="titBulk" style="display:none">
           <span class="tit-bulk-n">▸ <b id="titBulkCount">0 seleccionados</b></span>
-          <button class="tit-bulk-off" onclick="bulkSetActivo(false)">⊘ Desactivar seleccionados</button>
+          <button class="tit-bulk-on" onclick="bulkSetActivo(true)">◉ Activar</button>
+          <button class="tit-bulk-off" onclick="bulkSetActivo(false)">⊘ Desactivar</button>
           <button class="tit-bulk-clear" onclick="limpiarSel()">Limpiar selección</button>
         </div>
         <div class="card" id="titTableCard"><div class="tit-wrap" id="titWrap">
@@ -713,8 +725,18 @@ async function loadTitulares(force){
     return;
   }
   TIT_ALL=res.titulares||[]; TIT_GESTORES=res.gestores||[]; TIT_LOADED=true;
+  const visSet=new Set(res.visitados||[]);
+  TIT_ALL.forEach(t=>{ t.VISITADO=visSet.has(t.ID_TITULAR); });
   populateTitFilters(); applyTitFilters(); updateGeoPending();
 }
+// Estado derivado: inactivo > visitado > asignado > activo(sin asignar)
+function titEstado(t){
+  if(!t.ACTIVO) return 'inactivo';
+  if(t.VISITADO) return 'visitado';
+  if(t.ID_GESTOR) return 'asignado';
+  return 'activo';
+}
+const TIT_ESTADO_LABEL={activo:'SIN ASIGNAR',asignado:'ASIGNADO',visitado:'VISITADO',inactivo:'INACTIVO'};
 function populateTitFilters(){
   const estados=[...new Set(TIT_ALL.map(t=>t.ESTADO).filter(Boolean))].sort();
   document.getElementById('titEstado').innerHTML='<option value="">Estado · todos</option>'+estados.map(e=>`<option value="${e}">${e}</option>`).join('');
@@ -735,7 +757,8 @@ function applyTitFilters(){
   const estatus=document.getElementById('titEstatus').value;
   const rows=TIT_ALL.filter(t=>{
     if(estatus==='activos' && !t.ACTIVO) return false;
-    if(estatus==='inactivos' && t.ACTIVO) return false;
+    else if(estatus==='inactivos' && t.ACTIVO) return false;
+    else if((estatus==='activo'||estatus==='asignado'||estatus==='visitado') && titEstado(t)!==estatus) return false;
     if(est && t.ESTADO!==est) return false;
     if(mun && t.MUNICIPIO!==mun) return false;
     if(ges==='__none__'){ if(t.ID_GESTOR) return false; } else if(ges){ if(t.ID_GESTOR!==ges) return false; }
@@ -759,7 +782,7 @@ function renderTit(rows){
     '<th>Titular</th><th>Ubicación</th><th>Gestor</th><th style="text-align:right">Acciones</th></tr></thead><tbody>'+
     cap.map(t=>`<tr class="${t.ACTIVO?'':'is-inactive'} ${TIT_SEL.has(t.ID_TITULAR)?'is-sel':''}">
       <td class="tit-chkcol"><input type="checkbox" class="tit-cbx" ${TIT_SEL.has(t.ID_TITULAR)?'checked':''} onclick="toggleSel('${t.ID_TITULAR}',this.checked)"></td>
-      <td><div class="tit-name">${t.NOMBRE||'—'}${t.URGENTE?'<span class="urg-tag">URGENTE</span>':''}${t.ACTIVO?'':'<span class="off-tag">INACTIVO</span>'}</div><div class="tit-id">${t.ID_TITULAR}</div></td>
+      <td><div class="tit-name">${t.NOMBRE||'—'} <span class="st-badge st-${titEstado(t)}">${TIT_ESTADO_LABEL[titEstado(t)]}</span>${t.URGENTE?'<span class="urg-tag">URGENTE</span>':''}</div><div class="tit-id">${t.ID_TITULAR}</div></td>
       <td><div class="tit-loc">${t.MUNICIPIO||'—'}, ${t.ESTADO||'—'}</div><div class="tit-loc" style="color:var(--text-faint)">${t.DIRECCION||''}${(t.LATITUD&&t.LONGITUD)?'<span class="tit-geo">● geo</span>':'<span class="tit-no-geo">○ sin geo</span>'}</div></td>
       <td><select class="tit-gsel" onchange="reassignTit('${t.ID_TITULAR}',this.value)"><option value="">Sin asignar</option>${gOpts(t.ID_GESTOR)}</select></td>
       <td><div class="tit-act">
