@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Fortaleza Field · build f1.4 · 2026-06-17 · misiones del dia reales (sin demo) -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -650,6 +651,96 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 }
 .emoji-opt:active { transform: scale(0.92); }
 .emoji-opt.selected { border-color: var(--teal2); background: rgba(23,133,130,0.12); }
+
+.btn-foto-perfil {
+  margin-top: 14px; width: 100%; padding: 11px;
+  border-radius: 12px; background: var(--surface2);
+  border: 1px solid var(--border2); color: var(--text);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.btn-foto-perfil:active { transform: scale(0.98); }
+.btn-credencial {
+  margin-top: 14px; display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 22px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #1c1407; font-weight: 700; font-size: 14px; z-index: 1;
+  box-shadow: 0 6px 20px rgba(191,161,129,0.28); cursor: pointer;
+}
+.btn-credencial:active { transform: scale(0.97); }
+.btn-reintentar {
+  margin-top: 16px; padding: 10px 24px; border-radius: 12px;
+  background: var(--teal); color: #04141a; font-weight: 600; font-size: 14px; cursor: pointer;
+}
+
+/* ───── Credencial digital ───── */
+.cred-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(4,10,18,0.9); backdrop-filter: blur(10px);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px; padding: 24px;
+}
+.cred-overlay.show { display: flex; }
+.cred-card {
+  position: relative; width: min(340px, 86vw); border-radius: 26px; overflow: hidden;
+  background: linear-gradient(160deg, #0e2236, #0a1828 60%);
+  border: 1px solid rgba(191,161,129,0.3);
+  box-shadow: 0 30px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+  padding: 0 26px 26px; text-align: center;
+  animation: credIn .4s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes credIn { from{opacity:0;transform:translateY(20px) scale(.96)} to{opacity:1;transform:none} }
+.cred-shine {
+  position: absolute; top: -40%; left: -30%; width: 160%; height: 80%;
+  background: radial-gradient(ellipse at center, rgba(26,181,177,0.18), transparent 60%);
+  pointer-events: none;
+}
+.cred-band {
+  display: flex; align-items: center; gap: 11px;
+  padding: 20px 4px 18px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 22px;
+}
+.cred-logo {
+  width: 40px; height: 40px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 24px; color: #04141a;
+}
+.cred-org { text-align: left; }
+.cred-org-name {
+  font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700;
+  color: var(--text); line-height: 1; letter-spacing: .5px;
+}
+.cred-org-sub { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); margin-top: 3px; }
+.cred-photo {
+  width: 108px; height: 108px; border-radius: 50%; margin: 0 auto 16px;
+  background: linear-gradient(135deg, var(--navy2), var(--navy3));
+  background-size: cover; background-position: center;
+  border: 3px solid var(--gold);
+  display: flex; align-items: center; justify-content: center; font-size: 54px;
+  box-shadow: 0 0 0 6px rgba(191,161,129,0.12);
+}
+.cred-name { font-size: 21px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.cred-role {
+  display: inline-block; margin-top: 8px; padding: 4px 14px; border-radius: 20px;
+  background: rgba(23,133,130,0.18); border: 1px solid rgba(26,181,177,0.35);
+  font-size: 11px; letter-spacing: 1px; color: var(--teal2); font-weight: 600; text-transform: uppercase;
+}
+.cred-data {
+  margin: 22px 0 18px; display: flex; flex-direction: column; gap: 1px;
+  border-radius: 14px; overflow: hidden; border: 1px solid var(--border);
+}
+.cred-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; background: var(--surface); }
+.cred-row span { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); }
+.cred-row b { font-size: 14px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.cred-qr {
+  width: 120px; height: 120px; margin: 0 auto;
+  background: #fff; border-radius: 14px; padding: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.cred-qr img { width: 100%; height: 100%; display: block; }
+.cred-foot { margin-top: 16px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); }
+.cred-close {
+  padding: 13px 40px; border-radius: 14px; background: var(--surface2);
+  border: 1px solid var(--border2); color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer;
+}
 
 /* Stats del perfil */
 .perfil-stats {
@@ -1624,7 +1715,7 @@ input[type="file"].foto-input { display: none; }
   <!-- Header FIJO -->
   <div class="perfil-header" style="flex-shrink:0;background:var(--navy);z-index:20;">
     <button class="back-btn" onclick="goTo('home')">←</button>
-    <div class="perfil-title">Mi Perfil</div>
+    <div class="perfil-title">Mi Perfil <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);font-weight:400;letter-spacing:1px;margin-left:6px">f1.4</span></div>
   </div>
 
   <!-- Scroll area -->
@@ -1639,12 +1730,15 @@ input[type="file"].foto-input { display: none; }
       </div>
       <div class="avatar-name" id="perfilName">Cargando...</div>
       <div class="avatar-rank-badge" id="perfilRank">🗺️ Recluta de Campo</div>
+      <button class="btn-credencial" onclick="abrirCredencial()">🪪 Mi credencial</button>
     </div>
 
     <!-- Avatar picker -->
     <div class="avatar-picker" id="avatarPicker">
       <div class="picker-title">Elige tu avatar</div>
       <div class="emoji-grid" id="emojiGrid"></div>
+      <button class="btn-foto-perfil" onclick="document.getElementById('fotoPerfilInput').click()">📷 Subir foto</button>
+      <input type="file" id="fotoPerfilInput" accept="image/*" style="display:none" onchange="onAvatarPhoto(this)">
     </div>
 
     <!-- Stats -->
@@ -2215,6 +2309,7 @@ function renderHome() {
 
   // Topbar
   document.getElementById('homeAvatar').childNodes[0].textContent = STATE.avatar;
+  renderAvatarUI();
   document.getElementById('homeGestorName').textContent = u.nombre || 'Agente';
 
   // XP y nivel
@@ -2309,27 +2404,38 @@ function renderRanking() {
 }
 
 function renderMissions() {
-  const missions = [
-    { tipo:'cobranza', icono:'💰', clase:'mt-cobranza', cliente:'Cartera Welcome', nombre:'Juan Pérez López',    meta:'MX01058803', xp:50, done:false, urgent:true  },
-    { tipo:'cobranza', icono:'💰', clase:'mt-cobranza', cliente:'Cartera Welcome', nombre:'María Torres Ruiz',   meta:'MX01060059', xp:50, done:false, urgent:false },
-    { tipo:'censo',    icono:'📋', clase:'mt-censo',    cliente:'Censo CDMX',     nombre:'Roberto Soto García', meta:'C-2041',     xp:30, done:true,  urgent:false },
-  ];
+  const cont = document.getElementById('missionsList');
+  if (!cont) return;
+  const all = TITULARES_DATA || [];
+  if (!all.length) {
+    cont.innerHTML = `<div class="mission-empty" style="padding:22px;text-align:center;color:var(--text3);font-size:13px">${CARGA_ERROR ? 'No se pudo cargar tu cartera. Revisa tu conexión.' : 'Sin misiones por ahora.'}</div>`;
+    return;
+  }
+  const esUrg = v => (v === true || v === 'TRUE' || v === 'SI');
+  const pend = all.filter(t => !VISITAS_HOY_IDS.has(t.ID_TITULAR));
+  // Prioriza urgentes y muestra hasta 4 misiones del día
+  const orden = [...(pend.length ? pend : all)].sort((a,b)=> (esUrg(b.URGENTE)?1:0) - (esUrg(a.URGENTE)?1:0));
+  const lista = orden.slice(0, 4);
 
-  document.getElementById('missionsList').innerHTML = missions.map(m => `
-    <div class="mission-card ${m.urgent?'urgent':''} ${m.done?'done':''}"
-         onclick="${m.done?'':'goTo(\'captura\')'}" >
-      <div class="mission-type-icon ${m.clase}">${m.icono}</div>
+  cont.innerHTML = lista.map(t => {
+    const visitado = VISITAS_HOY_IDS.has(t.ID_TITULAR);
+    const urgent = esUrg(t.URGENTE);
+    return `
+    <div class="mission-card ${urgent?'urgent':''} ${visitado?'done':''}"
+         onclick="abrirFicha('${t.ID_TITULAR}')">
+      <div class="mission-type-icon mt-cobranza">💰</div>
       <div class="mission-info">
-        <div class="mission-client">${m.cliente}</div>
-        <div class="mission-name">${m.nombre}</div>
-        <div class="mission-meta">ID: ${m.meta} ${m.urgent?'· ⚡ Urgente':''}</div>
+        <div class="mission-client">${t.CARTERA || 'Cartera'}</div>
+        <div class="mission-name">${t.NOMBRE || '—'}</div>
+        <div class="mission-meta">ID: ${t.ID_TITULAR}${urgent?' · ⚡ Urgente':''}</div>
       </div>
       <div class="mission-xp">
-        +${m.xp} XP
-        <span>${m.done?'✅ Lista':'Pendiente'}</span>
+        +50 XP
+        <span>${visitado?'✅ Lista':'Pendiente'}</span>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════
@@ -2341,6 +2447,7 @@ function renderPerfil() {
   const rank = getRank(u.xp||0);
 
   document.getElementById('avatarLarge').childNodes[0].textContent = STATE.avatar;
+  renderAvatarUI();
   document.getElementById('perfilName').textContent = u.nombre || 'Agente';
   document.getElementById('perfilRank').textContent = `${rank.icono} ${rank.nombre}`;
 
@@ -2367,17 +2474,89 @@ function togglePicker() {
 
 function selectAvatar(emoji) {
   STATE.avatar = emoji;
-  document.getElementById('avatarLarge').childNodes[0].textContent = emoji;
-  document.getElementById('homeAvatar').childNodes[0].textContent  = emoji;
   if (STATE.user) {
     STATE.user.avatar = emoji;
+    STATE.user.fotoPerfil = null; // al elegir emoji se quita la foto
     localStorage.setItem('ff_session', JSON.stringify(STATE.user));
   }
+  renderAvatarUI();
   document.querySelectorAll('.emoji-opt').forEach(el => {
     el.classList.toggle('selected', el.textContent === emoji);
   });
   document.getElementById('avatarPicker').classList.remove('open');
   showToast('✅','Avatar actualizado','');
+}
+
+// Pinta avatar (grande + mini) según foto o emoji
+function renderAvatarUI() {
+  const foto = STATE.user && STATE.user.fotoPerfil;
+  ['avatarLarge','homeAvatar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (foto) {
+      el.style.backgroundImage = `url(${foto})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.classList.add('has-foto');
+      if (el.childNodes[0] && el.childNodes[0].nodeType === 3) el.childNodes[0].textContent = '';
+    } else {
+      el.style.backgroundImage = '';
+      el.classList.remove('has-foto');
+      if (el.childNodes[0] && el.childNodes[0].nodeType === 3) el.childNodes[0].textContent = STATE.avatar;
+    }
+  });
+}
+
+// Subir foto: recorte cuadrado centrado + compresión a ~256px
+function onAvatarPhoto(input) {
+  const file = input.files && input.files[0]; input.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const size = 256;
+      const cv = document.createElement('canvas'); cv.width = size; cv.height = size;
+      const ctx = cv.getContext('2d');
+      const min = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width-min)/2, (img.height-min)/2, min, min, 0, 0, size, size);
+      const dataUrl = cv.toDataURL('image/jpeg', 0.82);
+      if (STATE.user) { STATE.user.fotoPerfil = dataUrl; localStorage.setItem('ff_session', JSON.stringify(STATE.user)); }
+      renderAvatarUI();
+      document.getElementById('avatarPicker').classList.remove('open');
+      showToast('✅','Foto actualizada','');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ───── Credencial digital ─────
+function abrirCredencial() {
+  renderCredencial();
+  document.getElementById('credOverlay').classList.add('show');
+}
+function cerrarCredencial() {
+  document.getElementById('credOverlay').classList.remove('show');
+}
+function renderCredencial() {
+  const u = STATE.user; if (!u) return;
+  const photo = document.getElementById('credPhoto');
+  if (u.fotoPerfil) {
+    photo.style.backgroundImage = `url(${u.fotoPerfil})`;
+    photo.textContent = '';
+    photo.classList.add('has-foto');
+  } else {
+    photo.style.backgroundImage = '';
+    photo.textContent = STATE.avatar || '🧭';
+    photo.classList.remove('has-foto');
+  }
+  document.getElementById('credName').textContent = u.nombre || 'Gestor';
+  document.getElementById('credId').textContent   = u.idGestor || '—';
+  const tel = u.telegramUser ? ('@' + String(u.telegramUser).replace('@','')) : '—';
+  document.getElementById('credTel').textContent  = tel;
+  const qrData = encodeURIComponent(`FORTALEZA CONTACT CENTER\nGestor: ${u.nombre||''}\nID: ${u.idGestor||''}\n${tel}`);
+  document.getElementById('credQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=0&data=${qrData}`;
 }
 
 function buildBadges() {}
@@ -2991,6 +3170,7 @@ let VISITAS_HOY_IDS = new Set(); // IDs visitados hoy
 let TITULAR_ACTIVO  = null; // el que está en pantalla ficha
 let FILTRO_ACTIVO   = 'todos';
 let HISTORIAL_DATA  = [];
+let CARGA_ERROR     = false; // true si falló la carga de misiones
 
 // ═══════════════════════════════════════════════
 // CARGAR MISIONES DESDE N8N
@@ -3018,28 +3198,20 @@ async function loadMisiones() {
     if (data.titulares) {
       TITULARES_DATA = data.titulares;
       VISITAS_HOY_IDS = new Set(data.visitados_hoy || []);
+      CARGA_ERROR = false;
     } else {
       throw new Error('Sin datos');
     }
   } catch(e) {
-    // DEMO con datos ficticios realistas
-    TITULARES_DATA = getDemoTitulares();
-    VISITAS_HOY_IDS = new Set(['MX01060059']);
+    // Sin datos demo: si el servidor no responde, lista vacía con aviso
+    TITULARES_DATA = [];
+    VISITAS_HOY_IDS = new Set();
+    CARGA_ERROR = true;
   }
 
   // Respeta el filtro activo (Pendientes/Visitados/etc.) en vez de mostrar todos
   aplicarFiltros();
-}
-
-function getDemoTitulares() {
-  return [
-    { ID_TITULAR:'MX01058803', NOMBRE:'Jorge Daniel Bautista Corpus',  DIRECCION:'Rio aguanaval 11, Prados de Ixtacala II',   MUNICIPIO:'Atizapán de Zaragoza', ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
-    { ID_TITULAR:'MX01060059', NOMBRE:'Carlos Martinez Hernandez',      DIRECCION:'ALLENDE DEP 01, BENITO JUAREZ',             MUNICIPIO:'Acambay de Ruíz',      ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
-    { ID_TITULAR:'MX01061024', NOMBRE:'Omar Martinez Del Toro',         DIRECCION:'Nayarit Mz 20 Lt 15, Anáhuac 1a Secc',     MUNICIPIO:'Acolman',              ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
-    { ID_TITULAR:'MX01061252', NOMBRE:'Alfredo Abraham Soto Velázquez', DIRECCION:'CDA DE FRAILES',                           MUNICIPIO:'Acolman',              ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
-    { ID_TITULAR:'MX01060396', NOMBRE:'Diana Ledezma Reyes',            DIRECCION:'SANTA ANA MATLAHUACA',                     MUNICIPIO:'Aculco',               ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
-    { ID_TITULAR:'MX01059245', NOMBRE:'Mayled Aguilar Nieto',           DIRECCION:'cda los pinos S/N',                        MUNICIPIO:'Almoloya de Alquisiras',ESTADO:'Estado de México', CARTERA:'Welcome', ACTIVO:'SI' },
-  ];
+  if (typeof renderMissions === 'function') renderMissions();
 }
 
 // ═══════════════════════════════════════════════
@@ -3052,7 +3224,12 @@ function renderTitularesList() {
   count.textContent = `${TITULARES_FILTRADOS.length} titular${TITULARES_FILTRADOS.length !== 1 ? 'es' : ''}`;
 
   if (!TITULARES_FILTRADOS.length) {
-    lista.innerHTML = `
+    lista.innerHTML = CARGA_ERROR ? `
+      <div class="empty-state-misiones">
+        <div class="empty-icon">📡</div>
+        <div class="empty-text">No se pudo conectar con el servidor</div>
+        <button class="btn-reintentar" onclick="loadMisiones()">Reintentar</button>
+      </div>` : `
       <div class="empty-state-misiones">
         <div class="empty-icon">🗺️</div>
         <div class="empty-text">No hay titulares para este filtro</div>
@@ -3302,5 +3479,31 @@ function getInitials(nombre = '') {
   return nombre.split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
 }
 </script>
+
+<!-- ════════════════ CREDENCIAL DIGITAL ════════════════ -->
+<div class="cred-overlay" id="credOverlay">
+  <div class="cred-card">
+    <div class="cred-shine"></div>
+    <div class="cred-band">
+      <div class="cred-logo">F</div>
+      <div class="cred-org">
+        <div class="cred-org-name">FORTALEZA</div>
+        <div class="cred-org-sub">Contact Center</div>
+      </div>
+    </div>
+    <div class="cred-photo" id="credPhoto">🧭</div>
+    <div class="cred-name" id="credName">—</div>
+    <div class="cred-role">Gestor Domiciliario</div>
+    <div class="cred-data">
+      <div class="cred-row"><span>ID Gestor</span><b id="credId">—</b></div>
+      <div class="cred-row"><span>Telegram</span><b id="credTel">—</b></div>
+      <div class="cred-row"><span>Vigencia</span><b>2026</b></div>
+    </div>
+    <div class="cred-qr"><img id="credQr" alt="QR de verificación"></div>
+    <div class="cred-foot">Credencial digital · Personal autorizado</div>
+  </div>
+  <button class="cred-close" onclick="cerrarCredencial()">Cerrar</button>
+</div>
+
 </body>
 </html>
