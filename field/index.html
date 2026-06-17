@@ -871,11 +871,30 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 .tag-visit   { background: rgba(34,197,94,0.1);    color: var(--green); }
 .tag-urgente { background: rgba(232,68,68,0.1);    color: var(--red); }
 
-.titular-right { flex-shrink: 0; text-align: right; }
+.titular-right { flex-shrink: 0; text-align: right; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
 .titular-xp {
   font-size: 12px; color: var(--gold2); font-weight: 700;
 }
 .titular-arrow { font-size: 16px; color: var(--text3); margin-top: 4px; }
+.card-nav-btn {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: rgba(23,133,130,0.16); border: 1px solid rgba(23,133,130,0.35);
+  font-size: 17px; line-height: 1; display:flex; align-items:center; justify-content:center;
+  cursor: pointer; transition: transform .12s, background .12s;
+}
+.card-nav-btn:active { transform: scale(0.9); background: rgba(23,133,130,0.3); }
+.btn-como-llegar {
+  display: flex; align-items: center; gap: 10px;
+  margin: 16px 0 4px; padding: 15px 18px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  color: #04141a; font-weight: 700; font-size: 15px;
+  text-decoration: none; box-shadow: 0 8px 24px rgba(23,133,130,0.32);
+}
+.btn-como-llegar:active { transform: scale(0.98); }
+.btn-como-llegar-sub {
+  margin-left: auto; font-size: 11px; font-weight: 600;
+  opacity: .7; font-family: 'JetBrains Mono', monospace;
+}
 
 /* Spinner de carga */
 .loading-state {
@@ -1764,6 +1783,13 @@ input[type="file"].foto-input { display: none; }
       </div>
     </div>
 
+    <!-- Cómo llegar -->
+    <a class="btn-como-llegar" id="btnComoLlegar" href="#" target="_blank" rel="noopener">
+      <span style="font-size:18px">🧭</span>
+      <span>Cómo llegar</span>
+      <span class="btn-como-llegar-sub" id="comoLlegarSub">con coordenadas</span>
+    </a>
+
     <!-- Historial de visitas -->
     <div class="historial-section">
       <div class="historial-title">📋 Historial de visitas</div>
@@ -2116,9 +2142,67 @@ function doLogout() {
 // ═══════════════════════════════════════════════
 // INICIAR APP
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// SINCRONIZACIÓN OFFLINE
+// Reenvía las visitas que quedaron en la cola al recuperar conexión
+// ═══════════════════════════════════════════════
+let SYNCING = false;
+
+async function syncPendientes() {
+  if (SYNCING || !navigator.onLine) return;
+  let cola = [];
+  try { cola = JSON.parse(localStorage.getItem('ff_visitas_pendientes') || '[]'); } catch { cola = []; }
+  if (!cola.length) return;
+
+  SYNCING = true;
+  const restantes = [];
+  let ok = 0;
+
+  for (const item of cola) {
+    try {
+      const res = await fetch(`${N8N_BASE}/webhook/field-registrar-visita`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      const data = await res.json();
+      if (!data || !data.success) throw new Error(data?.message || 'fallo servidor');
+
+      // Gamificación de la visita sincronizada (no bloquea la sync)
+      try {
+        await fetch(`${N8N_BASE}/webhook/field-gamificacion`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_gestor: item.id_gestor || STATE.user?.idGestor || '',
+            resultado: item.resultado || '',
+            fecha:     item.fecha_visita || '',
+          }),
+        });
+      } catch (ge) { /* el XP se reconcilia luego al recargar */ }
+
+      ok++;
+    } catch (e) {
+      restantes.push(item); // se reintenta después
+    }
+  }
+
+  localStorage.setItem('ff_visitas_pendientes', JSON.stringify(restantes));
+  SYNCING = false;
+
+  if (ok > 0) {
+    showToast('✅', `${ok} visita${ok>1?'s':''} sincronizada${ok>1?'s':''}`, restantes.length ? `${restantes.length} pendiente(s)` : 'Todo al día');
+    if (typeof loadMisiones === 'function') loadMisiones().catch(() => {});
+  }
+}
+
+// Reintenta automáticamente en cuanto vuelve la conexión
+window.addEventListener('online', syncPendientes);
+
 function startApp() {
   goTo('home');
   renderHome();
+  syncPendientes();   // intenta vaciar la cola al entrar
   setTimeout(() => showToast('🗺️', `¡Bienvenido, ${STATE.user.nombre || 'Agente'}!`, '+0 XP'), 600);
 }
 
@@ -2868,6 +2952,9 @@ async function registrarVisita() {
     } catch(ge) {
       console.warn('Gamificación no actualizada:', ge.message);
     }
+
+    // Hubo conexión: aprovecha para vaciar cualquier visita pendiente en cola
+    syncPendientes();
   } catch(e) {
     // Guardar offline si N8N falla
     const pendientes = JSON.parse(localStorage.getItem('ff_visitas_pendientes') || '[]');
@@ -2995,6 +3082,7 @@ function renderTitularesList() {
         </div>
       </div>
       <div class="titular-right">
+        <button class="card-nav-btn" onclick="abrirNavegacion('${t.ID_TITULAR}',event)" title="Cómo llegar">🧭</button>
         <div class="titular-xp">+50 XP</div>
         <div class="titular-arrow">${visitadoHoy ? '✅' : '›'}</div>
       </div>
@@ -3041,6 +3129,25 @@ function aplicarFiltros() {
 // ═══════════════════════════════════════════════
 // ABRIR FICHA DE TITULAR
 // ═══════════════════════════════════════════════
+// ── Navegación a domicilio ──
+function _coordTit(t){
+  const norm=v=>{ let n=parseFloat(String(v==null?'':v).replace(',','.')); if(!isFinite(n)) return null; if(Math.abs(n)>180) n=n/1000000; return n; };
+  const lat=norm(t.LATITUD), lng=norm(t.LONGITUD);
+  if(lat===null||lng===null||Math.abs(lat)>90||Math.abs(lng)>180) return null;
+  return {lat,lng};
+}
+function urlNavegacion(t){
+  const c=_coordTit(t);
+  if(c) return `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}`;
+  const dir=[t.DIRECCION,t.MUNICIPIO,t.ESTADO,'México'].filter(Boolean).join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`;
+}
+function abrirNavegacion(idTitular, ev){
+  if(ev){ ev.stopPropagation(); }
+  const t=TITULARES_DATA.find(x=>x.ID_TITULAR===idTitular); if(!t) return;
+  window.open(urlNavegacion(t),'_blank','noopener');
+}
+
 async function abrirFicha(idTitular) {
   TITULAR_ACTIVO = TITULARES_DATA.find(t => t.ID_TITULAR === idTitular) || null;
   if (!TITULAR_ACTIVO) return;
@@ -3056,6 +3163,13 @@ async function abrirFicha(idTitular) {
   document.getElementById('fichaDireccion').textContent  = t.DIRECCION  || '—';
   document.getElementById('fichaMunicipio').textContent  = [t.MUNICIPIO, t.ESTADO].filter(Boolean).join(', ') || '—';
   document.getElementById('fichaCartera').textContent    = t.CARTERA    || '—';
+
+  // Cómo llegar
+  const btnLlegar = document.getElementById('btnComoLlegar');
+  if (btnLlegar) {
+    btnLlegar.href = urlNavegacion(t);
+    document.getElementById('comoLlegarSub').textContent = _coordTit(t) ? 'con coordenadas' : 'por dirección';
+  }
 
   // Botón iniciar visita
   const btn = document.getElementById('btnIniciarVisita');
