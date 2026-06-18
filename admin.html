@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.6 · 2026-06-17 · modulo Visitas (detalle + fotos + mapa) -->
+<!-- FCC Admin · build v2.7 · 2026-06-17 · modulo Reportes (metricas + export Excel) -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -308,6 +308,26 @@ input{font-family:inherit}
 .vis-lightbox{position:fixed;inset:0;background:rgba(2,8,14,.92);z-index:300;display:none;place-items:center;padding:30px}
 .vis-lightbox.show{display:grid}
 .vis-lightbox img{max-width:94vw;max-height:90vh;border-radius:10px}
+/* ░░ REPORTES ░░ */
+.rep-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:20px}
+.rep-bar .tit-sel{min-width:170px}
+.rep-dl{background:transparent;border:1px solid var(--teal);color:var(--teal-bright);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;transition:.14s}
+.rep-dl:hover:not(:disabled){background:var(--teal-dim)}
+.rep-dl:disabled{opacity:.4;cursor:not-allowed;border-color:var(--border);color:var(--text-faint)}
+.rep-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+.rep-kpi{background:var(--navy-700);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+.rep-kpi .n{font-family:var(--serif);font-size:34px;line-height:1;color:var(--text)}
+.rep-kpi .l{font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--text-faint);margin-top:8px}
+.rep-kpi.accent .n{color:var(--teal-bright)}
+.rep-kpi.gold .n{color:var(--gold)}
+.rep-meta{font-family:var(--mono);font-size:12px;color:var(--text-faint);margin-bottom:14px}
+.rep-table{width:100%;border-collapse:collapse;font-size:13px}
+.rep-table th{text-align:left;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--text-faint);padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600}
+.rep-table th.num,.rep-table td.num{text-align:right;font-family:var(--mono)}
+.rep-table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text-dim)}
+.rep-table tr:hover td{background:var(--navy-700)}
+.rep-table td.g{color:var(--text);font-weight:600}
+.rep-sec{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin:6px 0 12px}
 /* Popups del mapa — paleta oscura legible */
 .mapboxgl-popup-content{background:var(--navy-800)!important;border:1px solid var(--border-strong);border-radius:13px!important;padding:13px 16px!important;box-shadow:0 18px 44px rgba(0,0,0,.55)!important;color:var(--text)!important}
 .mapboxgl-popup-close-button{color:var(--text-faint)!important;font-size:18px!important;padding:2px 8px!important}
@@ -390,7 +410,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.6</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.7</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -546,10 +566,16 @@ input{font-family:inherit}
         </div></div>
       </section>
       <section class="panel" id="panel-reportes">
-        <div class="stub"><div class="stub-inner">
-          <span class="stub-tag">FASE 4</span><h2>Reportes</h2>
-          <p>Exportación a Excel por rango de fechas y gestor, con métricas de productividad.</p>
-        </div></div>
+        <div class="rep-bar">
+          <label class="vis-date">Desde <input type="date" id="repDesde"></label>
+          <label class="vis-date">Hasta <input type="date" id="repHasta"></label>
+          <select class="tit-sel" id="repGestor"><option value="">Gestor · todos</option></select>
+          <button class="ges-new" onclick="generarReporte()">▦ Generar reporte</button>
+          <button class="rep-dl" id="repDl" onclick="descargarExcel()" disabled>⬇ Descargar Excel</button>
+        </div>
+        <div id="repBody">
+          <div class="empty"><div class="empty-ic">▦</div><p>Elige un rango de fechas (opcional) y genera el reporte de productividad.</p></div>
+        </div>
       </section>
       <section class="panel" id="panel-config">
         <div class="stub"><div class="stub-inner">
@@ -709,6 +735,7 @@ function showPanel(id){
   if(id==='titulares'){ loadTitulares(); }
   if(id==='gestores'){ loadGestores(); }
   if(id==='visitas'){ loadVisitas(); }
+  if(id==='reportes'){ initReportes(); }
 }
 function onDateChange(){ STATE.selectedDate=document.getElementById('datePick').value||todayLocal(); loadDashboard(); resetCountdown(); }
 
@@ -1302,6 +1329,118 @@ async function marcarUrgenteVisita(idTit){
   const r=await apiCall('admin-titulares-v2','POST',{action:'toggle_urgente',id_titular:idTit,urgente:true});
   if(r&&r.success){ toast('Titular marcado como urgente'); if(typeof TIT_ALL!=='undefined'){ const t=TIT_ALL.find(x=>x.ID_TITULAR===idTit); if(t) t.URGENTE=true; } }
   else toast('No se pudo marcar');
+}
+
+/* ════════ REPORTES (Fase 4) ════════ */
+let REP_DATA=null;
+
+async function initReportes(){
+  let gs=(typeof GES_ALL!=='undefined' && GES_ALL.length)?GES_ALL:null;
+  if(!gs){ const r=await apiCall('admin-gestores-v2','POST',{action:'list'}); gs=(r&&r.gestores)||[]; }
+  const sel=document.getElementById('repGestor'); const cur=sel.value;
+  sel.innerHTML='<option value="">Gestor · todos</option>'+gs.map(g=>`<option value="${g.ID_GESTOR}">${g.NOMBRE}</option>`).join('');
+  sel.value=cur;
+}
+function _money(x){ return parseFloat(String(x==null?'':x).replace(/[^0-9.\-]/g,''))||0; }
+function calcMetrics(visitas){
+  let total=visitas.length, contacto=0, pagos=0, promesas=0, montoProm=0;
+  const porGestor={};
+  for(const v of visitas){
+    const r=(v.RESULTADO||'').trim().toLowerCase();
+    const conContacto = !!r && !r.startsWith('no ');
+    const esPago = r.includes('pago') && !r.includes('promesa');
+    const monto=_money(v.MONTO_PROMESA);
+    const esPromesa = r.includes('promesa') || monto>0;
+    if(conContacto) contacto++;
+    if(esPago) pagos++;
+    if(esPromesa){ promesas++; montoProm+=monto; }
+    const g=v.NOMBRE_GESTOR||v.ID_GESTOR||'—';
+    if(!porGestor[g]) porGestor[g]={gestor:g,visitas:0,contacto:0,pagos:0,promesas:0,monto:0};
+    const pg=porGestor[g]; pg.visitas++; if(conContacto)pg.contacto++; if(esPago)pg.pagos++; if(esPromesa){pg.promesas++; pg.monto+=monto;}
+  }
+  return { total, contacto, pagos, promesas, montoProm,
+    tasa: total?Math.round(contacto/total*100):0,
+    porGestor:Object.values(porGestor).sort((a,b)=>b.visitas-a.visitas) };
+}
+async function generarReporte(){
+  const body={action:'list'};
+  const d=_gv('repDesde'), h=_gv('repHasta'), g=_gv('repGestor');
+  if(d)body.fecha_desde=d; if(h)body.fecha_hasta=h; if(g)body.id_gestor=g;
+  document.getElementById('repBody').innerHTML='<div class="empty"><div class="empty-ic">▦</div><p>Generando reporte…</p></div>';
+  document.getElementById('repDl').disabled=true;
+  const res=await apiCall('admin-visitas','POST',body);
+  if(!res||!res.success){ document.getElementById('repBody').innerHTML='<div class="empty"><div class="empty-ic">▦</div><p>No se pudo generar el reporte.</p><button class="btn-ghost" onclick="generarReporte()">Reintentar</button></div>'; return; }
+  const visitas=res.visitas||[];
+  const m=calcMetrics(visitas);
+  const sel=document.getElementById('repGestor');
+  REP_DATA={ visitas, metrics:m, desde:d, hasta:h, gestor:(g?sel.selectedOptions[0].textContent:'Todos') };
+  renderReporte(m);
+  document.getElementById('repDl').disabled = !visitas.length;
+}
+function renderReporte(m){
+  const fmt=n=>n.toLocaleString('es-MX');
+  const money=n=>'$'+n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const rng=`${REP_DATA.desde||'inicio'} → ${REP_DATA.hasta||'hoy'}`;
+  const rows=m.porGestor.map(g=>`<tr>
+    <td class="g">${g.gestor}</td>
+    <td class="num">${fmt(g.visitas)}</td>
+    <td class="num">${fmt(g.contacto)}</td>
+    <td class="num">${g.visitas?Math.round(g.contacto/g.visitas*100):0}%</td>
+    <td class="num">${fmt(g.pagos)}</td>
+    <td class="num">${fmt(g.promesas)}</td>
+    <td class="num">${money(g.monto)}</td></tr>`).join('');
+  document.getElementById('repBody').innerHTML=`
+    <div class="rep-meta">Rango: ${rng} · Gestor: ${REP_DATA.gestor}</div>
+    <div class="rep-kpis">
+      <div class="rep-kpi"><div class="n">${fmt(m.total)}</div><div class="l">Visitas totales</div></div>
+      <div class="rep-kpi accent"><div class="n">${m.tasa}%</div><div class="l">Tasa de contacto</div></div>
+      <div class="rep-kpi"><div class="n">${fmt(m.contacto)}</div><div class="l">Con contacto</div></div>
+      <div class="rep-kpi"><div class="n">${fmt(m.pagos)}</div><div class="l">Pagos</div></div>
+      <div class="rep-kpi"><div class="n">${fmt(m.promesas)}</div><div class="l">Promesas</div></div>
+      <div class="rep-kpi gold"><div class="n">${money(m.montoProm)}</div><div class="l">Monto prometido</div></div>
+    </div>
+    <div class="card" style="padding:8px 6px">
+      <div class="rep-sec" style="padding:10px 14px 4px">Productividad por gestor</div>
+      <table class="rep-table">
+        <thead><tr><th>Gestor</th><th class="num">Visitas</th><th class="num">Contacto</th><th class="num">Tasa</th><th class="num">Pagos</th><th class="num">Promesas</th><th class="num">Monto prometido</th></tr></thead>
+        <tbody>${rows||'<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:24px">Sin visitas en el rango.</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+function descargarExcel(){
+  if(!REP_DATA || typeof XLSX==='undefined') return;
+  const { visitas, metrics:m, desde, hasta, gestor }=REP_DATA;
+  const wb=XLSX.utils.book_new();
+  const resumen=[
+    ['Fortaleza Contact Center — Reporte de visitas'],
+    ['Rango', `${desde||'inicio'} a ${hasta||'hoy'}`],
+    ['Gestor', gestor||'Todos'],
+    ['Generado', new Date().toLocaleString('es-MX')],
+    [],
+    ['Métrica','Valor'],
+    ['Visitas totales', m.total],
+    ['Con contacto', m.contacto],
+    ['Tasa de contacto', (m.tasa/100)],
+    ['Pagos', m.pagos],
+    ['Promesas', m.promesas],
+    ['Monto prometido', m.montoProm],
+    [],
+    ['Productividad por gestor'],
+    ['Gestor','Visitas','Contacto','Tasa','Pagos','Promesas','Monto prometido'],
+    ...m.porGestor.map(g=>[g.gestor,g.visitas,g.contacto,(g.visitas?g.contacto/g.visitas:0),g.pagos,g.promesas,g.monto])
+  ];
+  const wsR=XLSX.utils.aoa_to_sheet(resumen);
+  wsR['!cols']=[{wch:26},{wch:14},{wch:12},{wch:10},{wch:10},{wch:12},{wch:16}];
+  // formato % y moneda
+  ['B9'].forEach(c=>{ if(wsR[c]) wsR[c].z='0%'; });
+  ['B12'].forEach(c=>{ if(wsR[c]) wsR[c].z='"$"#,##0.00'; });
+  XLSX.utils.book_append_sheet(wb, wsR, 'Resumen');
+  const det=[['Fecha','Hora','ID Titular','Titular','Gestor','Resultado','Tipo contacto','Monto promesa','Fecha promesa','Observaciones','Latitud','Longitud']];
+  visitas.forEach(v=>det.push([v.FECHA,v.HORA,v.ID_TITULAR,v.NOMBRE_TITULAR,v.NOMBRE_GESTOR,v.RESULTADO,v.TIPO_CONTACTO,_money(v.MONTO_PROMESA)||'',v.FECHA_PROMESA,v.OBSERVACIONES,v.LATITUD,v.LONGITUD]));
+  const wsD=XLSX.utils.aoa_to_sheet(det);
+  wsD['!cols']=[{wch:11},{wch:7},{wch:13},{wch:26},{wch:18},{wch:22},{wch:14},{wch:13},{wch:13},{wch:50},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, wsD, 'Detalle');
+  XLSX.writeFile(wb, `reporte_visitas_${desde||'inicio'}_${hasta||'hoy'}.xlsx`);
 }
 
 /* ════════ BOOT ════════ */
