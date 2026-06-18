@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.7 · 2026-06-17 · modulo Reportes (metricas + export Excel) -->
+<!-- FCC Admin · build v2.8 · 2026-06-17 · Configuracion (health-check + parametros) + modal visitas mas ancho -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -285,7 +285,7 @@ input{font-family:inherit}
 .res-nolocaliza{background:rgba(217,100,90,.15);color:var(--danger)}
 .res-otro{background:rgba(147,166,179,.15);color:var(--text-dim)}
 /* detalle */
-.vis-modal{width:min(720px,94vw);max-height:90vh;overflow:auto;position:relative;padding:28px 30px}
+.vis-modal{width:min(880px,95vw);max-height:90vh;overflow:auto;position:relative;padding:30px 36px}
 .vis-x{position:absolute;top:16px;right:18px;font-size:18px;color:var(--text-dim);width:32px;height:32px;border-radius:8px;z-index:3}
 .vis-x:hover{background:var(--navy-700);color:var(--text)}
 .vis-d-head{margin-bottom:18px;padding-right:30px}
@@ -328,6 +328,36 @@ input{font-family:inherit}
 .rep-table tr:hover td{background:var(--navy-700)}
 .rep-table td.g{color:var(--text);font-weight:600}
 .rep-sec{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin:6px 0 12px}
+/* ░░ CONFIGURACIÓN ░░ */
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.cfg-card{padding:22px 24px}
+.cfg-wide{grid-column:1 / -1}
+.cfg-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.cfg-title{font-family:var(--serif);font-size:21px;color:var(--text)}
+.cfg-sub{font-size:12px;color:var(--text-faint);margin-top:3px}
+.cfg-eps{display:flex;flex-direction:column;gap:2px}
+.cfg-ep{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px solid var(--border)}
+.cfg-ep:last-child{border-bottom:none}
+.cfg-ep .dot{width:9px;height:9px;border-radius:50%;background:var(--text-faint);flex-shrink:0;transition:.2s}
+.cfg-ep.ok .dot{background:var(--good);box-shadow:0 0 8px rgba(95,185,142,.6)}
+.cfg-ep.warn .dot{background:var(--amber)}
+.cfg-ep.fail .dot{background:var(--danger);box-shadow:0 0 8px rgba(217,100,90,.5)}
+.cfg-ep.testing .dot{background:var(--teal-bright);animation:pulse 1s infinite}
+.cfg-ep.skip .dot{background:var(--navy-600);border:1px solid var(--border)}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.cfg-ep .path{font-family:var(--mono);font-size:13px;color:var(--text);min-width:190px}
+.cfg-ep .desc{font-size:12px;color:var(--text-faint);flex:1}
+.cfg-ep .st{font-family:var(--mono);font-size:11px;color:var(--text-dim);text-align:right;min-width:90px}
+.cfg-ep.ok .st{color:var(--good)} .cfg-ep.warn .st{color:var(--amber)} .cfg-ep.fail .st{color:var(--danger)}
+.cfg-tag-w{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--border);border-radius:5px;padding:2px 7px}
+.cfg-param{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+.cfg-param:last-of-type{border-bottom:none}
+.cfg-param .k{font-size:12px;color:var(--text-faint)}
+.cfg-param .v{font-family:var(--mono);font-size:12.5px;color:var(--text-dim);text-align:right;word-break:break-all;max-width:62%}
+.cfg-note{font-size:11.5px;color:var(--text-faint);line-height:1.5;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.cfg-logout{width:100%;margin-top:18px;background:transparent;border:1px solid rgba(217,100,90,.4);color:var(--danger);border-radius:10px;padding:11px;font-size:13px;font-weight:600;transition:.14s}
+.cfg-logout:hover{background:rgba(217,100,90,.12)}
+@media(max-width:760px){.cfg-grid{grid-template-columns:1fr}.cfg-ep .path{min-width:140px}.cfg-ep .desc{display:none}}
 /* Popups del mapa — paleta oscura legible */
 .mapboxgl-popup-content{background:var(--navy-800)!important;border:1px solid var(--border-strong);border-radius:13px!important;padding:13px 16px!important;box-shadow:0 18px 44px rgba(0,0,0,.55)!important;color:var(--text)!important}
 .mapboxgl-popup-close-button{color:var(--text-faint)!important;font-size:18px!important;padding:2px 8px!important}
@@ -410,7 +440,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.7</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.8</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -578,10 +608,30 @@ input{font-family:inherit}
         </div>
       </section>
       <section class="panel" id="panel-config">
-        <div class="stub"><div class="stub-inner">
-          <span class="stub-tag">SISTEMA</span><h2>Configuración</h2>
-          <p>Conexión N8N, hoja de cálculo y parámetros del panel.</p>
-        </div></div>
+        <div class="cfg-grid">
+          <div class="card cfg-card cfg-wide">
+            <div class="cfg-head">
+              <div><div class="cfg-title">Estado de conexión</div><div class="cfg-sub">Prueba en vivo de los webhooks de N8N</div></div>
+              <button class="ges-new" onclick="probarEndpoints()" id="cfgTestBtn">⟳ Probar todo</button>
+            </div>
+            <div id="cfgEndpoints" class="cfg-eps"></div>
+          </div>
+          <div class="card cfg-card">
+            <div class="cfg-title">Parámetros del sistema</div>
+            <div class="cfg-param"><span class="k">Servidor N8N</span><span class="v" id="cfgN8n">—</span></div>
+            <div class="cfg-param"><span class="k">Hoja de cálculo</span><span class="v" id="cfgSheet">—</span></div>
+            <div class="cfg-param"><span class="k">Token Mapbox</span><span class="v" id="cfgMapbox">—</span></div>
+            <div class="cfg-param"><span class="k">Refresco en vivo</span><span class="v" id="cfgRefresh">—</span></div>
+            <div class="cfg-note">Estos valores viven en el código del panel. Para cambiarlos, edita el archivo y vuelve a desplegar.</div>
+          </div>
+          <div class="card cfg-card">
+            <div class="cfg-title">Sesión</div>
+            <div class="cfg-param"><span class="k">Administrador</span><span class="v" id="cfgAdmin">—</span></div>
+            <div class="cfg-param"><span class="k">Rol</span><span class="v" id="cfgRol">—</span></div>
+            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.8</span></div>
+            <button class="cfg-logout" onclick="doLogout()">Cerrar sesión</button>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -648,6 +698,7 @@ const CFG = {
   N8N_BASE: 'https://n8n.fortalezacontactcenter.com',
   MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
   REFRESH_MS: 60000,
+  SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
 };
 const PANEL_TITLES = {
   dashboard:['Principal','Tablero'], mapa:['Principal','Mapa en vivo'],
@@ -736,6 +787,7 @@ function showPanel(id){
   if(id==='gestores'){ loadGestores(); }
   if(id==='visitas'){ loadVisitas(); }
   if(id==='reportes'){ initReportes(); }
+  if(id==='config'){ initConfig(); }
 }
 function onDateChange(){ STATE.selectedDate=document.getElementById('datePick').value||todayLocal(); loadDashboard(); resetCountdown(); }
 
@@ -1441,6 +1493,66 @@ function descargarExcel(){
   wsD['!cols']=[{wch:11},{wch:7},{wch:13},{wch:26},{wch:18},{wch:22},{wch:14},{wch:13},{wch:13},{wch:50},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb, wsD, 'Detalle');
   XLSX.writeFile(wb, `reporte_visitas_${desde||'inicio'}_${hasta||'hoy'}.xlsx`);
+}
+
+/* ════════ CONFIGURACIÓN (Sistema) ════════ */
+const CFG_EPS=[
+  {path:'admin-auth',          desc:'Autenticación de administradores', method:'POST', body:{email:'',password:''}, test:true},
+  {path:'admin-dashboard',     desc:'KPIs y posiciones del tablero',    method:'GET',  test:true},
+  {path:'admin-gestores',      desc:'Gestores (tablero en vivo)',       method:'POST', body:{action:'list'}, test:true},
+  {path:'admin-gestores-v2',   desc:'Gestores (módulo CRUD)',           method:'POST', body:{action:'list'}, test:true},
+  {path:'admin-titulares-v2',  desc:'Titulares (lista y acciones)',     method:'POST', body:{action:'list'}, test:true},
+  {path:'admin-visitas',       desc:'Visitas y reportes',               method:'POST', body:{action:'list'}, test:true},
+  {path:'admin-titulares-geo',    desc:'Geocodificación masiva', escritura:true, test:false},
+  {path:'admin-titulares-import', desc:'Importación de Excel',   escritura:true, test:false},
+  {path:'admin-titulares-bulk',   desc:'Acciones masivas',       escritura:true, test:false}
+];
+function initConfig(){
+  document.getElementById('cfgN8n').textContent=CFG.N8N_BASE;
+  document.getElementById('cfgSheet').textContent=CFG.SHEET_ID;
+  const tk=CFG.MAPBOX_TOKEN||'';
+  document.getElementById('cfgMapbox').textContent=tk?(tk.slice(0,10)+'…'+tk.slice(-6)):'—';
+  document.getElementById('cfgRefresh').textContent=(CFG.REFRESH_MS/1000)+' s';
+  const u=STATE.user||{};
+  document.getElementById('cfgAdmin').textContent=u.nombre||u.email||'—';
+  document.getElementById('cfgRol').textContent=u.rol||'—';
+  const wrap=document.getElementById('cfgEndpoints');
+  wrap.innerHTML=CFG_EPS.map(ep=>`
+    <div class="cfg-ep ${ep.test?'':'skip'}" id="ep-${ep.path}">
+      <span class="dot"></span>
+      <span class="path">${ep.path}</span>
+      <span class="desc">${ep.desc}</span>
+      <span class="st">${ep.test?'sin probar':'<span class="cfg-tag-w">escritura</span>'}</span>
+    </div>`).join('');
+}
+function setEpStatus(path,state,ms,code){
+  const el=document.getElementById('ep-'+path); if(!el) return;
+  el.classList.remove('ok','warn','fail','testing','skip');
+  el.classList.add(state);
+  const st=el.querySelector('.st');
+  if(state==='testing') st.textContent='probando…';
+  else if(state==='ok') st.textContent=ms+' ms';
+  else if(state==='warn') st.textContent='HTTP '+(code||'?')+' · '+ms+'ms';
+  else if(state==='fail') st.textContent='sin conexión';
+}
+async function probarEndpoints(){
+  const btn=document.getElementById('cfgTestBtn'); btn.disabled=true; btn.textContent='Probando…';
+  const fecha=(typeof todayLocal==='function')?todayLocal():new Date().toISOString().slice(0,10);
+  for(const ep of CFG_EPS){
+    if(!ep.test) continue;
+    setEpStatus(ep.path,'testing');
+    const t0=performance.now();
+    try{
+      let url=`${CFG.N8N_BASE}/webhook/${ep.path}`;
+      const opts={method:ep.method||'POST',headers:{'Content-Type':'application/json'}};
+      if((ep.method||'POST')==='GET'){ url+='?fecha='+fecha; }
+      else { opts.body=JSON.stringify(ep.body||{}); }
+      const r=await fetch(url,opts);
+      const dur=Math.round(performance.now()-t0);
+      setEpStatus(ep.path, r.ok?'ok':'warn', dur, r.status);
+    }catch(e){ setEpStatus(ep.path,'fail'); }
+  }
+  btn.disabled=false; btn.textContent='⟳ Probar todo';
 }
 
 /* ════════ BOOT ════════ */
