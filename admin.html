@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.4 · 2026-06-17 · estatus derivados (activo/asignado/visitado/inactivo) + activar masivo -->
+<!-- FCC Admin · build v2.5 · 2026-06-17 · modulo Gestores (CRUD + gamificacion) -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -235,6 +235,34 @@ input{font-family:inherit}
 .st-asignado{background:var(--teal-dim);color:var(--teal-bright)}
 .st-visitado{background:rgba(95,185,142,.18);color:var(--good)}
 .st-inactivo{background:rgba(217,100,90,.16);color:var(--danger)}
+/* ░░ GESTORES ░░ */
+.ges-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:18px}
+.ges-bar .tit-search{flex:1;min-width:240px}
+.ges-new{background:var(--teal);color:#04141a;border-radius:11px;padding:11px 18px;font-weight:600;font-size:14px;white-space:nowrap}
+.ges-new:hover{filter:brightness(1.08)}
+.ges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.ges-card{background:var(--navy-700);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;transition:.15s}
+.ges-card:hover{border-color:var(--border-strong)}
+.ges-card.inactivo{opacity:.5}
+.ges-head{display:flex;align-items:center;gap:14px}
+.ges-ava{width:50px;height:50px;border-radius:13px;display:grid;place-items:center;font-family:var(--serif);font-size:22px;font-weight:600;color:#04141a;background:linear-gradient(135deg,var(--teal),var(--teal-bright));flex-shrink:0}
+.ges-id-name{flex:1;min-width:0}
+.ges-name{font-weight:600;font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ges-meta{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:2px}
+.ges-lvl{font-family:var(--mono);font-size:10px;font-weight:700;background:var(--teal-dim);color:var(--teal-bright);padding:3px 9px;border-radius:6px;white-space:nowrap}
+.ges-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.ges-stat{text-align:center}
+.ges-stat-n{font-family:var(--serif);font-size:23px;color:var(--text);line-height:1}
+.ges-stat-l{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-faint);margin-top:4px}
+.ges-actions{display:flex;gap:9px}
+.ges-btn{flex:1;border:1px solid var(--border);border-radius:9px;padding:9px;font-size:13px;color:var(--text-dim);transition:.14s}
+.ges-btn:hover{border-color:var(--border-strong);color:var(--text)}
+.ges-btn.on{color:var(--good)} .ges-btn.off{color:var(--danger);background:rgba(217,100,90,.08)}
+.ges-form{margin:6px 0 4px}
+.ges-form label{display:block;font-size:12px;color:var(--text-dim);margin:12px 0 6px}
+.ges-input{width:100%;background:var(--navy-700);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px}
+.ges-input:focus{outline:none;border-color:var(--teal)}
+.ges-input:disabled{opacity:.5;cursor:not-allowed}
 /* Popups del mapa — paleta oscura legible */
 .mapboxgl-popup-content{background:var(--navy-800)!important;border:1px solid var(--border-strong);border-radius:13px!important;padding:13px 16px!important;box-shadow:0 18px 44px rgba(0,0,0,.55)!important;color:var(--text)!important}
 .mapboxgl-popup-close-button{color:var(--text-faint)!important;font-size:18px!important;padding:2px 8px!important}
@@ -317,7 +345,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.4</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.5</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -411,10 +439,14 @@ input{font-family:inherit}
 
       <!-- PLACEHOLDERS FASE 2/3 -->
       <section class="panel" id="panel-gestores">
-        <div class="stub"><div class="stub-inner">
-          <span class="stub-tag">FASE 2</span><h2>Gestores</h2>
-          <p>Alta, edición y desactivación de gestores, con su gamificación real (XP, nivel, racha) ya conectada a la hoja.</p>
-        </div></div>
+        <div class="ges-bar">
+          <input class="tit-search" id="gesSearch" placeholder="Buscar gestor por nombre, ID o Telegram…" oninput="renderGestores()">
+          <span class="tit-count" id="gesCount">—</span>
+          <button class="ges-new" onclick="abrirGestorModal()">＋ Nuevo gestor</button>
+        </div>
+        <div class="ges-grid" id="gesGrid">
+          <div class="empty"><div class="empty-ic">◎</div><p>Cargando gestores…</p></div>
+        </div>
       </section>
       <section class="panel" id="panel-titulares">
         <div class="tit-bar">
@@ -498,6 +530,27 @@ input{font-family:inherit}
     <div class="imp-actions">
       <button class="imp-cancel" onclick="cerrarImp()">Cancelar</button>
       <button class="imp-go" id="impGo" onclick="confirmarImport()">Geocodificar e importar</button>
+    </div>
+  </div>
+</div>
+
+<div class="geo-overlay" id="gesOverlay">
+  <div class="geo-modal" style="width:min(440px,92vw)">
+    <div class="geo-title" id="gesModalTitle">Nuevo gestor</div>
+    <div class="geo-sub" id="gesModalSub">Da de alta un gestor domiciliario</div>
+    <div class="ges-form">
+      <label>ID Gestor</label>
+      <input id="gesfId" class="ges-input" placeholder="G007" maxlength="20">
+      <label>Nombre completo</label>
+      <input id="gesfNombre" class="ges-input" placeholder="Nombre y apellidos">
+      <label>Usuario de Telegram</label>
+      <input id="gesfUser" class="ges-input" placeholder="usuario (sin @)">
+      <label>Telegram ID <span style="color:var(--text-faint)">(opcional)</span></label>
+      <input id="gesfTgId" class="ges-input" placeholder="123456789">
+    </div>
+    <div class="imp-actions">
+      <button class="imp-cancel" onclick="cerrarGestorModal()">Cancelar</button>
+      <button class="imp-go" id="gesfSave" onclick="guardarGestor()">Guardar</button>
     </div>
   </div>
 </div>
@@ -593,6 +646,7 @@ function showPanel(id){
   document.getElementById('sidebar').classList.remove('open');
   if(id==='mapa'){ setTimeout(()=>{ if(!STATE.mapFull) initMap('mapFull','mapFull'); else STATE.mapFull.resize(); paintMarkers(STATE.mapFull,'mapFullMeta'); },200); }
   if(id==='titulares'){ loadTitulares(); }
+  if(id==='gestores'){ loadGestores(); }
 }
 function onDateChange(){ STATE.selectedDate=document.getElementById('datePick').value||todayLocal(); loadDashboard(); resetCountdown(); }
 
@@ -1020,6 +1074,83 @@ function paintTitMap(){
   TIT_MAP.getSource('tit').setData({type:'FeatureCollection',features:feats});
   const meta=document.getElementById('titMapMeta'); if(meta) meta.textContent=`${n} titular(es) en el mapa`;
   if(n) { try{ TIT_MAP.fitBounds(bounds,{padding:60,maxZoom:14,duration:600}); }catch(e){} }
+}
+
+/* ════════ GESTORES (Fase 2) ════════ */
+let GES_ALL=[], GES_LOADED=false, GES_EDIT_ID=null;
+const _gv=id=>{ const e=document.getElementById(id); return e?e.value:''; };
+function iniciales(n){ const p=String(n||'').trim().split(/\s+/); return (((p[0]||'')[0]||'')+((p[1]||'')[0]||'')||'?').toUpperCase(); }
+
+async function loadGestores(force){
+  if(GES_LOADED && !force) return;
+  const grid=document.getElementById('gesGrid');
+  grid.innerHTML='<div class="empty"><div class="empty-ic">◎</div><p>Cargando gestores…</p></div>';
+  const res=await apiCall('admin-gestores-v2','POST',{action:'list'});
+  if(!res||!res.success){ grid.innerHTML='<div class="empty"><div class="empty-ic">◎</div><p>No se pudieron cargar los gestores.</p><button class="btn-ghost" onclick="loadGestores(true)">Reintentar</button></div>'; return; }
+  GES_ALL=res.gestores||[]; GES_LOADED=true; renderGestores();
+}
+function renderGestores(){
+  if(!GES_LOADED) return;
+  const grid=document.getElementById('gesGrid');
+  const q=(_gv('gesSearch')||'').toLowerCase().trim();
+  const rows=GES_ALL.filter(g=> !q || (g.NOMBRE+' '+g.ID_GESTOR+' '+g.USUARIO_TELEGRAM).toLowerCase().includes(q));
+  document.getElementById('gesCount').textContent=`${rows.length} gestor${rows.length!==1?'es':''}`;
+  if(!rows.length){ grid.innerHTML='<div class="empty"><div class="empty-ic">◎</div><p>Sin gestores para esta búsqueda.</p></div>'; return; }
+  grid.innerHTML=rows.map(g=>`
+    <div class="ges-card ${g.ACTIVO?'':'inactivo'}">
+      <div class="ges-head">
+        <div class="ges-ava">${iniciales(g.NOMBRE)}</div>
+        <div class="ges-id-name">
+          <div class="ges-name">${g.NOMBRE||'—'}</div>
+          <div class="ges-meta">${g.ID_GESTOR}${g.USUARIO_TELEGRAM?' · @'+g.USUARIO_TELEGRAM:''}</div>
+        </div>
+        <div class="ges-lvl">NIVEL ${g.NIVEL||1}</div>
+      </div>
+      <div class="ges-stats">
+        <div class="ges-stat"><div class="ges-stat-n">${(g.XP_TOTAL||0).toLocaleString()}</div><div class="ges-stat-l">XP</div></div>
+        <div class="ges-stat"><div class="ges-stat-n">${g.VISITAS_TOTAL||0}</div><div class="ges-stat-l">Visitas</div></div>
+        <div class="ges-stat"><div class="ges-stat-n">${g.STREAK_ACTUAL||0}</div><div class="ges-stat-l">Racha</div></div>
+      </div>
+      <div class="ges-actions">
+        <button class="ges-btn" onclick="editarGestor('${g.ID_GESTOR}')">✎ Editar</button>
+        <button class="ges-btn ${g.ACTIVO?'on':'off'}" onclick="toggleGestor('${g.ID_GESTOR}',${!g.ACTIVO})">${g.ACTIVO?'◉ Activo':'○ Inactivo'}</button>
+      </div>
+    </div>`).join('');
+}
+function abrirGestorModal(g){
+  GES_EDIT_ID = g ? g.ID_GESTOR : null;
+  document.getElementById('gesModalTitle').textContent = g?'Editar gestor':'Nuevo gestor';
+  document.getElementById('gesModalSub').textContent = g?g.ID_GESTOR:'Da de alta un gestor domiciliario';
+  document.getElementById('gesfId').value = g?g.ID_GESTOR:'';
+  document.getElementById('gesfId').disabled = !!g;
+  document.getElementById('gesfNombre').value = g?(g.NOMBRE||''):'';
+  document.getElementById('gesfUser').value = g?(g.USUARIO_TELEGRAM||''):'';
+  document.getElementById('gesfTgId').value = g?(g.TELEGRAM_ID||''):'';
+  document.getElementById('gesfSave').textContent = g?'Guardar cambios':'Crear gestor';
+  document.getElementById('gesOverlay').classList.add('show');
+}
+function editarGestor(id){ const g=GES_ALL.find(x=>x.ID_GESTOR===id); if(g) abrirGestorModal(g); }
+function cerrarGestorModal(){ document.getElementById('gesOverlay').classList.remove('show'); }
+async function guardarGestor(){
+  const id=_gv('gesfId').trim(), nombre=_gv('gesfNombre').trim(), user=_gv('gesfUser').trim().replace('@',''), tg=_gv('gesfTgId').trim();
+  if(!id){ toast('El ID de gestor es obligatorio'); return; }
+  if(!nombre){ toast('El nombre es obligatorio'); return; }
+  const btn=document.getElementById('gesfSave'); btn.disabled=true;
+  let r;
+  if(GES_EDIT_ID){
+    r=await apiCall('admin-gestores-v2','POST',{action:'update',id_gestor:GES_EDIT_ID,nombre,usuario_telegram:user,telegram_id:tg});
+  } else {
+    if(GES_ALL.some(g=>g.ID_GESTOR===id)){ toast('Ya existe un gestor con ese ID'); btn.disabled=false; return; }
+    r=await apiCall('admin-gestores-v2','POST',{action:'create',id_gestor:id,nombre,usuario_telegram:user,telegram_id:tg});
+  }
+  btn.disabled=false;
+  if(r&&r.success){ toast(GES_EDIT_ID?'Gestor actualizado':'Gestor creado'); cerrarGestorModal(); loadGestores(true); }
+  else { toast('No se pudo guardar el gestor'); }
+}
+async function toggleGestor(id,val){
+  const g=GES_ALL.find(x=>x.ID_GESTOR===id); if(!g) return; g.ACTIVO=val; renderGestores();
+  const r=await apiCall('admin-gestores-v2','POST',{action:'toggle_activo',id_gestor:id,activo:val});
+  if(r&&r.success){ toast(val?'Gestor activado':'Gestor desactivado'); } else { g.ACTIVO=!val; renderGestores(); toast('No se pudo actualizar'); }
 }
 
 /* ════════ BOOT ════════ */
