@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.5 · 2026-06-17 · modulo Gestores (CRUD + gamificacion) -->
+<!-- FCC Admin · build v2.6 · 2026-06-17 · modulo Visitas (detalle + fotos + mapa) -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -263,6 +263,51 @@ input{font-family:inherit}
 .ges-input{width:100%;background:var(--navy-700);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px}
 .ges-input:focus{outline:none;border-color:var(--teal)}
 .ges-input:disabled{opacity:.5;cursor:not-allowed}
+/* ░░ VISITAS ░░ */
+.vis-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px}
+.vis-bar .tit-search{flex:1;min-width:220px}
+.vis-date{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim)}
+.vis-date input{background:var(--navy-700);border:1px solid var(--border);border-radius:9px;padding:8px 11px;color:var(--text);font-size:13px;color-scheme:dark}
+.vis-wrap{max-height:calc(100vh - 250px);overflow:auto}
+.vis-row{display:flex;align-items:center;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:.13s}
+.vis-row:hover{background:var(--navy-700)}
+.vis-when{font-family:var(--mono);font-size:11px;color:var(--text-faint);width:96px;flex-shrink:0;line-height:1.5}
+.vis-when b{color:var(--text-dim);font-size:12px}
+.vis-main{flex:1;min-width:0}
+.vis-tit{font-weight:600;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vis-sub{font-size:12px;color:var(--text-faint);margin-top:2px}
+.vis-ges{font-size:12px;color:var(--text-dim);width:140px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vis-photos-ic{font-family:var(--mono);font-size:11px;color:var(--teal-bright);width:42px;flex-shrink:0;text-align:right}
+.res-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:7px;white-space:nowrap}
+.res-pago{background:rgba(95,185,142,.18);color:var(--good)}
+.res-promesa{background:rgba(224,160,74,.18);color:var(--amber)}
+.res-contacto{background:var(--teal-dim);color:var(--teal-bright)}
+.res-nolocaliza{background:rgba(217,100,90,.15);color:var(--danger)}
+.res-otro{background:rgba(147,166,179,.15);color:var(--text-dim)}
+/* detalle */
+.vis-modal{width:min(720px,94vw);max-height:90vh;overflow:auto;position:relative;padding:28px 30px}
+.vis-x{position:absolute;top:16px;right:18px;font-size:18px;color:var(--text-dim);width:32px;height:32px;border-radius:8px;z-index:3}
+.vis-x:hover{background:var(--navy-700);color:var(--text)}
+.vis-d-head{margin-bottom:18px;padding-right:30px}
+.vis-d-tit{font-family:var(--serif);font-size:25px;color:var(--text);line-height:1.1}
+.vis-d-meta{font-family:var(--mono);font-size:12px;color:var(--text-faint);margin-top:6px}
+.vis-d-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.vis-d-cell{background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:13px 15px}
+.vis-d-cell .l{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-faint)}
+.vis-d-cell .v{font-size:14px;color:var(--text);margin-top:5px;word-break:break-word}
+.vis-d-obs{background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:14px 16px;font-size:14px;color:var(--text-dim);line-height:1.5;margin-bottom:18px}
+.vis-d-sec{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin:18px 0 10px}
+.vis-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.vis-photo{aspect-ratio:3/4;border-radius:11px;overflow:hidden;background:var(--navy-600);border:1px solid var(--border);cursor:pointer}
+.vis-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.vis-dmap{height:240px;border-radius:13px;overflow:hidden;border:1px solid var(--border)}
+.vis-d-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.vis-act{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:13px;font-weight:500;color:var(--text);transition:.14s}
+.vis-act:hover{border-color:var(--teal);color:var(--teal-bright)}
+.vis-act.urg{border-color:rgba(224,160,74,.4);color:var(--amber)}
+.vis-lightbox{position:fixed;inset:0;background:rgba(2,8,14,.92);z-index:300;display:none;place-items:center;padding:30px}
+.vis-lightbox.show{display:grid}
+.vis-lightbox img{max-width:94vw;max-height:90vh;border-radius:10px}
 /* Popups del mapa — paleta oscura legible */
 .mapboxgl-popup-content{background:var(--navy-800)!important;border:1px solid var(--border-strong);border-radius:13px!important;padding:13px 16px!important;box-shadow:0 18px 44px rgba(0,0,0,.55)!important;color:var(--text)!important}
 .mapboxgl-popup-close-button{color:var(--text-faint)!important;font-size:18px!important;padding:2px 8px!important}
@@ -345,7 +390,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.5</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.6</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -489,9 +534,15 @@ input{font-family:inherit}
         </div>
       </section>
       <section class="panel" id="panel-visitas">
-        <div class="stub"><div class="stub-inner">
-          <span class="stub-tag">FASE 3</span><h2>Visitas</h2>
-          <p>Detalle de cada visita con sus fotos de Drive, mapa del punto y acciones de seguimiento.</p>
+        <div class="vis-bar">
+          <input class="tit-search" id="visSearch" placeholder="Buscar titular, gestor o resultado…" oninput="applyVisFilters()">
+          <label class="vis-date">Desde <input type="date" id="visDesde" onchange="loadVisitas(true)"></label>
+          <label class="vis-date">Hasta <input type="date" id="visHasta" onchange="loadVisitas(true)"></label>
+          <select class="tit-sel" id="visGestor" onchange="applyVisFilters()"><option value="">Gestor · todos</option></select>
+          <span class="tit-count" id="visCount">—</span>
+        </div>
+        <div class="card"><div class="tit-wrap" id="visWrap">
+          <div class="empty"><div class="empty-ic">◆</div><p>Cargando visitas…</p></div>
         </div></div>
       </section>
       <section class="panel" id="panel-reportes">
@@ -553,6 +604,16 @@ input{font-family:inherit}
       <button class="imp-go" id="gesfSave" onclick="guardarGestor()">Guardar</button>
     </div>
   </div>
+</div>
+
+<div class="geo-overlay" id="visOverlay">
+  <div class="geo-modal vis-modal">
+    <button class="vis-x" onclick="cerrarVisita()">✕</button>
+    <div class="vis-detail" id="visDetail"></div>
+  </div>
+</div>
+<div class="vis-lightbox" id="visLightbox" onclick="this.classList.remove('show')">
+  <img id="visLightboxImg" src="" alt="Foto de visita">
 </div>
 
 <script>
@@ -647,6 +708,7 @@ function showPanel(id){
   if(id==='mapa'){ setTimeout(()=>{ if(!STATE.mapFull) initMap('mapFull','mapFull'); else STATE.mapFull.resize(); paintMarkers(STATE.mapFull,'mapFullMeta'); },200); }
   if(id==='titulares'){ loadTitulares(); }
   if(id==='gestores'){ loadGestores(); }
+  if(id==='visitas'){ loadVisitas(); }
 }
 function onDateChange(){ STATE.selectedDate=document.getElementById('datePick').value||todayLocal(); loadDashboard(); resetCountdown(); }
 
@@ -1151,6 +1213,95 @@ async function toggleGestor(id,val){
   const g=GES_ALL.find(x=>x.ID_GESTOR===id); if(!g) return; g.ACTIVO=val; renderGestores();
   const r=await apiCall('admin-gestores-v2','POST',{action:'toggle_activo',id_gestor:id,activo:val});
   if(r&&r.success){ toast(val?'Gestor activado':'Gestor desactivado'); } else { g.ACTIVO=!val; renderGestores(); toast('No se pudo actualizar'); }
+}
+
+/* ════════ VISITAS (Fase 3) ════════ */
+let VIS_ALL=[], VIS_GESTORES=[], VIS_LOADED=false, VIS_MAP=null, VIS_VISIBLE=[];
+
+async function loadVisitas(force){
+  if(VIS_LOADED && !force) return;
+  const wrap=document.getElementById('visWrap');
+  wrap.innerHTML='<div class="empty"><div class="empty-ic">◆</div><p>Cargando visitas…</p></div>';
+  const body={action:'list'};
+  const d=_gv('visDesde'), h=_gv('visHasta');
+  if(d) body.fecha_desde=d; if(h) body.fecha_hasta=h;
+  const res=await apiCall('admin-visitas','POST',body);
+  if(!res||!res.success){ wrap.innerHTML='<div class="empty"><div class="empty-ic">◆</div><p>No se pudieron cargar las visitas.</p><button class="btn-ghost" onclick="loadVisitas(true)">Reintentar</button></div>'; return; }
+  VIS_ALL=res.visitas||[]; VIS_GESTORES=res.gestores||[]; VIS_LOADED=true;
+  const sel=document.getElementById('visGestor'); const cur=sel.value;
+  sel.innerHTML='<option value="">Gestor · todos</option>'+VIS_GESTORES.map(g=>`<option value="${g.ID_GESTOR}">${g.NOMBRE}</option>`).join('');
+  sel.value=cur;
+  applyVisFilters();
+}
+function applyVisFilters(){
+  if(!VIS_LOADED) return;
+  const q=(_gv('visSearch')||'').toLowerCase().trim(), g=_gv('visGestor');
+  const rows=VIS_ALL.filter(v=>{
+    if(g && v.ID_GESTOR!==g) return false;
+    if(q && !((v.NOMBRE_TITULAR+' '+v.NOMBRE_GESTOR+' '+v.RESULTADO+' '+v.ID_TITULAR).toLowerCase().includes(q))) return false;
+    return true;
+  });
+  renderVisitas(rows);
+}
+function resClass(r){ const s=(r||'').toLowerCase(); if(s.includes('pago')&&!s.includes('promesa'))return'res-pago'; if(s.includes('promesa'))return'res-promesa'; if(s.includes('no se localiza')||s.includes('no localiza')||s.includes('negativ'))return'res-nolocaliza'; if(s.includes('localiza')||s.includes('contacto')||s.includes('tercero')||s.includes('vecino'))return'res-contacto'; return'res-otro'; }
+function renderVisitas(rows){
+  document.getElementById('visCount').textContent=`${rows.length} visita${rows.length!==1?'s':''}`;
+  const wrap=document.getElementById('visWrap');
+  if(!rows.length){ wrap.innerHTML='<div class="empty"><div class="empty-ic">◆</div><p>Sin visitas para estos filtros.</p></div>'; return; }
+  VIS_VISIBLE=rows.slice(0,400);
+  wrap.innerHTML=VIS_VISIBLE.map((v,i)=>`
+    <div class="vis-row" onclick="abrirVisita(${i})">
+      <div class="vis-when"><b>${v.FECHA||'—'}</b><br>${v.HORA||''}</div>
+      <div class="vis-main">
+        <div class="vis-tit">${v.NOMBRE_TITULAR||'—'}</div>
+        <div class="vis-sub">${v.ID_TITULAR}${v.TIPO_CONTACTO?' · '+v.TIPO_CONTACTO:''}</div>
+      </div>
+      <span class="res-badge ${resClass(v.RESULTADO)}">${v.RESULTADO||'—'}</span>
+      <div class="vis-ges">${v.NOMBRE_GESTOR||''}</div>
+      <div class="vis-photos-ic">${v.FOTOS&&v.FOTOS.length?('📷 '+v.FOTOS.length):''}</div>
+    </div>`).join('')+(rows.length>400?`<div class="empty" style="padding:16px"><p>Mostrando 400 de ${rows.length}. Afina los filtros.</p></div>`:'');
+}
+function abrirVisita(i){
+  const v=VIS_VISIBLE[i]; if(!v) return;
+  const cell=(l,val)=>`<div class="vis-d-cell"><div class="l">${l}</div><div class="v">${val||'—'}</div></div>`;
+  const lat=fixCoord(v.LATITUD), lng=fixCoord(v.LONGITUD);
+  const coord=(lat!==null&&lng!==null&&Math.abs(lat)<=90&&Math.abs(lng)<=180);
+  const html=`
+    <div class="vis-d-head">
+      <div class="vis-d-tit">${v.NOMBRE_TITULAR||'—'}</div>
+      <div class="vis-d-meta">${v.ID_TITULAR} · ${v.FECHA||''} ${v.HORA||''}</div>
+    </div>
+    <div class="vis-d-grid">
+      ${cell('Gestor', v.NOMBRE_GESTOR)}
+      ${cell('Resultado', `<span class="res-badge ${resClass(v.RESULTADO)}">${v.RESULTADO||'—'}</span>`)}
+      ${cell('Tipo de contacto', v.TIPO_CONTACTO)}
+      ${cell('Promesa', v.MONTO_PROMESA?('$'+v.MONTO_PROMESA+(v.FECHA_PROMESA?' · '+v.FECHA_PROMESA:'')):'—')}
+    </div>
+    ${v.OBSERVACIONES?`<div class="vis-d-sec">Observaciones</div><div class="vis-d-obs">${v.OBSERVACIONES}</div>`:''}
+    ${v.FOTOS&&v.FOTOS.length?`<div class="vis-d-sec">Fotos (${v.FOTOS.length})</div><div class="vis-gallery">${v.FOTOS.map(u=>`<div class="vis-photo" onclick="verFoto('${u}')"><img src="${u}" loading="lazy" referrerpolicy="no-referrer"></div>`).join('')}</div>`:''}
+    ${coord?`<div class="vis-d-sec">Ubicación del punto</div><div class="vis-dmap" id="visDmap"></div>`:''}
+    <div class="vis-d-actions">
+      ${coord?`<a class="vis-act" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener">🧭 Cómo llegar</a>`:''}
+      <button class="vis-act urg" onclick="marcarUrgenteVisita('${v.ID_TITULAR}')">⚑ Marcar titular urgente</button>
+    </div>`;
+  document.getElementById('visDetail').innerHTML=html;
+  document.getElementById('visOverlay').classList.add('show');
+  if(coord) setTimeout(()=>initVisMap(lat,lng),200);
+}
+function initVisMap(lat,lng){
+  if(typeof mapboxgl==='undefined') return;
+  if(VIS_MAP){ try{VIS_MAP.remove();}catch(e){} VIS_MAP=null; }
+  mapboxgl.accessToken=CFG.MAPBOX_TOKEN;
+  VIS_MAP=new mapboxgl.Map({container:'visDmap',style:'mapbox://styles/mapbox/satellite-streets-v12',center:[lng,lat],zoom:15,attributionControl:false});
+  VIS_MAP.addControl(new mapboxgl.NavigationControl(),'top-right');
+  new mapboxgl.Marker({color:'#2BC4BE'}).setLngLat([lng,lat]).addTo(VIS_MAP);
+}
+function cerrarVisita(){ document.getElementById('visOverlay').classList.remove('show'); if(VIS_MAP){ try{VIS_MAP.remove();}catch(e){} VIS_MAP=null; } }
+function verFoto(url){ document.getElementById('visLightboxImg').src=url; document.getElementById('visLightbox').classList.add('show'); }
+async function marcarUrgenteVisita(idTit){
+  const r=await apiCall('admin-titulares-v2','POST',{action:'toggle_urgente',id_titular:idTit,urgente:true});
+  if(r&&r.success){ toast('Titular marcado como urgente'); if(typeof TIT_ALL!=='undefined'){ const t=TIT_ALL.find(x=>x.ID_TITULAR===idTit); if(t) t.URGENTE=true; } }
+  else toast('No se pudo marcar');
 }
 
 /* ════════ BOOT ════════ */
