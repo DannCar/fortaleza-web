@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.8 · 2026-06-17 · Configuracion (health-check + parametros) + modal visitas mas ancho -->
+<!-- FCC Admin · build v2.9 · 2026-06-21 · Fase 3.2: modulo Clientes y Carteras + selector de cartera en import -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -240,6 +240,35 @@ input{font-family:inherit}
 .ges-bar .tit-search{flex:1;min-width:240px}
 .ges-new{background:var(--teal);color:#04141a;border-radius:11px;padding:11px 18px;font-weight:600;font-size:14px;white-space:nowrap}
 .ges-new:hover{filter:brightness(1.08)}
+/* ── Clientes y Carteras (Fase 3) ── */
+.cli-head{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.cli-h-title{font-family:var(--serif);font-size:22px;font-weight:600}
+.cli-h-sub{font-size:13px;color:var(--text-dim);margin-top:2px;max-width:520px}
+.cli-head .ges-new{margin-left:auto}
+.cli-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.cli-card{padding:18px;border-radius:14px;background:var(--navy-800);border:1px solid var(--border);display:flex;flex-direction:column;gap:13px}
+.cli-card.off{opacity:.5}
+.cli-card-top{display:flex;align-items:flex-start;gap:12px}
+.cli-ic{width:42px;height:42px;border-radius:11px;background:var(--teal-dim);color:var(--teal-bright);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.cli-name{font-weight:600;font-size:16px;line-height:1.2}
+.cli-rfc{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:3px}
+.cli-stats{display:flex;gap:20px}
+.cli-stat{font-size:12px;color:var(--text-dim)}
+.cli-stat b{display:block;font-family:var(--mono);font-size:19px;color:var(--teal-bright);font-weight:600;line-height:1.1}
+.cli-actions{display:flex;gap:8px}
+.cli-btn{flex:1;padding:8px 6px;border-radius:9px;font-size:12.5px;font-weight:600;border:1px solid var(--border);background:var(--navy-700);color:var(--text-dim);cursor:pointer;transition:.15s}
+.cli-btn:hover{color:var(--text);border-color:var(--teal)}
+.cli-btn.primary{background:var(--teal-dim);color:var(--teal-bright);border-color:transparent}
+.cli-empty{grid-column:1/-1;text-align:center;color:var(--text-faint);padding:44px 20px}
+.cart-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;max-height:44vh;overflow:auto}
+.cart-row{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:var(--navy-800);border:1px solid var(--border)}
+.cart-row.off{opacity:.5}
+.cart-row .nm{font-weight:600;font-size:14px}
+.cart-row .tp{font-size:11px;color:var(--text-faint);font-family:var(--mono);margin-top:2px}
+.cart-row .ct{margin-left:auto;font-size:12px;color:var(--text-dim);white-space:nowrap}
+.cart-newbox{border-top:1px solid var(--border);padding-top:14px;margin-top:6px}
+.cart-newtitle{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin-bottom:9px}
+.cart-newrow{display:flex;gap:8px}
 .ges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .ges-card{background:var(--navy-700);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;transition:.15s}
 .ges-card:hover{border-color:var(--border-strong)}
@@ -440,13 +469,14 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.8</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.9</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
       <div class="nav-item active" id="nav-dashboard" onclick="showPanel('dashboard')"><span class="nav-ic">◆</span> Tablero <span class="nav-badge" id="badgeDash">—</span></div>
       <div class="nav-item" id="nav-mapa" onclick="showPanel('mapa')"><span class="nav-ic">⊕</span> Mapa en vivo</div>
       <div class="nav-group">Gestión</div>
+      <div class="nav-item hidden" id="nav-clientes" onclick="showPanel('clientes')"><span class="nav-ic">▣</span> Clientes</div>
       <div class="nav-item" id="nav-gestores" onclick="showPanel('gestores')"><span class="nav-ic">⊚</span> Gestores</div>
       <div class="nav-item" id="nav-titulares" onclick="showPanel('titulares')"><span class="nav-ic">▤</span> Titulares</div>
       <div class="nav-item" id="nav-visitas" onclick="showPanel('visitas')"><span class="nav-ic">◈</span> Visitas</div>
@@ -533,6 +563,17 @@ input{font-family:inherit}
       </section>
 
       <!-- PLACEHOLDERS FASE 2/3 -->
+      <section class="panel" id="panel-clientes">
+        <div class="cli-head">
+          <div>
+            <div class="cli-h-title">Clientes y Carteras</div>
+            <div class="cli-h-sub">Da de alta clientes y sus carteras (productos). Cada cartera agrupa a sus titulares — base de la operación multi-cliente.</div>
+          </div>
+          <button class="ges-new" onclick="abrirClienteModal()">＋ Nuevo cliente</button>
+        </div>
+        <div id="cliGrid" class="cli-grid"></div>
+      </section>
+
       <section class="panel" id="panel-gestores">
         <div class="ges-bar">
           <input class="tit-search" id="gesSearch" placeholder="Buscar gestor por nombre, ID o Telegram…" oninput="renderGestores()">
@@ -628,7 +669,7 @@ input{font-family:inherit}
             <div class="cfg-title">Sesión</div>
             <div class="cfg-param"><span class="k">Administrador</span><span class="v" id="cfgAdmin">—</span></div>
             <div class="cfg-param"><span class="k">Rol</span><span class="v" id="cfgRol">—</span></div>
-            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.8</span></div>
+            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.9</span></div>
             <button class="cfg-logout" onclick="doLogout()">Cerrar sesión</button>
           </div>
         </div>
@@ -682,6 +723,42 @@ input{font-family:inherit}
   </div>
 </div>
 
+<div class="geo-overlay" id="cliOverlay">
+  <div class="geo-modal" style="width:min(440px,92vw)">
+    <div class="geo-title" id="cliModalTitle">Nuevo cliente</div>
+    <div class="geo-sub">El cliente es la empresa que contrata a Fortaleza (banco, financiera, etc.)</div>
+    <div class="ges-form">
+      <label>Nombre del cliente</label>
+      <input id="clifNombre" class="ges-input" placeholder="Banco / financiera / empresa">
+      <label>RFC <span style="color:var(--text-faint)">(opcional)</span></label>
+      <input id="clifRfc" class="ges-input" placeholder="XAXX010101000">
+    </div>
+    <div class="imp-actions">
+      <button class="imp-cancel" onclick="cerrarClienteModal()">Cancelar</button>
+      <button class="imp-go" id="clifSave" onclick="guardarCliente()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="geo-overlay" id="cartOverlay">
+  <div class="geo-modal" style="width:min(560px,92vw)">
+    <div class="geo-title" id="cartModalTitle">Carteras</div>
+    <div class="geo-sub" id="cartModalSub">Productos del cliente</div>
+    <div id="cartList" class="cart-list"></div>
+    <div class="cart-newbox">
+      <div class="cart-newtitle">Nueva cartera</div>
+      <div class="cart-newrow">
+        <input id="cartfNombre" class="ges-input" placeholder="Nombre (p. ej. Tarjetas 2026)">
+        <input id="cartfTipo" class="ges-input" placeholder="Tipo (opcional)" style="max-width:170px">
+      </div>
+      <button class="imp-go" id="cartfSave" onclick="guardarCartera()" style="margin-top:10px;width:100%">＋ Agregar cartera</button>
+    </div>
+    <div class="imp-actions">
+      <button class="imp-cancel" onclick="cerrarCarterasModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="geo-overlay" id="visOverlay">
   <div class="geo-modal vis-modal">
     <button class="vis-x" onclick="cerrarVisita()">✕</button>
@@ -702,6 +779,7 @@ const CFG = {
 };
 const PANEL_TITLES = {
   dashboard:['Principal','Tablero'], mapa:['Principal','Mapa en vivo'],
+  clientes:['Gestión','Clientes y Carteras'],
   gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], visitas:['Gestión','Visitas'],
   reportes:['Sistema','Reportes'], config:['Sistema','Configuración'],
 };
@@ -761,6 +839,7 @@ function startApp(){
   document.getElementById('sideAvatar').textContent=initials(u.nombre||u.email);
   // Config solo para Admin Master
   document.getElementById('nav-config').classList.toggle('hidden', (u.rol!=='Admin Master'));
+  document.getElementById('nav-clientes').classList.toggle('hidden', (u.rol!=='Admin Master'));
   STATE.selectedDate=todayLocal();
   document.getElementById('datePick').value=STATE.selectedDate;
   showPanel('dashboard');
@@ -783,6 +862,7 @@ function showPanel(id){
   document.getElementById('panelTitle').textContent=t[1];
   document.getElementById('sidebar').classList.remove('open');
   if(id==='mapa'){ setTimeout(()=>{ if(!STATE.mapFull) initMap('mapFull','mapFull'); else STATE.mapFull.resize(); paintMarkers(STATE.mapFull,'mapFullMeta'); },200); }
+  if(id==='clientes'){ loadClientes(); }
   if(id==='titulares'){ loadTitulares(); }
   if(id==='gestores'){ loadGestores(); }
   if(id==='visitas'){ loadVisitas(); }
@@ -1110,6 +1190,7 @@ async function onImportFile(input){
     IMP_MAP=buildMapping(Object.keys(raw[0]));
     IMP_ROWS=raw.map(r=>mapRow(r,IMP_MAP));
     IMP_FILE=file.name;
+    if(!CART_ALL.length){ const k=await apiCall('admin-carteras','POST',{action:'list'}); CART_ALL=(k&&k.carteras)?k.carteras:[]; }
     renderImpPreview();
   }catch(e){ toast('No se pudo leer el archivo'); console.warn(e); }
 }
@@ -1124,7 +1205,12 @@ function renderImpPreview(){
   const dup=IMP_VALID.filter(r=>existing.has(r.ID_TITULAR)).length;
   const reqOk=req.every(t=>IMP_MAP[t]);
   const sample=IMP_VALID[0]?JSON.stringify(IMP_VALID[0],null,1):'(sin filas válidas)';
+  const cartOpts=CART_ALL.map(k=>`<option value="${k.ID_CARTERA}">${esc(k.NOMBRE_CLIENTE)} — ${esc(k.NOMBRE)}</option>`).join('');
+  const cartSelector=`<div class="imp-head">Cartera destino</div>`+
+    (cartOpts ? `<select id="impCartera" class="ges-input" style="width:100%">${cartOpts}</select>`
+              : `<div class="imp-row"><span class="imp-warn">Sin carteras; se usará la cartera por defecto.</span></div>`);
   document.getElementById('impBody').innerHTML=
+    cartSelector+
     `<div class="imp-head">Mapeo de columnas</div>${[...req,...opt].map(mapLine).join('')}`+
     `<div class="imp-head">Resumen</div>`+
     `<div class="imp-row"><b>Filas válidas</b><span class="imp-ok">${IMP_VALID.length}</span></div>`+
@@ -1137,6 +1223,8 @@ function renderImpPreview(){
 }
 function cerrarImp(){ document.getElementById('impOverlay').classList.remove('show'); }
 async function confirmarImport(){
+  const cartSel=document.getElementById('impCartera');
+  const carteraId=cartSel?cartSel.value:null;
   cerrarImp();
   const rows=IMP_VALID.slice();
   if(!rows.length) return;
@@ -1155,7 +1243,9 @@ async function confirmarImport(){
   const payload=rows.map(r=>({ ID_TITULAR:r.ID_TITULAR, NOMBRE:r.NOMBRE, DIRECCION:r.DIRECCION, ESTADO:r.ESTADO, MUNICIPIO:r.MUNICIPIO, CARTERA:r.CARTERA, ID_GESTOR:r.ID_GESTOR, ACTIVO:'SI', URGENTE:'FALSE', LATITUD:r.LATITUD, LONGITUD:r.LONGITUD }));
   let saved=0;
   for(let i=0;i<payload.length;i+=150){
-    const resp=await apiCall('admin-titulares-import','POST',{rows:payload.slice(i,i+150)});
+    const body={rows:payload.slice(i,i+150)};
+    if(carteraId) body.cartera_id=carteraId;
+    const resp=await apiCall('admin-titulares-import','POST',body);
     if(resp&&resp.success) saved+=(resp.saved||0);
   }
   setGeoTitle('Importación lista','Titulares guardados');
@@ -1272,6 +1362,104 @@ function abrirGestorModal(g){
 }
 function editarGestor(id){ const g=GES_ALL.find(x=>x.ID_GESTOR===id); if(g) abrirGestorModal(g); }
 function cerrarGestorModal(){ document.getElementById('gesOverlay').classList.remove('show'); }
+
+/* ════════ CLIENTES Y CARTERAS (Fase 3) ════════ */
+let CLI_ALL=[], CART_ALL=[], CART_CURRENT_CLI=null, CLI_EDIT=null;
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function loadClientes(){
+  const grid=document.getElementById('cliGrid');
+  grid.innerHTML='<div class="cli-empty">Cargando…</div>';
+  const [cRes,kRes]=await Promise.all([
+    apiCall('admin-clientes','POST',{action:'list'}),
+    apiCall('admin-carteras','POST',{action:'list'})
+  ]);
+  CLI_ALL=(cRes&&cRes.clientes)?cRes.clientes:[];
+  CART_ALL=(kRes&&kRes.carteras)?kRes.carteras:[];
+  renderClientes();
+}
+function renderClientes(){
+  const grid=document.getElementById('cliGrid');
+  if(!CLI_ALL.length){ grid.innerHTML='<div class="cli-empty">Aún no hay clientes. Crea el primero con “＋ Nuevo cliente”.</div>'; return; }
+  grid.innerHTML=CLI_ALL.map(c=>`
+    <div class="cli-card ${c.ACTIVO?'':'off'}">
+      <div class="cli-card-top">
+        <div class="cli-ic">▣</div>
+        <div style="min-width:0">
+          <div class="cli-name">${esc(c.NOMBRE)}</div>
+          ${c.RFC?`<div class="cli-rfc">${esc(c.RFC)}</div>`:''}
+        </div>
+      </div>
+      <div class="cli-stats">
+        <div class="cli-stat"><b>${c.CARTERAS||0}</b>carteras</div>
+        <div class="cli-stat"><b>${c.TITULARES||0}</b>titulares</div>
+      </div>
+      <div class="cli-actions">
+        <button class="cli-btn primary" onclick="abrirCarterasModal('${c.ID_CLIENTE}')">Carteras →</button>
+        <button class="cli-btn" onclick="abrirClienteModal('${c.ID_CLIENTE}')">Editar</button>
+        <button class="cli-btn" onclick="toggleClienteActivo('${c.ID_CLIENTE}',${c.ACTIVO?'false':'true'})">${c.ACTIVO?'Desactivar':'Activar'}</button>
+      </div>
+    </div>`).join('');
+}
+function abrirClienteModal(id){
+  CLI_EDIT = id ? (CLI_ALL.find(c=>c.ID_CLIENTE===id)||null) : null;
+  document.getElementById('cliModalTitle').textContent = CLI_EDIT?'Editar cliente':'Nuevo cliente';
+  document.getElementById('clifNombre').value = CLI_EDIT?CLI_EDIT.NOMBRE:'';
+  document.getElementById('clifRfc').value = CLI_EDIT?(CLI_EDIT.RFC||''):'';
+  document.getElementById('cliOverlay').classList.add('show');
+}
+function cerrarClienteModal(){ document.getElementById('cliOverlay').classList.remove('show'); }
+async function guardarCliente(){
+  const nombre=document.getElementById('clifNombre').value.trim();
+  const rfc=document.getElementById('clifRfc').value.trim();
+  if(!nombre){ toast('Escribe el nombre del cliente'); return; }
+  const btn=document.getElementById('clifSave'); btn.disabled=true; btn.textContent='Guardando…';
+  const body = CLI_EDIT ? {action:'update', id_cliente:CLI_EDIT.ID_CLIENTE, nombre, rfc} : {action:'create', nombre, rfc};
+  const res=await apiCall('admin-clientes','POST',body);
+  btn.disabled=false; btn.textContent='Guardar';
+  if(res&&res.success){ toast(CLI_EDIT?'Cliente actualizado':'Cliente creado'); cerrarClienteModal(); loadClientes(); }
+  else toast('No se pudo guardar el cliente');
+}
+async function toggleClienteActivo(id,activo){
+  const res=await apiCall('admin-clientes','POST',{action:'toggle_activo',id_cliente:id,activo});
+  if(res&&res.success){ toast(activo?'Cliente activado':'Cliente desactivado'); loadClientes(); }
+  else toast('No se pudo actualizar');
+}
+function abrirCarterasModal(idCliente){
+  CART_CURRENT_CLI=idCliente;
+  const cli=CLI_ALL.find(c=>c.ID_CLIENTE===idCliente);
+  document.getElementById('cartModalSub').textContent=cli?('Cliente: '+cli.NOMBRE):'Productos del cliente';
+  document.getElementById('cartfNombre').value='';
+  document.getElementById('cartfTipo').value='';
+  renderCarterasModal();
+  document.getElementById('cartOverlay').classList.add('show');
+}
+function renderCarterasModal(){
+  const list=CART_ALL.filter(k=>k.ID_CLIENTE===CART_CURRENT_CLI);
+  document.getElementById('cartList').innerHTML = list.length ? list.map(k=>`
+    <div class="cart-row ${k.ACTIVO?'':'off'}">
+      <div style="min-width:0"><div class="nm">${esc(k.NOMBRE)}</div>${k.TIPO?`<div class="tp">${esc(k.TIPO)}</div>`:''}</div>
+      <span class="ct">${k.TITULARES||0} titulares</span>
+    </div>`).join('') : '<div class="cli-empty" style="padding:18px">Sin carteras todavía. Agrega la primera abajo.</div>';
+}
+function cerrarCarterasModal(){ document.getElementById('cartOverlay').classList.remove('show'); }
+async function guardarCartera(){
+  const nombre=document.getElementById('cartfNombre').value.trim();
+  const tipo=document.getElementById('cartfTipo').value.trim();
+  if(!nombre){ toast('Escribe el nombre de la cartera'); return; }
+  if(!CART_CURRENT_CLI){ toast('Selecciona un cliente'); return; }
+  const btn=document.getElementById('cartfSave'); btn.disabled=true; btn.textContent='Agregando…';
+  const res=await apiCall('admin-carteras','POST',{action:'create',cliente_id:CART_CURRENT_CLI,nombre,tipo});
+  btn.disabled=false; btn.textContent='＋ Agregar cartera';
+  if(res&&res.success){
+    toast('Cartera agregada');
+    document.getElementById('cartfNombre').value=''; document.getElementById('cartfTipo').value='';
+    const kRes=await apiCall('admin-carteras','POST',{action:'list'});
+    CART_ALL=(kRes&&kRes.carteras)?kRes.carteras:CART_ALL;
+    renderCarterasModal();
+    apiCall('admin-clientes','POST',{action:'list'}).then(r=>{ if(r&&r.clientes){ CLI_ALL=r.clientes; renderClientes(); } });
+  } else toast('No se pudo agregar la cartera');
+}
 async function guardarGestor(){
   const id=_gv('gesfId').trim(), nombre=_gv('gesfNombre').trim(), user=_gv('gesfUser').trim().replace('@',''), tg=_gv('gesfTgId').trim();
   if(!id){ toast('El ID de gestor es obligatorio'); return; }
