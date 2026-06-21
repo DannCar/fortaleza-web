@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.15 · 2026-06-21 · Titulares: fix filtros-orden (const->let) + columna Status separada -->
+<!-- FCC Admin · build v2.16 · 2026-06-21 · Fase 4.2: login 2FA con OTP por Telegram (paso codigo) -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -57,6 +57,8 @@ input{font-family:inherit}
 .login-btn:hover{filter:brightness(1.08)}
 .login-btn:active{transform:translateY(1px)}
 .login-btn:disabled{opacity:.6;cursor:default}
+.login-back{margin-top:14px;text-align:center;color:var(--text-dim);font-size:13px;cursor:pointer}
+.login-back:hover{color:var(--teal-bright)}
 .login-err{display:none;margin-top:14px;padding:11px 14px;border-radius:10px;font-size:13px;
   background:rgba(217,100,90,.12);border:1px solid rgba(217,100,90,.32);color:#F0A59E}
 .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
@@ -491,18 +493,32 @@ input{font-family:inherit}
     </div>
     <div class="login-h">Centro de Operaciones</div>
     <div class="login-p">Acceso restringido al personal autorizado.</div>
-    <div class="field">
-      <label for="email">Correo</label>
-      <input type="email" id="email" autocomplete="username" placeholder="tu@fortaleza.com" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="loginStep1">
+      <div class="field">
+        <label for="email">Correo</label>
+        <input type="email" id="email" autocomplete="username" placeholder="tu@fortaleza.com" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">
+        <span class="spin" id="loginSpin"></span>
+        <span id="loginBtnText">Entrar</span>
+      </button>
     </div>
-    <div class="field">
-      <label for="password">Contraseña</label>
-      <input type="password" id="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="loginStep2" style="display:none">
+      <div class="login-p" style="margin-top:2px">Te enviamos un código de 6 dígitos por Telegram. Escríbelo para entrar.</div>
+      <div class="field">
+        <label for="otpCode">Código de verificación</label>
+        <input type="text" id="otpCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" style="letter-spacing:8px;text-align:center;font-family:var(--mono)" onkeydown="if(event.key==='Enter')verifyOtp()">
+      </div>
+      <button class="login-btn" id="otpBtn" onclick="verifyOtp()">
+        <span class="spin" id="otpSpin"></span>
+        <span id="otpBtnText">Verificar código</span>
+      </button>
+      <div class="login-back" onclick="backToLogin()">← Volver al inicio</div>
     </div>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">
-      <span class="spin" id="loginSpin"></span>
-      <span id="loginBtnText">Entrar</span>
-    </button>
     <div class="login-err" id="loginError"></div>
   </div>
 </div>
@@ -512,7 +528,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.15</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.16</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -763,7 +779,7 @@ input{font-family:inherit}
             <div class="cfg-title">Sesión</div>
             <div class="cfg-param"><span class="k">Administrador</span><span class="v" id="cfgAdmin">—</span></div>
             <div class="cfg-param"><span class="k">Rol</span><span class="v" id="cfgRol">—</span></div>
-            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.15</span></div>
+            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.16</span></div>
             <button class="cfg-logout" onclick="doLogout()">Cerrar sesión</button>
           </div>
         </div>
@@ -889,7 +905,7 @@ const PANEL_TITLES = {
   gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], visitas:['Gestión','Visitas'],
   reportes:['Sistema','Reportes'], config:['Sistema','Configuración'],
 };
-const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:null, mapDash:null, mapFull:null, markers:[], refreshTimer:null, countdown:60, scope:null, currentPanel:'dashboard' };
+const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:null, mapDash:null, mapFull:null, markers:[], refreshTimer:null, countdown:60, scope:null, currentPanel:'dashboard', challenge:null };
 
 /* ════════ HELPERS ════════ */
 function todayLocal(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -912,7 +928,13 @@ async function doLogin(){
   try{
     const res=await fetch(`${CFG.N8N_BASE}/webhook/admin-auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const data=await res.json();
-    if(data && data.success && data.token){
+    if(data && data.success && data.otp_required && data.challenge_id){
+      STATE.challenge=data.challenge_id;
+      document.getElementById('loginStep1').style.display='none';
+      document.getElementById('loginStep2').style.display='block';
+      const oc=document.getElementById('otpCode'); oc.value=''; setTimeout(()=>oc.focus(),50);
+      document.getElementById('loginError').style.display='none';
+    }else if(data && data.success && data.token){
       STATE.token=data.token; STATE.user=data.user;
       localStorage.setItem('fcc_session',JSON.stringify({token:data.token,user:data.user}));
       startApp();
@@ -920,19 +942,49 @@ async function doLogin(){
       showLoginError(data && data.message ? data.message : 'Credenciales incorrectas.');
     }
   }catch(e){
-    // Falla en CERRADO: sin demo, sin acceso de respaldo
     showLoginError('No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.');
     console.warn('Login falló:',e.message);
   }finally{
     btn.disabled=false; spin.style.display='none'; document.getElementById('loginBtnText').textContent='Entrar';
   }
 }
+async function verifyOtp(){
+  const otp=(document.getElementById('otpCode').value||'').trim();
+  document.getElementById('loginError').style.display='none';
+  if(!/^\d{6}$/.test(otp)){ return showLoginError('Escribe el código de 6 dígitos.'); }
+  const btn=document.getElementById('otpBtn'), spin=document.getElementById('otpSpin');
+  btn.disabled=true; spin.style.display='block'; document.getElementById('otpBtnText').textContent='Verificando…';
+  try{
+    const res=await fetch(`${CFG.N8N_BASE}/webhook/admin-auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge_id:STATE.challenge,otp})});
+    const data=await res.json();
+    if(data && data.success && data.token){
+      STATE.token=data.token; STATE.user=data.user;
+      localStorage.setItem('fcc_session',JSON.stringify({token:data.token,user:data.user}));
+      startApp();
+    }else{
+      showLoginError(data && data.message ? data.message : 'Código incorrecto.');
+    }
+  }catch(e){
+    showLoginError('No se pudo conectar con el servidor. Intenta de nuevo.');
+  }finally{
+    btn.disabled=false; spin.style.display='none'; document.getElementById('otpBtnText').textContent='Verificar código';
+  }
+}
+function backToLogin(){
+  STATE.challenge=null;
+  document.getElementById('loginStep2').style.display='none';
+  document.getElementById('loginStep1').style.display='block';
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('password').value='';
+}
 function showLoginError(m){ const el=document.getElementById('loginError'); el.textContent=m; el.style.display='block'; }
 function doLogout(){
-  localStorage.removeItem('fcc_session'); STATE.token=null; STATE.user=null;
+  localStorage.removeItem('fcc_session'); STATE.token=null; STATE.user=null; STATE.challenge=null;
   if(STATE.refreshTimer) clearInterval(STATE.refreshTimer);
   document.getElementById('appPage').style.display='none';
   document.getElementById('loginPage').style.display='flex';
+  document.getElementById('loginStep1').style.display='block';
+  document.getElementById('loginStep2').style.display='none';
 }
 
 /* ════════ START ════════ */
