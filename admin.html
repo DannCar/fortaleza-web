@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.13 · 2026-06-21 · Apartado dedicado de importacion (destino cliente-cartera + plantilla) -->
+<!-- FCC Admin · build v2.14 · 2026-06-21 · Importar: quitar nav duplicado, centrar modulo, IDs de ejemplo genericos -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -308,6 +308,10 @@ input{font-family:inherit}
 .imp-drop{background:var(--teal);color:#04141a;border:none;border-radius:11px;padding:12px 20px;font-weight:600;font-size:14px;cursor:pointer;margin-top:4px}
 .imp-drop:hover{filter:brightness(1.08)}
 .imp-drop:disabled{opacity:.5;cursor:not-allowed}
+#panel-import .cli-head{justify-content:center}
+#panel-import .cli-head>div{text-align:center}
+#panel-import .cli-h-sub{margin-left:auto;margin-right:auto}
+#panel-import .imp-mod{margin-left:auto;margin-right:auto}
 .ges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .ges-card{background:var(--navy-700);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;transition:.15s}
 .ges-card:hover{border-color:var(--border-strong)}
@@ -508,7 +512,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.13</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.14</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -516,7 +520,6 @@ input{font-family:inherit}
       <div class="nav-item" id="nav-mapa" onclick="showPanel('mapa')"><span class="nav-ic">⊕</span> Mapa en vivo</div>
       <div class="nav-group">Gestión</div>
       <div class="nav-item hidden" id="nav-clientes" onclick="showPanel('clientes')"><span class="nav-ic">▣</span> Clientes</div>
-      <div class="nav-item hidden" id="nav-importar" onclick="showPanel('import')"><span class="nav-ic">⬆</span> Importar</div>
       <div class="nav-item" id="nav-gestores" onclick="showPanel('gestores')"><span class="nav-ic">⊚</span> Gestores</div>
       <div class="nav-item" id="nav-titulares" onclick="showPanel('titulares')"><span class="nav-ic">▤</span> Titulares</div>
       <div class="nav-item hidden" id="nav-import" onclick="showPanel('import')"><span class="nav-ic">⬆</span> Importar</div>
@@ -760,7 +763,7 @@ input{font-family:inherit}
             <div class="cfg-title">Sesión</div>
             <div class="cfg-param"><span class="k">Administrador</span><span class="v" id="cfgAdmin">—</span></div>
             <div class="cfg-param"><span class="k">Rol</span><span class="v" id="cfgRol">—</span></div>
-            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.13</span></div>
+            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.14</span></div>
             <button class="cfg-logout" onclick="doLogout()">Cerrar sesión</button>
           </div>
         </div>
@@ -943,7 +946,6 @@ function startApp(){
   // Config solo para Admin Master
   document.getElementById('nav-config').classList.toggle('hidden', (u.rol!=='Admin Master'));
   document.getElementById('nav-clientes').classList.toggle('hidden', (u.rol!=='Admin Master'));
-  document.getElementById('nav-importar').classList.toggle('hidden', (u.rol!=='Admin Master'));
   document.getElementById('nav-import').classList.toggle('hidden', (u.rol!=='Admin Master'));
   if(u.rol==='Admin Master'){ document.getElementById('scopeBox').style.display='flex'; loadScopeOptions(); }
   STATE.selectedDate=todayLocal();
@@ -1735,8 +1737,8 @@ function descargarPlantilla(){
   const headers=['ID_TITULAR','NOMBRE','DIRECCION','ESTADO','MUNICIPIO','ID_GESTOR','LATITUD','LONGITUD'];
   const filas=[
     headers,
-    ['MX01099001','Juan Pérez López','Av. Reforma 100, Centro, 62000','Morelos','Cuernavaca','G001','',''],
-    ['MX01099002','María García Ruiz','Calle 5 de Mayo 23, Jiutepec','Morelos','Jiutepec','','',''],
+    ['EJEMPLO-0001','Juan Pérez López','Av. Reforma 100, Centro, 62000','Morelos','Cuernavaca','G001','',''],
+    ['EJEMPLO-0002','María García Ruiz','Calle 5 de Mayo 23, Jiutepec','Morelos','Jiutepec','','',''],
   ];
   const ws=XLSX.utils.aoa_to_sheet(filas);
   ws['!cols']=headers.map(()=>({wch:20}));
