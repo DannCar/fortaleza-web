@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.14 · 2026-06-21 · Importar: quitar nav duplicado, centrar modulo, IDs de ejemplo genericos -->
+<!-- FCC Admin · build v2.15 · 2026-06-21 · Titulares: fix filtros-orden (const->let) + columna Status separada -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -512,7 +512,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.14</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.15</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -763,7 +763,7 @@ input{font-family:inherit}
             <div class="cfg-title">Sesión</div>
             <div class="cfg-param"><span class="k">Administrador</span><span class="v" id="cfgAdmin">—</span></div>
             <div class="cfg-param"><span class="k">Rol</span><span class="v" id="cfgRol">—</span></div>
-            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.14</span></div>
+            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.15</span></div>
             <button class="cfg-logout" onclick="doLogout()">Cerrar sesión</button>
           </div>
         </div>
@@ -1140,7 +1140,7 @@ function applyTitFilters(){
   const est=document.getElementById('titEstado').value, mun=document.getElementById('titMuni').value;
   const ges=document.getElementById('titGestorF').value, soloUrg=document.getElementById('titUrg').checked;
   const estatus=document.getElementById('titEstatus').value;
-  const rows=TIT_ALL.filter(t=>{
+  let rows=TIT_ALL.filter(t=>{
     if(estatus==='activos' && !t.ACTIVO) return false;
     else if(estatus==='inactivos' && t.ACTIVO) return false;
     else if((estatus==='activo'||estatus==='asignado'||estatus==='visitado') && titEstado(t)!==estatus) return false;
@@ -1153,7 +1153,8 @@ function applyTitFilters(){
   });
   if(TIT_SORT.col){
     const c=TIT_SORT.col, dir=TIT_SORT.dir;
-    rows=rows.slice().sort((a,b)=> String(a[c]==null?'':a[c]).localeCompare(String(b[c]==null?'':b[c]),'es',{numeric:true,sensitivity:'base'})*dir);
+    const kf = c==='STATUS' ? (t)=>TIT_ESTADO_LABEL[titEstado(t)] : (t)=>String(t[c]==null?'':t[c]);
+    rows.sort((a,b)=> kf(a).localeCompare(kf(b),'es',{numeric:true,sensitivity:'base'})*dir);
   }
   TIT_FILTERED=rows;
   updateFiltBadge();
@@ -1193,13 +1194,15 @@ function renderTit(rows){
     `<th class="tit-chkcol"><input type="checkbox" class="tit-cbx" id="titSelAll" ${allSel?'checked':''} onclick="toggleSelAll(this.checked)"></th>`+
     `<th class="th-sort" onclick="sortTit('ID_TITULAR')">ID ${sa('ID_TITULAR')}</th>`+
     `<th class="th-sort" onclick="sortTit('NOMBRE')">Nombre ${sa('NOMBRE')}</th>`+
+    `<th class="th-sort" onclick="sortTit('STATUS')">Status ${sa('STATUS')}</th>`+
     `<th class="th-sort" onclick="sortTit('MUNICIPIO')">Municipio ${sa('MUNICIPIO')}</th>`+
     `<th class="th-sort" onclick="sortTit('ESTADO')">Estado ${sa('ESTADO')}</th>`+
     `<th>Gestor</th><th style="text-align:right">Acciones</th></tr></thead><tbody>`+
     cap.map(t=>`<tr class="${t.ACTIVO?'':'is-inactive'} ${TIT_SEL.has(t.ID_TITULAR)?'is-sel':''}">
       <td class="tit-chkcol"><input type="checkbox" class="tit-cbx" ${TIT_SEL.has(t.ID_TITULAR)?'checked':''} onclick="toggleSel('${t.ID_TITULAR}',this.checked)"></td>
       <td class="tit-id-col">${t.ID_TITULAR}</td>
-      <td><div class="tit-name">${t.NOMBRE||'—'} <span class="st-badge st-${titEstado(t)}">${TIT_ESTADO_LABEL[titEstado(t)]}</span>${t.URGENTE?'<span class="urg-tag">URGENTE</span>':''}</div><div class="tit-loc" style="color:var(--text-faint)">${t.DIRECCION||''}${(t.LATITUD&&t.LONGITUD)?'<span class="tit-geo">● geo</span>':'<span class="tit-no-geo">○ sin geo</span>'}</div></td>
+      <td><div class="tit-name">${t.NOMBRE||'—'}${t.URGENTE?' <span class="urg-tag">URGENTE</span>':''}</div><div class="tit-loc" style="color:var(--text-faint)">${t.DIRECCION||''}${(t.LATITUD&&t.LONGITUD)?'<span class="tit-geo">● geo</span>':'<span class="tit-no-geo">○ sin geo</span>'}</div></td>
+      <td><span class="st-badge st-${titEstado(t)}" style="margin-left:0">${TIT_ESTADO_LABEL[titEstado(t)]}</span></td>
       <td>${t.MUNICIPIO||'—'}</td>
       <td>${t.ESTADO||'—'}</td>
       <td><select class="tit-gsel" onchange="reassignTit('${t.ID_TITULAR}',this.value)"><option value="">Sin asignar</option>${gOpts(t.ID_GESTOR)}</select></td>
