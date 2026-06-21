@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.10 · 2026-06-21 · Fase 3.3a: asignacion gestor-cartera -->
+<!-- FCC Admin · build v2.11 · 2026-06-21 · Fase 3.3b-c: selector global de alcance cliente-cartera -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -279,6 +279,9 @@ input{font-family:inherit}
 .gc-toggle.on::after{left:23px;background:var(--teal-bright)}
 .cart-row .gbtn{flex:0 0 auto;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--navy-700);color:var(--text-dim);cursor:pointer;transition:.15s}
 .cart-row .gbtn:hover{color:var(--teal-bright);border-color:var(--teal)}
+.scope{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.scope-sel{background:var(--navy-700);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:7px 10px;font-size:12.5px;max-width:175px;cursor:pointer}
+.scope-sel:hover{border-color:var(--teal)}
 .ges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .ges-card{background:var(--navy-700);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;transition:.15s}
 .ges-card:hover{border-color:var(--border-strong)}
@@ -479,7 +482,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.10</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.11</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -512,6 +515,10 @@ input{font-family:inherit}
         <h1 id="panelTitle">Tablero</h1>
       </div>
       <div class="topbar-right">
+        <div class="scope" id="scopeBox" style="display:none">
+          <select id="scopeCliente" class="scope-sel" onchange="onScopeCliente()"><option value="">Todos los clientes</option></select>
+          <select id="scopeCartera" class="scope-sel" onchange="onScopeCartera()"><option value="">Todas las carteras</option></select>
+        </div>
         <div class="live" id="liveBadge">
           <span class="live-dot"></span>
           <span class="live-label">En vivo</span>
@@ -679,7 +686,7 @@ input{font-family:inherit}
             <div class="cfg-title">Sesión</div>
             <div class="cfg-param"><span class="k">Administrador</span><span class="v" id="cfgAdmin">—</span></div>
             <div class="cfg-param"><span class="k">Rol</span><span class="v" id="cfgRol">—</span></div>
-            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.10</span></div>
+            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.11</span></div>
             <button class="cfg-logout" onclick="doLogout()">Cerrar sesión</button>
           </div>
         </div>
@@ -804,7 +811,7 @@ const PANEL_TITLES = {
   gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], visitas:['Gestión','Visitas'],
   reportes:['Sistema','Reportes'], config:['Sistema','Configuración'],
 };
-const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:null, mapDash:null, mapFull:null, markers:[], refreshTimer:null, countdown:60 };
+const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:null, mapDash:null, mapFull:null, markers:[], refreshTimer:null, countdown:60, scope:null, currentPanel:'dashboard' };
 
 /* ════════ HELPERS ════════ */
 function todayLocal(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -861,6 +868,7 @@ function startApp(){
   // Config solo para Admin Master
   document.getElementById('nav-config').classList.toggle('hidden', (u.rol!=='Admin Master'));
   document.getElementById('nav-clientes').classList.toggle('hidden', (u.rol!=='Admin Master'));
+  if(u.rol==='Admin Master'){ document.getElementById('scopeBox').style.display='flex'; loadScopeOptions(); }
   STATE.selectedDate=todayLocal();
   document.getElementById('datePick').value=STATE.selectedDate;
   showPanel('dashboard');
@@ -874,6 +882,7 @@ function restoreSession(){
 
 /* ════════ NAV ════════ */
 function showPanel(id){
+  STATE.currentPanel=id;
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
@@ -918,7 +927,7 @@ async function apiCall(endpoint,method='GET',body=null){
 /* ════════ DASHBOARD ════════ */
 async function loadDashboard(){
   const fecha=STATE.selectedDate;
-  const [vRes,gRes]=await Promise.all([ apiCall(`admin-dashboard?fecha=${fecha}`), apiCall('admin-gestores','POST',{action:'list'}) ]);
+  const [vRes,gRes]=await Promise.all([ apiCall(`admin-dashboard?fecha=${fecha}${scopeQuery()}`), apiCall('admin-gestores','POST',{action:'list'}) ]);
   STATE.visitas = (vRes && vRes.visitas) ? vRes.visitas : [];
   STATE.gestores= (gRes && gRes.gestores)? gRes.gestores: [];
   updateKPIs(); renderFeed(); paintMarkers(STATE.mapDash,'mapMeta'); if(STATE.mapFull) paintMarkers(STATE.mapFull,'mapFullMeta');
@@ -1015,7 +1024,7 @@ async function loadTitulares(force){
   if(TIT_LOADED && !force) return;
   const wrap=document.getElementById('titWrap');
   wrap.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>';
-  const res=await apiCall('admin-titulares-v2','POST',{action:'list'});
+  const res=await apiCall('admin-titulares-v2','POST',{action:'list', ...scopeParams()});
   if(!res || !res.success){
     wrap.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>No se pudieron cargar los titulares.</p><button class="btn-ghost" onclick="loadTitulares(true)">Reintentar</button></div>';
     return;
@@ -1398,6 +1407,7 @@ async function loadClientes(){
   CLI_ALL=(cRes&&cRes.clientes)?cRes.clientes:[];
   CART_ALL=(kRes&&kRes.carteras)?kRes.carteras:[];
   renderClientes();
+  fillScopeClientes(); fillScopeCarteras();
 }
 function renderClientes(){
   const grid=document.getElementById('cliGrid');
@@ -1509,6 +1519,48 @@ async function toggleGestorCartera(gestorId, el){
   else { el.classList.toggle('on', !willAssign); toast('No se pudo actualizar'); }
 }
 function cerrarGestoresCartera(){ document.getElementById('gcOverlay').classList.remove('show'); }
+
+/* ──── Selector global de alcance: cliente/cartera (Fase 3.3b/c) ──── */
+async function loadScopeOptions(){
+  const [cRes,kRes]=await Promise.all([ apiCall('admin-clientes','POST',{action:'list'}), apiCall('admin-carteras','POST',{action:'list'}) ]);
+  CLI_ALL=(cRes&&cRes.clientes)?cRes.clientes:[];
+  CART_ALL=(kRes&&kRes.carteras)?kRes.carteras:[];
+  try{ const s=JSON.parse(localStorage.getItem('fcc_scope')||'null'); if(s&&(s.clienteId||s.carteraId)) STATE.scope=s; }catch(e){}
+  fillScopeClientes(); fillScopeCarteras();
+}
+function fillScopeClientes(){
+  const sel=document.getElementById('scopeCliente'); if(!sel) return;
+  sel.innerHTML='<option value="">Todos los clientes</option>'+CLI_ALL.map(c=>`<option value="${c.ID_CLIENTE}">${esc(c.NOMBRE)}</option>`).join('');
+  sel.value=(STATE.scope&&STATE.scope.clienteId)||'';
+}
+function fillScopeCarteras(){
+  const sel=document.getElementById('scopeCartera'); if(!sel) return;
+  const cid=(STATE.scope&&STATE.scope.clienteId)||'';
+  const list=cid?CART_ALL.filter(k=>k.ID_CLIENTE===cid):CART_ALL;
+  sel.innerHTML='<option value="">Todas las carteras</option>'+list.map(k=>`<option value="${k.ID_CARTERA}">${esc(k.NOMBRE)}</option>`).join('');
+  sel.value=(STATE.scope&&STATE.scope.carteraId)||'';
+}
+function onScopeCliente(){
+  const v=document.getElementById('scopeCliente').value;
+  STATE.scope={clienteId:v||null, carteraId:null};
+  saveScope(); fillScopeCarteras(); applyScope();
+}
+function onScopeCartera(){
+  const v=document.getElementById('scopeCartera').value;
+  STATE.scope=STATE.scope||{clienteId:null,carteraId:null};
+  STATE.scope.carteraId=v||null;
+  if(v){ const k=CART_ALL.find(x=>x.ID_CARTERA===v); if(k){ STATE.scope.clienteId=k.ID_CLIENTE; document.getElementById('scopeCliente').value=k.ID_CLIENTE; } }
+  saveScope(); applyScope();
+}
+function saveScope(){ try{ localStorage.setItem('fcc_scope', JSON.stringify(STATE.scope||{})); }catch(e){} }
+function scopeParams(){ const s=STATE.scope||{}; const o={}; if(s.carteraId) o.cartera_id=s.carteraId; else if(s.clienteId) o.cliente_id=s.clienteId; return o; }
+function scopeQuery(){ const s=STATE.scope||{}; if(s.carteraId) return '&cartera_id='+encodeURIComponent(s.carteraId); if(s.clienteId) return '&cliente_id='+encodeURIComponent(s.clienteId); return ''; }
+function applyScope(){
+  const p=STATE.currentPanel;
+  if(p==='dashboard'||p==='mapa') loadDashboard();
+  else if(p==='titulares') loadTitulares(true);
+  else if(p==='visitas') loadVisitas(true);
+}
 async function guardarGestor(){
   const id=_gv('gesfId').trim(), nombre=_gv('gesfNombre').trim(), user=_gv('gesfUser').trim().replace('@',''), tg=_gv('gesfTgId').trim();
   if(!id){ toast('El ID de gestor es obligatorio'); return; }
@@ -1539,6 +1591,7 @@ async function loadVisitas(force){
   const wrap=document.getElementById('visWrap');
   wrap.innerHTML='<div class="empty"><div class="empty-ic">◆</div><p>Cargando visitas…</p></div>';
   const body={action:'list'};
+  Object.assign(body, scopeParams());
   const d=_gv('visDesde'), h=_gv('visHasta');
   if(d) body.fecha_desde=d; if(h) body.fecha_hasta=h;
   const res=await apiCall('admin-visitas','POST',body);
