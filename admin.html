@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- FCC Admin · build v2.9 · 2026-06-21 · Fase 3.2: modulo Clientes y Carteras + selector de cartera en import -->
+<!-- FCC Admin · build v2.10 · 2026-06-21 · Fase 3.3a: asignacion gestor-cartera -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -269,6 +269,16 @@ input{font-family:inherit}
 .cart-newbox{border-top:1px solid var(--border);padding-top:14px;margin-top:6px}
 .cart-newtitle{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin-bottom:9px}
 .cart-newrow{display:flex;gap:8px}
+.gc-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;max-height:52vh;overflow:auto}
+.gc-row{display:flex;align-items:center;gap:12px;padding:10px 13px;border-radius:10px;background:var(--navy-800);border:1px solid var(--border)}
+.gc-row .nm{font-weight:600;font-size:14px}
+.gc-row .gid{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:2px}
+.gc-toggle{margin-left:auto;width:46px;height:25px;border-radius:13px;background:var(--navy-600);border:1px solid var(--border);position:relative;cursor:pointer;transition:.18s;flex-shrink:0}
+.gc-toggle::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:var(--text-dim);transition:.18s}
+.gc-toggle.on{background:var(--teal-dim);border-color:var(--teal)}
+.gc-toggle.on::after{left:23px;background:var(--teal-bright)}
+.cart-row .gbtn{flex:0 0 auto;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--navy-700);color:var(--text-dim);cursor:pointer;transition:.15s}
+.cart-row .gbtn:hover{color:var(--teal-bright);border-color:var(--teal)}
 .ges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .ges-card{background:var(--navy-700);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;transition:.15s}
 .ges-card:hover{border-color:var(--border-strong)}
@@ -469,7 +479,7 @@ input{font-family:inherit}
   <aside class="sidebar" id="sidebar">
     <div class="side-brand">
       <div class="brand-mark">F</div>
-      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.9</div></div>
+      <div><div class="side-brand-name">Fortaleza</div><div class="side-brand-sub">Operaciones · v2.10</div></div>
     </div>
     <nav class="nav">
       <div class="nav-group">Principal</div>
@@ -669,7 +679,7 @@ input{font-family:inherit}
             <div class="cfg-title">Sesión</div>
             <div class="cfg-param"><span class="k">Administrador</span><span class="v" id="cfgAdmin">—</span></div>
             <div class="cfg-param"><span class="k">Rol</span><span class="v" id="cfgRol">—</span></div>
-            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.9</span></div>
+            <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.10</span></div>
             <button class="cfg-logout" onclick="doLogout()">Cerrar sesión</button>
           </div>
         </div>
@@ -755,6 +765,17 @@ input{font-family:inherit}
     </div>
     <div class="imp-actions">
       <button class="imp-cancel" onclick="cerrarCarterasModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="geo-overlay" id="gcOverlay">
+  <div class="geo-modal" style="width:min(460px,92vw)">
+    <div class="geo-title">Gestores de la cartera</div>
+    <div class="geo-sub" id="gcSub">—</div>
+    <div id="gcList" class="gc-list"></div>
+    <div class="imp-actions">
+      <button class="imp-cancel" onclick="cerrarGestoresCartera()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1440,6 +1461,7 @@ function renderCarterasModal(){
     <div class="cart-row ${k.ACTIVO?'':'off'}">
       <div style="min-width:0"><div class="nm">${esc(k.NOMBRE)}</div>${k.TIPO?`<div class="tp">${esc(k.TIPO)}</div>`:''}</div>
       <span class="ct">${k.TITULARES||0} titulares</span>
+      <button class="gbtn" onclick="abrirGestoresCartera('${k.ID_CARTERA}')">Gestores</button>
     </div>`).join('') : '<div class="cli-empty" style="padding:18px">Sin carteras todavía. Agrega la primera abajo.</div>';
 }
 function cerrarCarterasModal(){ document.getElementById('cartOverlay').classList.remove('show'); }
@@ -1460,6 +1482,33 @@ async function guardarCartera(){
     apiCall('admin-clientes','POST',{action:'list'}).then(r=>{ if(r&&r.clientes){ CLI_ALL=r.clientes; renderClientes(); } });
   } else toast('No se pudo agregar la cartera');
 }
+
+/* ──── Asignación gestor ↔ cartera (Fase 3.3a) ──── */
+let GC_CART=null;
+async function abrirGestoresCartera(carteraId){
+  GC_CART=carteraId;
+  const k=CART_ALL.find(x=>x.ID_CARTERA===carteraId);
+  document.getElementById('gcSub').textContent = k ? ('Cartera: '+k.NOMBRE) : '—';
+  document.getElementById('gcList').innerHTML='<div class="cli-empty" style="padding:18px">Cargando…</div>';
+  document.getElementById('gcOverlay').classList.add('show');
+  const res=await apiCall('admin-gestor-cartera','POST',{action:'list',cartera_id:carteraId});
+  renderGCList((res&&res.gestores)?res.gestores:[]);
+}
+function renderGCList(gs){
+  document.getElementById('gcList').innerHTML = gs.length ? gs.map(g=>`
+    <div class="gc-row">
+      <div style="min-width:0"><div class="nm">${esc(g.NOMBRE)}</div><div class="gid">${esc(g.ID_GESTOR)}</div></div>
+      <div class="gc-toggle ${g.ASIGNADO?'on':''}" onclick="toggleGestorCartera('${g.ID_GESTOR}', this)"></div>
+    </div>`).join('') : '<div class="cli-empty" style="padding:18px">No hay gestores activos.</div>';
+}
+async function toggleGestorCartera(gestorId, el){
+  const willAssign=!el.classList.contains('on');
+  el.classList.toggle('on', willAssign);
+  const res=await apiCall('admin-gestor-cartera','POST',{action:'toggle',cartera_id:GC_CART,gestor_id:gestorId,asignado:willAssign});
+  if(res&&res.success){ toast(willAssign?'Gestor asignado':'Gestor quitado'); }
+  else { el.classList.toggle('on', !willAssign); toast('No se pudo actualizar'); }
+}
+function cerrarGestoresCartera(){ document.getElementById('gcOverlay').classList.remove('show'); }
 async function guardarGestor(){
   const id=_gv('gesfId').trim(), nombre=_gv('gesfNombre').trim(), user=_gv('gesfUser').trim().replace('@',''), tg=_gv('gesfTgId').trim();
   if(!id){ toast('El ID de gestor es obligatorio'); return; }
