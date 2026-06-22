@@ -902,6 +902,32 @@ input  { font-family: 'Outfit', sans-serif; outline: none; border: none; }
 
 /* Lista titulares */
 .titulares-list { padding: 0 20px; }
+/* Tabs Misiones / Visitados */
+.misiones-tabs{display:flex;gap:8px;padding:0 20px 12px}
+.mseg{flex:1;padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:14px;font-weight:700;cursor:pointer;transition:.18s;font-family:inherit}
+.mseg.active{background:rgba(23,133,130,0.15);border-color:var(--border2);color:var(--teal3)}
+/* Historial de visitas (Visitados) */
+.visitados-list{padding:0 20px}
+.vis-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.vis-card:active{border-color:var(--border2)}
+.vis-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.vis-titular{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
+.vis-id{font-size:11px;color:var(--text3);font-family:monospace;margin-left:6px}
+.vis-when{font-size:12px;color:var(--text2);white-space:nowrap;text-align:right;line-height:1.5}
+.vis-badge{display:inline-block;margin-top:9px;padding:4px 11px;border-radius:8px;font-size:12px;font-weight:700}
+.vis-contacto{font-size:12px;color:var(--text2);margin-top:7px}
+.vis-toggle{margin-top:10px;font-size:12px;color:var(--teal3);font-weight:700;user-select:none}
+.vis-detail{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.vis-card.open .vis-detail{display:block}
+.vis-card.open .vis-toggle .arr{transform:rotate(180deg)}
+.vis-toggle .arr{display:inline-block;transition:transform .2s}
+.vis-row{display:flex;gap:10px;font-size:13px;margin-bottom:8px;line-height:1.45}
+.vis-row .k{color:var(--text3);min-width:118px;flex-shrink:0}
+.vis-row .v{color:var(--text);flex:1}
+.vis-fotos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.vis-foto{width:74px;height:74px;border-radius:10px;object-fit:cover;border:1px solid var(--border)}
+.vis-empty{text-align:center;padding:54px 20px;color:var(--text2)}
+.vis-empty .em-ic{font-size:42px;margin-bottom:14px;opacity:.7}
 .titular-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1804,6 +1830,11 @@ input[type="file"].foto-input { display: none; }
       <div class="misiones-title">🗺️ Mis Misiones</div>
       <div class="misiones-count" id="misionesCount">— titulares</div>
     </div>
+    <div class="misiones-tabs">
+      <button class="mseg active" id="seg-misiones" onclick="switchMis('misiones')">🗺️ Misiones</button>
+      <button class="mseg" id="seg-visitados" onclick="switchMis('visitados')">📋 Visitados</button>
+    </div>
+    <div id="misionesFiltros">
     <div class="buscar-wrap">
       <span class="buscar-icon">🔍</span>
       <input class="buscar-input" type="search" id="buscarInput"
@@ -1817,6 +1848,7 @@ input[type="file"].foto-input { display: none; }
       <div class="filtro-chip"        data-filtro="visitado"  onclick="setFiltro('visitado')">✅ Visitados hoy</div>
       <div class="filtro-chip"        data-filtro="urgente"   onclick="setFiltro('urgente')">⚡ Urgentes</div>
     </div>
+    </div>
   </div>
 
   <!-- Zona scrolleable -->
@@ -1827,6 +1859,7 @@ input[type="file"].foto-input { display: none; }
         <div class="loading-text">Cargando tu cartera...</div>
       </div>
     </div>
+    <div class="visitados-list" id="visitadosList" style="display:none"></div>
   </div>
 
   <!-- Bottom nav FIXED -->
@@ -2158,7 +2191,7 @@ function goTo(screen) {
   }
   if (screen === 'perfil')   renderPerfil();
   if (screen === 'home')     renderHome();
-  if (screen === 'misiones') loadMisiones();
+  if (screen === 'misiones') { if (typeof switchMis === 'function') switchMis('misiones'); loadMisiones(); }
   if (screen === 'captura')  initCaptura();
 }
 
@@ -3212,6 +3245,69 @@ async function loadMisiones() {
   // Respeta el filtro activo (Pendientes/Visitados/etc.) en vez de mostrar todos
   aplicarFiltros();
   if (typeof renderMissions === 'function') renderMissions();
+}
+
+/* ──── Visitados: historial de visitas del gestor (solo lectura) ──── */
+let MIS_VISITAS = [];
+function escH(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function switchMis(tab){
+  const isVis = tab === 'visitados';
+  document.getElementById('seg-misiones').classList.toggle('active', !isVis);
+  document.getElementById('seg-visitados').classList.toggle('active', isVis);
+  document.getElementById('misionesFiltros').style.display = isVis ? 'none' : '';
+  document.getElementById('titularesList').style.display   = isVis ? 'none' : '';
+  document.getElementById('visitadosList').style.display   = isVis ? 'block' : 'none';
+  document.getElementById('misionesCount').style.display   = isVis ? 'none' : '';
+  if (isVis) loadMisVisitas();
+}
+async function loadMisVisitas(){
+  const el = document.getElementById('visitadosList');
+  el.innerHTML = `<div class="loading-state"><div class="spinner"></div><div class="loading-text">Cargando tu historial...</div></div>`;
+  try{
+    const res = await fetch(`${N8N_BASE}/webhook/field-mis-visitas`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ id_gestor: STATE.user?.idGestor || '' })});
+    const data = await res.json();
+    MIS_VISITAS = (data && data.visitas) ? data.visitas : [];
+  }catch(e){ MIS_VISITAS = []; }
+  renderMisVisitas();
+}
+function visBadgeColor(r){
+  if(!r) return '#888';
+  if(/realiza pago/i.test(r))   return '#1ab5b1';
+  if(/no se localiza/i.test(r)) return '#e84444';
+  if(/carta|tercero/i.test(r))  return '#f59e0b';
+  if(/localiza/i.test(r))       return '#22c55e';
+  return '#888888';
+}
+function renderMisVisitas(){
+  const el = document.getElementById('visitadosList');
+  if(!MIS_VISITAS.length){
+    el.innerHTML = `<div class="vis-empty"><div class="em-ic">📋</div><div>Aún no tienes visitas registradas.<br>Aquí verás el respaldo de cada visita que realices.</div></div>`;
+    return;
+  }
+  el.innerHTML = MIS_VISITAS.map(v=>{
+    const col = visBadgeColor(v.RESULTADO);
+    const rows = [];
+    if(v.OBSERVACIONES)      rows.push(['Observaciones', v.OBSERVACIONES]);
+    if(v.CONOCE_TITULAR)     rows.push(['¿Conoce al titular?', v.CONOCE_TITULAR]);
+    if(v.NOMBRE_TERCERO)     rows.push(['Tercero', v.NOMBRE_TERCERO]);
+    if(v.HORARIO_INDICADO)   rows.push(['Horario indicado', v.HORARIO_INDICADO]);
+    if(v.TELEFONO_ADICIONAL) rows.push(['Teléfono adicional', v.TELEFONO_ADICIONAL]);
+    if(v.SENA_PARTICULAR)    rows.push(['Seña particular', v.SENA_PARTICULAR]);
+    if(v.DIRECCION)          rows.push(['Dirección', v.DIRECCION + (v.MUNICIPIO ? ', '+v.MUNICIPIO : '')]);
+    const fotos = (v.FOTOS && v.FOTOS.length)
+      ? `<div class="vis-fotos">${v.FOTOS.map(u=>`<img class="vis-foto" src="${escH(u)}" loading="lazy" onclick="event.stopPropagation();window.open('${escH(u)}','_blank')">`).join('')}</div>` : '';
+    const detailInner = rows.map(([k,val])=>`<div class="vis-row"><div class="k">${k}</div><div class="v">${escH(val)}</div></div>`).join('') + fotos;
+    const hasDetail = rows.length || fotos;
+    return `<div class="vis-card" onclick="this.classList.toggle('open')">
+      <div class="vis-head">
+        <div style="min-width:0"><span class="vis-titular">${escH(v.TITULAR||'—')}</span><span class="vis-id">${escH(v.ID_TITULAR||'')}</span></div>
+        <div class="vis-when">${escH(v.FECHA||'')}<br>${escH(v.HORA||'')}</div>
+      </div>
+      <span class="vis-badge" style="background:${col}22;color:${col}">${escH(v.RESULTADO||'—')}</span>
+      ${v.TIPO_CONTACTO ? `<div class="vis-contacto">Contacto: ${escH(v.TIPO_CONTACTO)}</div>` : ''}
+      ${hasDetail ? `<div class="vis-toggle">Ver detalle <span class="arr">▾</span></div><div class="vis-detail">${detailInner}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════
