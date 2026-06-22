@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<!-- FCC Validador de Expedientes · build v1.0 · domicilio (Google Maps + Street View) + OCR de identificación -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Validador de Expedientes · Fortaleza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0A1828; --navy2:#0d1f33; --navy3:#112440;
+    --teal:#178582; --teal2:#1ab5b1; --teal3:#0ef5f0;
+    --gold:#BFA181; --gold2:#e8c990;
+    --text:#e8e8e2; --text2:rgba(232,232,226,0.62); --text3:rgba(232,232,226,0.34);
+    --border:rgba(255,255,255,0.09); --border2:rgba(23,133,130,0.4);
+    --surface:rgba(255,255,255,0.045); --surface2:rgba(255,255,255,0.08);
+    --red:#e84444; --green:#22c55e;
+    --serif:'Cormorant Garamond',serif; --sans:'Outfit',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(23,133,130,0.10), transparent),
+      radial-gradient(900px 500px at -10% 110%, rgba(191,161,129,0.08), transparent), var(--navy);
+    color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:26px 20px 60px}
+  /* Header */
+  .head{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .mark{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--teal),var(--navy3));
+    border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--serif);
+    font-weight:700;font-size:24px;color:var(--gold2);flex-shrink:0}
+  .h-tt{font-family:var(--serif);font-size:27px;font-weight:600;letter-spacing:.3px;line-height:1.1}
+  .h-sub{font-size:12px;color:var(--text3);letter-spacing:2.5px;text-transform:uppercase}
+  .lead{color:var(--text2);font-size:14px;margin:14px 0 22px;max-width:680px}
+  /* Tabs */
+  .tabs{display:flex;gap:8px;margin-bottom:22px;border-bottom:1px solid var(--border);padding-bottom:0}
+  .tab{padding:12px 18px;border:none;background:none;color:var(--text2);font-family:var(--sans);font-size:15px;
+    font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.18s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--teal2);border-bottom-color:var(--teal2)}
+  .pane{display:none;animation:fade .25s ease}
+  .pane.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:18px}
+  .card-tt{font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:4px}
+  .card-sub{font-size:13px;color:var(--text2);margin-bottom:18px}
+  .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
+    background:rgba(23,133,130,0.18);color:var(--teal3);font-family:var(--mono);font-size:12px;font-weight:600;margin-right:9px}
+  /* Forms */
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:13px}
+  .f{display:flex;flex-direction:column;gap:6px}
+  .f.c2{grid-column:span 2}.f.c3{grid-column:span 3}.f.c6{grid-column:span 6}
+  label{font-size:12px;color:var(--text3);font-weight:500;letter-spacing:.3px}
+  input,select{background:var(--navy2);border:1px solid var(--border);border-radius:10px;padding:11px 12px;
+    color:var(--text);font-family:var(--sans);font-size:14px;width:100%;transition:.15s}
+  input:focus,select:focus{outline:none;border-color:var(--teal);background:var(--navy3)}
+  input::placeholder{color:var(--text3)}
+  .mono-in{font-family:var(--mono);font-size:13px;letter-spacing:.5px}
+  /* Buttons */
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .btn{padding:11px 20px;border-radius:11px;border:1px solid var(--border);background:var(--surface2);
+    color:var(--text);font-family:var(--sans);font-weight:600;font-size:14px;cursor:pointer;transition:.15s;
+    display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{border-color:var(--teal);color:var(--teal2)}
+  .btn.primary{background:linear-gradient(135deg,var(--teal),#10605e);border-color:var(--border2);color:#eafffe}
+  .btn.primary:hover{filter:brightness(1.1);color:#fff}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.ghost{background:none}
+  /* Map */
+  .map-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+  #map,#pano{height:340px;border-radius:14px;border:1px solid var(--border);background:var(--navy2);overflow:hidden}
+  .map-label{font-size:11px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin:0 0 6px 2px}
+  .map-warn{padding:30px;text-align:center;color:var(--text2);font-size:13px}
+  .coords{display:grid;grid-template-columns:1fr 1fr auto;gap:11px;align-items:end;margin-top:16px}
+  .hint{font-size:12.5px;color:var(--text2);margin:14px 0 2px;display:flex;align-items:center;gap:8px}
+  .hint .dot{color:var(--gold2)}
+  /* OCR */
+  .drop{border:1.5px dashed var(--border2);border-radius:14px;padding:26px;text-align:center;cursor:pointer;
+    transition:.18s;background:rgba(23,133,130,0.04)}
+  .drop:hover{background:rgba(23,133,130,0.09);border-color:var(--teal)}
+  .drop .ic{font-size:34px;margin-bottom:8px}
+  .drop .t{font-weight:600;font-size:15px}
+  .drop .s{font-size:12.5px;color:var(--text2);margin-top:4px}
+  #idPreview{max-width:100%;max-height:260px;border-radius:12px;border:1px solid var(--border);margin-top:14px;display:none}
+  .ocr-status{font-size:13px;margin-top:12px;display:none;padding:10px 14px;border-radius:10px}
+  .ocr-status.work{display:block;background:rgba(23,133,130,0.12);color:var(--teal2)}
+  .ocr-status.err{display:block;background:rgba(232,68,68,0.12);color:#ff9b9b}
+  .ocr-status.ok{display:block;background:rgba(34,197,94,0.12);color:#86efac}
+  #ocrFields{display:none}
+  /* Toast */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy3);
+    border:1px solid var(--border2);color:var(--text);padding:13px 22px;border-radius:12px;font-size:14px;font-weight:500;
+    opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;
+    display:none;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media(max-width:760px){
+    .grid{grid-template-columns:repeat(2,1fr)}
+    .f.c2,.f.c3{grid-column:span 2}.f.c6{grid-column:span 2}
+    .map-grid{grid-template-columns:1fr}
+    .coords{grid-template-columns:1fr 1fr}.coords .btn{grid-column:span 2}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="mark">F</div>
+    <div>
+      <div class="h-tt">Validador de Expedientes</div>
+      <div class="h-sub">Fortaleza · Validación de domicilio e identidad</div>
+    </div>
+  </div>
+  <p class="lead">Herramienta de apoyo al seguimiento de expedientes de financieras, fintech y bancos. Valida y corrige el domicilio sobre el mapa, y extrae los datos de la identificación con lectura automática.</p>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-dom" onclick="switchTab('dom')">📍 Domicilio</button>
+    <button class="tab" id="tab-ocr" onclick="switchTab('ocr')">🪪 Identificación</button>
+  </div>
+
+  <!-- ════════ DOMICILIO ════════ -->
+  <div class="pane active" id="pane-dom">
+    <div class="card">
+      <div class="card-tt"><span class="num">1</span>Datos del domicilio</div>
+      <div class="card-sub">Captura la dirección del expediente. Luego ajústala en el mapa si la ubicación no es exacta.</div>
+      <div class="grid">
+        <div class="f c3"><label>Calle</label><input id="d_calle" placeholder="Av. Reforma"></div>
+        <div class="f"><label>Núm. exterior</label><input id="d_ext" placeholder="100"></div>
+        <div class="f"><label>Núm. interior</label><input id="d_int" placeholder="3B"></div>
+        <div class="f c3"><label>Colonia</label><input id="d_col" placeholder="Centro"></div>
+        <div class="f"><label>Código postal</label><input id="d_cp" placeholder="62000" inputmode="numeric"></div>
+        <div class="f c2"><label>Municipio / Alcaldía</label><input id="d_mun" placeholder="Cuernavaca"></div>
+        <div class="f c2"><label>Estado</label><input id="d_edo" placeholder="Morelos"></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" onclick="localizarDireccion()"><span class="spin" id="geoSpin"></span>Localizar dirección</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-tt"><span class="num">2</span>Ubicación en el mapa</div>
+      <div class="card-sub">Arrastra el pin o haz clic en el mapa para corregir la posición. Usa el Street View para identificar la casa exacta.</div>
+      <div class="map-grid">
+        <div>
+          <div class="map-label">Mapa · arrastra el pin</div>
+          <div id="map"><div class="map-warn" id="mapWarn">Agrega tu API key de Google Maps para ver el mapa.<br>Mientras tanto, el resto de la herramienta funciona.</div></div>
+        </div>
+        <div>
+          <div class="map-label">Street View · identifica la casa</div>
+          <div id="pano"><div class="map-warn">El Street View aparece al localizar una dirección.</div></div>
+        </div>
+      </div>
+      <div class="coords">
+        <div class="f"><label>Latitud</label><input id="d_lat" class="mono-in" placeholder="—"></div>
+        <div class="f"><label>Longitud</label><input id="d_lng" class="mono-in" placeholder="—"></div>
+        <button class="btn" onclick="aplicarCoords()">Aplicar coordenadas</button>
+      </div>
+      <div class="hint"><span class="dot">●</span> La ubicación final que guardes es la del pin, no la dirección escrita.</div>
+      <div class="actions">
+        <button class="btn primary" onclick="guardarUbicacion()">Guardar ubicación validada</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ OCR ════════ -->
+  <div class="pane" id="pane-ocr">
+    <div class="card">
+      <div class="card-tt"><span class="num">1</span>Leer identificación</div>
+      <div class="card-sub">Sube o toma una foto de la credencial para votar (INE/IFE). La lectura es automática; tú revisas y corriges.</div>
+      <label class="drop" for="idFile">
+        <div class="ic">🪪</div>
+        <div class="t">Toca para subir o tomar la foto</div>
+        <div class="s">JPG o PNG · frente de la identificación, bien iluminada y enfocada</div>
+      </label>
+      <input type="file" id="idFile" accept="image/*" capture="environment" style="display:none" onchange="onIdFile(this)">
+      <img id="idPreview" alt="Vista previa de la identificación">
+      <div class="actions">
+        <button class="btn primary" id="btnLeer" onclick="leerINE()" disabled><span class="spin" id="ocrSpin"></span>Leer identificación</button>
+      </div>
+      <div class="ocr-status" id="ocrStatus"></div>
+    </div>
+
+    <div class="card" id="ocrFields">
+      <div class="card-tt"><span class="num">2</span>Datos extraídos · revisa y corrige</div>
+      <div class="card-sub">Confirma cada dato contra la credencial física antes de guardar. Los campos son editables.</div>
+      <div class="grid">
+        <div class="f c6"><label>Nombre completo</label><input id="o_nombre"></div>
+        <div class="f c2"><label>Apellido paterno</label><input id="o_pat"></div>
+        <div class="f c2"><label>Apellido materno</label><input id="o_mat"></div>
+        <div class="f c2"><label>Nombre(s)</label><input id="o_nom"></div>
+        <div class="f c3"><label>CURP</label><input id="o_curp" class="mono-in"></div>
+        <div class="f c3"><label>Clave de elector</label><input id="o_clave" class="mono-in"></div>
+        <div class="f"><label>Sexo</label><input id="o_sexo"></div>
+        <div class="f"><label>Fecha nac.</label><input id="o_fnac"></div>
+        <div class="f"><label>Sección</label><input id="o_sec"></div>
+        <div class="f"><label>Año registro</label><input id="o_anio"></div>
+        <div class="f"><label>Vigencia</label><input id="o_vig"></div>
+        <div class="f c3"><label>Domicilio · calle y número</label><input id="o_calle"></div>
+        <div class="f c3"><label>Colonia</label><input id="o_col"></div>
+        <div class="f c2"><label>Código postal</label><input id="o_cp"></div>
+        <div class="f c2"><label>Municipio</label><input id="o_mun"></div>
+        <div class="f c2"><label>Estado</label><input id="o_edo"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="usarDomicilioEnMapa()">📍 Validar este domicilio en el mapa</button>
+        <button class="btn ghost" onclick="copiarDatos()">Copiar datos (JSON)</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const N8N_BASE = 'https://n8n.fortalezacontactcenter.com';
+let MAP=null, MARKER=null, PANO=null, GEOCODER=null, MAPS_READY=false;
+let ID_B64=null, ID_MIME=null;
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),2600);}
+function switchTab(t){
+  document.getElementById('tab-dom').classList.toggle('active', t==='dom');
+  document.getElementById('tab-ocr').classList.toggle('active', t==='ocr');
+  document.getElementById('pane-dom').classList.toggle('active', t==='dom');
+  document.getElementById('pane-ocr').classList.toggle('active', t==='ocr');
+}
+
+/* ─────── Mapa (Google Maps + Street View) ─────── */
+const MAP_DARK=[
+  {elementType:'geometry',stylers:[{color:'#0d1f33'}]},
+  {elementType:'labels.text.fill',stylers:[{color:'#8aa0b3'}]},
+  {elementType:'labels.text.stroke',stylers:[{color:'#0A1828'}]},
+  {featureType:'road',elementType:'geometry',stylers:[{color:'#1b3550'}]},
+  {featureType:'road',elementType:'labels.text.fill',stylers:[{color:'#b9c6d3'}]},
+  {featureType:'water',elementType:'geometry',stylers:[{color:'#0a1622'}]},
+  {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
+  {featureType:'poi.park',elementType:'geometry',stylers:[{color:'#12352a'}]},
+];
+function initMap(){
+  MAPS_READY=true;
+  GEOCODER=new google.maps.Geocoder();
+  const centro={lat:19.4326,lng:-99.1332}; // CDMX por defecto
+  document.getElementById('mapWarn')?.remove();
+  MAP=new google.maps.Map(document.getElementById('map'),{
+    center:centro, zoom:12, styles:MAP_DARK, mapTypeControl:false, streetViewControl:true, fullscreenControl:false,
+  });
+  PANO=new google.maps.StreetViewPanorama(document.getElementById('pano'),{
+    position:centro, pov:{heading:0,pitch:0}, visible:false, addressControl:false, fullscreenControl:false,
+  });
+  MAP.setStreetView(PANO);
+  MARKER=new google.maps.Marker({position:centro, map:MAP, draggable:true, title:'Domicilio'});
+  MARKER.addListener('dragend', e=> setPunto(e.latLng, false));
+  MAP.addListener('click', e=> setPunto(e.latLng, false));
+}
+function setPunto(latlng, recenter){
+  if(!MAPS_READY) return;
+  MARKER.setPosition(latlng);
+  if(recenter){ MAP.setCenter(latlng); MAP.setZoom(18); }
+  PANO.setPosition(latlng); PANO.setVisible(true);
+  document.getElementById('d_lat').value = latlng.lat().toFixed(6);
+  document.getElementById('d_lng').value = latlng.lng().toFixed(6);
+}
+function localizarDireccion(){
+  if(!MAPS_READY){ toast('Falta la API key de Google Maps'); return; }
+  const partes=[
+    [document.getElementById('d_calle').value, document.getElementById('d_ext').value].filter(Boolean).join(' '),
+    document.getElementById('d_col').value,
+    document.getElementById('d_cp').value,
+    document.getElementById('d_mun').value,
+    document.getElementById('d_edo').value, 'México'
+  ].filter(Boolean).join(', ');
+  if(!partes.trim()){ toast('Captura al menos calle y municipio'); return; }
+  const sp=document.getElementById('geoSpin'); sp.style.display='block';
+  GEOCODER.geocode({address:partes}, (res,status)=>{
+    sp.style.display='none';
+    if(status==='OK' && res[0]){ setPunto(res[0].geometry.location, true); toast('Dirección localizada · ajusta el pin si hace falta'); }
+    else { toast('No se encontró la dirección. Ajústala manualmente en el mapa.'); }
+  });
+}
+function aplicarCoords(){
+  if(!MAPS_READY){ toast('Falta la API key de Google Maps'); return; }
+  const lat=parseFloat(document.getElementById('d_lat').value), lng=parseFloat(document.getElementById('d_lng').value);
+  if(isNaN(lat)||isNaN(lng)){ toast('Coordenadas inválidas'); return; }
+  setPunto(new google.maps.LatLng(lat,lng), true);
+}
+function guardarUbicacion(){
+  const data={
+    calle:document.getElementById('d_calle').value, num_ext:document.getElementById('d_ext').value,
+    num_int:document.getElementById('d_int').value, colonia:document.getElementById('d_col').value,
+    cp:document.getElementById('d_cp').value, municipio:document.getElementById('d_mun').value,
+    estado:document.getElementById('d_edo').value,
+    lat:document.getElementById('d_lat').value, lng:document.getElementById('d_lng').value,
+  };
+  if(!data.lat||!data.lng){ toast('Primero coloca el pin en el mapa'); return; }
+  navigator.clipboard?.writeText(JSON.stringify(data,null,2)).catch(()=>{});
+  toast('Ubicación guardada y copiada al portapapeles');
+  // Punto de integración: aquí se puede hacer POST del expediente a un endpoint n8n.
+}
+
+/* ─────── OCR de identificación ─────── */
+function onIdFile(input){
+  const file=input.files && input.files[0]; if(!file) return;
+  ID_MIME=file.type || 'image/jpeg';
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=document.getElementById('idPreview'); img.src=reader.result; img.style.display='block';
+    ID_B64=String(reader.result).replace(/^data:[^;]+;base64,/,'');
+    document.getElementById('btnLeer').disabled=false;
+    setStatus('','');
+  };
+  reader.readAsDataURL(file);
+}
+function setStatus(msg, kind){
+  const s=document.getElementById('ocrStatus');
+  s.className='ocr-status'+(kind?(' '+kind):''); s.textContent=msg;
+}
+async function leerINE(){
+  if(!ID_B64){ toast('Primero sube la foto de la identificación'); return; }
+  const btn=document.getElementById('btnLeer'), sp=document.getElementById('ocrSpin');
+  btn.disabled=true; sp.style.display='block'; setStatus('Leyendo la identificación…','work');
+  try{
+    const res=await fetch(`${N8N_BASE}/webhook/ocr-ine`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image_base64:ID_B64, mime:ID_MIME})});
+    const data=await res.json();
+    if(data && data.success && data.campos){ llenarCampos(data.campos); setStatus('Datos extraídos. Revísalos y corrige lo que haga falta.','ok'); document.getElementById('ocrFields').style.display='block'; }
+    else { setStatus(data && data.message ? data.message : 'No se pudo leer la identificación. Prueba con una foto más nítida.','err'); }
+  }catch(e){ setStatus('No se pudo conectar con el servicio de lectura. Revisa tu conexión.','err'); }
+  finally{ btn.disabled=false; sp.style.display='none'; }
+}
+function set(id,v){ const el=document.getElementById(id); if(el) el.value=(v==null?'':v); }
+function llenarCampos(c){
+  set('o_nombre',c.nombre_completo); set('o_pat',c.apellido_paterno); set('o_mat',c.apellido_materno);
+  set('o_nom',c.nombres); set('o_curp',c.curp); set('o_clave',c.clave_elector); set('o_sexo',c.sexo);
+  set('o_fnac',c.fecha_nacimiento); set('o_sec',c.seccion); set('o_anio',c.anio_registro); set('o_vig',c.vigencia);
+  const calle=[c.domicilio_calle, c.domicilio_numero].filter(Boolean).join(' ');
+  set('o_calle',calle); set('o_col',c.domicilio_colonia); set('o_cp',c.domicilio_cp);
+  set('o_mun',c.domicilio_municipio); set('o_edo',c.domicilio_estado);
+}
+function usarDomicilioEnMapa(){
+  set('d_calle',document.getElementById('o_calle').value); set('d_col',document.getElementById('o_col').value);
+  set('d_cp',document.getElementById('o_cp').value); set('d_mun',document.getElementById('o_mun').value);
+  set('d_edo',document.getElementById('o_edo').value);
+  switchTab('dom'); setTimeout(localizarDireccion, 150);
+}
+function copiarDatos(){
+  const ids=['o_nombre','o_pat','o_mat','o_nom','o_curp','o_clave','o_sexo','o_fnac','o_sec','o_anio','o_vig','o_calle','o_col','o_cp','o_mun','o_edo'];
+  const keys=['nombre_completo','apellido_paterno','apellido_materno','nombres','curp','clave_elector','sexo','fecha_nacimiento','seccion','anio_registro','vigencia','domicilio_calle_numero','domicilio_colonia','domicilio_cp','domicilio_municipio','domicilio_estado'];
+  const out={}; ids.forEach((id,i)=> out[keys[i]]=document.getElementById(id).value);
+  navigator.clipboard?.writeText(JSON.stringify(out,null,2)).catch(()=>{});
+  toast('Datos copiados al portapapeles');
+}
+// Fallback si Google Maps no carga (key ausente/incorrecta)
+window.gm_authFailure=function(){ const m=document.getElementById('map'); if(m) m.innerHTML='<div class="map-warn">La API key de Google Maps no es válida o le faltan permisos (Maps JavaScript API, Geocoding, Street View).</div>'; MAPS_READY=false; };
+</script>
+<!-- Reemplaza TU_GOOGLE_MAPS_API_KEY por tu clave (habilita: Maps JavaScript API, Geocoding API, Street View) -->
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDwodPEXVpDHlUCDqXOI8rjVsq8o5wiOHg&callback=initMap&v=weekly"></script>
+</body>
+</html>
