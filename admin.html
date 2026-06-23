@@ -480,6 +480,48 @@ input{font-family:inherit}
 }
 .menu-toggle{display:none;place-items:center;width:38px;height:38px;border-radius:9px;background:var(--navy-700);border:1px solid var(--border);font-size:18px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── Editor de cuestionarios (nodos) ── */
+#panel-cuestionarios{display:flex;flex-direction:column;height:calc(100vh - 116px)}
+.cq-bar{display:flex;align-items:center;gap:10px;padding:0 0 12px;flex-wrap:wrap}
+.cq-sel{background:var(--navy-700);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:8px 12px;font-family:var(--sans);font-size:13px;min-width:240px}
+.cq-status{font-size:12px;color:var(--gold-soft)}
+.cq-btn{background:var(--navy-700);border:1px solid var(--border-strong);color:var(--text);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.cq-btn:hover{background:var(--navy-600)}
+.cq-btn-primary{background:var(--teal);border-color:var(--teal);color:#04221f}
+.cq-btn-danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+.cq-canvas-wrap{flex:1;position:relative;overflow:auto;border:1px solid var(--border);border-radius:14px;background:radial-gradient(circle at 1px 1px, rgba(191,161,129,.10) 1px, transparent 0) 0 0/24px 24px, var(--navy-900)}
+.cq-canvas{position:relative;min-width:1200px;min-height:800px}
+.cq-cables{position:absolute;top:0;left:0;pointer-events:none;z-index:1}
+.cq-cable{fill:none;stroke:var(--teal-bright);stroke-width:2.4;opacity:.85;pointer-events:stroke;cursor:pointer}
+.cq-cable.tmp{stroke-dasharray:5 4;opacity:.6}
+.cq-node{position:absolute;z-index:2;background:var(--navy-700);border:1px solid var(--border-strong);border-radius:12px;box-shadow:var(--shadow);user-select:none}
+.cq-node.ini{border-color:var(--teal-bright);box-shadow:0 0 0 1px var(--teal-bright),var(--shadow)}
+.cq-node.res .cq-tipo{color:var(--gold-soft)}
+.cq-node-head{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:grab;border-bottom:1px solid var(--border)}
+.cq-node-head:active{cursor:grabbing}
+.cq-tipo{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--teal-bright);background:var(--teal-dim);padding:2px 7px;border-radius:6px}
+.cq-star{color:var(--gold);font-size:13px}
+.cq-ini-btn{margin-left:auto;font-size:11px;color:var(--text-dim);cursor:pointer}
+.cq-ini-btn:hover{color:var(--teal-bright)}
+.cq-node-body{padding:11px 12px;font-size:13px;color:var(--text);cursor:pointer;line-height:1.4;min-height:20px}
+.cq-node-body:hover{color:var(--teal-bright)}
+.cq-portrow{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:3px 12px;height:26px;position:relative}
+.cq-portlbl{font-size:12px;color:var(--text-dim);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cq-out{width:13px;height:13px;border-radius:50%;background:var(--gold);border:2px solid var(--navy-800);cursor:crosshair;position:absolute;right:-7px;top:50%;transform:translateY(-50%)}
+.cq-out:hover{background:var(--teal-bright)}
+.cq-in{width:13px;height:13px;border-radius:50%;background:var(--teal);border:2px solid var(--navy-800);position:absolute;left:-7px;top:16px}
+.cq-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text-faint);font-size:14px}
+.cq-drawer{position:fixed;top:0;right:0;height:100%;width:340px;max-width:90vw;background:var(--navy-800);border-left:1px solid var(--border-strong);box-shadow:var(--shadow);transform:translateX(100%);transition:transform .25s;z-index:60;padding:20px;overflow-y:auto;box-sizing:border-box}
+.cq-drawer.open{transform:none}
+.cq-drawer-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:16px}
+.cq-x{cursor:pointer;color:var(--text-dim);font-size:18px}
+.cq-drawer label{display:block;font-size:12px;color:var(--text-dim);margin:12px 0 5px}
+.cq-drawer textarea,.cq-drawer select{width:100%;background:var(--navy-700);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 11px;font-family:var(--sans);font-size:13px;box-sizing:border-box}
+.cq-chk{display:flex!important;align-items:center;gap:8px;font-size:13px!important;color:var(--text)!important;margin-top:12px;cursor:pointer}
+.cq-chk input{width:auto}
+.cq-drawer-actions{display:flex;gap:10px;margin-top:22px}
+.cq-drawer-actions .cq-btn{flex:1}
 </style>
 </head>
 <body>
@@ -538,6 +580,7 @@ input{font-family:inherit}
       <div class="nav-item hidden" id="nav-clientes" onclick="showPanel('clientes')"><span class="nav-ic">▣</span> Clientes</div>
       <div class="nav-item" id="nav-gestores" onclick="showPanel('gestores')"><span class="nav-ic">⊚</span> Gestores</div>
       <div class="nav-item" id="nav-titulares" onclick="showPanel('titulares')"><span class="nav-ic">▤</span> Titulares</div>
+      <div class="nav-item" id="nav-cuestionarios" onclick="showPanel('cuestionarios')"><span class="nav-ic">❖</span> Cuestionarios</div>
       <div class="nav-item hidden" id="nav-import" onclick="showPanel('import')"><span class="nav-ic">⬆</span> Importar</div>
       <div class="nav-item" id="nav-visitas" onclick="showPanel('visitas')"><span class="nav-ic">◈</span> Visitas</div>
       <div class="nav-group">Sistema</div>
@@ -734,6 +777,40 @@ input{font-family:inherit}
           <div class="tit-map-meta" id="titMapMeta">—</div>
         </div>
       </section>
+      <section class="panel" id="panel-cuestionarios">
+        <div class="cq-bar">
+          <select id="cqCartera" class="cq-sel" onchange="CQ.onCartera()"><option value="">Selecciona cartera…</option></select>
+          <span id="cqStatus" class="cq-status"></span>
+          <span style="flex:1"></span>
+          <button class="cq-btn" onclick="CQ.addPregunta()">+ Pregunta</button>
+          <button class="cq-btn cq-btn-primary" onclick="CQ.save()">Guardar flujo</button>
+        </div>
+        <div class="cq-canvas-wrap">
+          <div class="cq-canvas" id="cqCanvas"><svg class="cq-cables" id="cqCables"></svg></div>
+          <div class="cq-hint" id="cqHint">Selecciona una cartera para editar su cuestionario.</div>
+        </div>
+        <div class="cq-drawer" id="cqDrawer">
+          <div class="cq-drawer-head">Editar pregunta <span class="cq-x" onclick="CQ.closeDrawer()">✕</span></div>
+          <label>Texto de la pregunta</label>
+          <textarea id="cqfTexto" rows="2"></textarea>
+          <label>Tipo</label>
+          <select id="cqfTipo" onchange="CQ.onTipoChange()">
+            <option value="texto">Texto libre</option>
+            <option value="numero">Número</option>
+            <option value="opcion">Opción única</option>
+            <option value="multi">Opción múltiple</option>
+            <option value="boolean">Sí / No</option>
+            <option value="fecha">Fecha</option>
+          </select>
+          <div id="cqfOpcionesWrap"><label>Opciones (una por línea)</label><textarea id="cqfOpciones" rows="4"></textarea></div>
+          <label class="cq-chk"><input type="checkbox" id="cqfReq"> Requerida</label>
+          <label class="cq-chk"><input type="checkbox" id="cqfRes"> Es la pregunta de resultado</label>
+          <div class="cq-drawer-actions">
+            <button class="cq-btn cq-btn-danger" onclick="CQ.deletePregunta()">Eliminar</button>
+            <button class="cq-btn cq-btn-primary" onclick="CQ.savePregunta()">Guardar pregunta</button>
+          </div>
+        </div>
+      </section>
       <section class="panel" id="panel-visitas">
         <div class="vis-bar">
           <input class="tit-search" id="visSearch" placeholder="Buscar titular, gestor o resultado…" oninput="applyVisFilters()">
@@ -902,7 +979,7 @@ const PANEL_TITLES = {
   dashboard:['Principal','Tablero'], mapa:['Principal','Mapa en vivo'],
   clientes:['Gestión','Clientes y Carteras'],
   import:['Gestión','Importar titulares'],
-  gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], visitas:['Gestión','Visitas'],
+  gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], cuestionarios:['Gestión','Cuestionarios'], visitas:['Gestión','Visitas'],
   reportes:['Sistema','Reportes'], config:['Sistema','Configuración'],
 };
 const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:null, mapDash:null, mapFull:null, markers:[], refreshTimer:null, countdown:60, scope:null, currentPanel:'dashboard', challenge:null };
@@ -1026,6 +1103,7 @@ function showPanel(id){
   if(id==='clientes'){ loadClientes(); }
   if(id==='import'){ loadImportModule(); }
   if(id==='titulares'){ loadTitulares(); }
+  if(id==='cuestionarios'){ CQ.init(); }
   if(id==='gestores'){ loadGestores(); }
   if(id==='visitas'){ loadVisitas(); }
   if(id==='reportes'){ initReportes(); }
@@ -2087,6 +2165,162 @@ async function probarEndpoints(){
 
 /* ════════ BOOT ════════ */
 restoreSession();
+</script>
+<script>
+/* ════════════════ CQ · Editor de cuestionarios (nodos) ════════════════ */
+window.CQ = (function(){
+  const NODE_W=222;
+  let cartera=null, cuest=null, preguntas=[], transiciones=[], dirty=false, editId=null;
+  let gesture=null;
+  const $ = id => document.getElementById(id);
+  const byId = id => preguntas.find(p=>p.ID===id);
+
+  function ports(p){
+    if(p.TIPO==='opcion'||p.TIPO==='multi'){ const o=Array.isArray(p.OPCIONES)?p.OPCIONES:[]; return o.map(x=>({op:String(x),label:String(x)})); }
+    if(p.TIPO==='boolean') return [{op:'Sí',label:'Sí'},{op:'No',label:'No'}];
+    return [{op:'',label:'→ siguiente'}];
+  }
+  const nodeH = p => 90 + ports(p).length*26;
+
+  // centro de un elemento puerto, relativo al lienzo (robusto al scroll y altura variable)
+  function center(el){ const cr=$('cqCanvas').getBoundingClientRect(), r=el.getBoundingClientRect();
+    return { x:r.left-cr.left+r.width/2, y:r.top-cr.top+r.height/2 }; }
+  const outEl = (id,op)=> $('cqCanvas').querySelector(`.cq-out[data-out="${id}"][data-opt="${encodeURIComponent(op)}"]`);
+  const inEl  = id => $('cqCanvas').querySelector(`.cq-in[data-in="${id}"]`);
+
+  async function init(){
+    if(!window.CART_ALL || !CART_ALL.length){ try{ const k=await apiCall('admin-carteras','POST',{action:'list'}); window.CART_ALL=(k&&k.carteras)?k.carteras:[]; }catch(e){} }
+    $('cqCartera').innerHTML='<option value="">Selecciona cartera…</option>'+
+      (CART_ALL||[]).map(k=>`<option value="${k.ID_CARTERA}">${esc(k.NOMBRE_CLIENTE||'')} — ${esc(k.NOMBRE||'')}</option>`).join('');
+    if(cartera) $('cqCartera').value=cartera;
+  }
+  async function onCartera(){ cartera=$('cqCartera').value||null; cuest=null; preguntas=[]; transiciones=[]; dirty=false; if(!cartera){ render(); return; } await load(); }
+  async function load(){
+    const r=await apiCall('admin-cuestionarios','POST',{action:'list',cartera_id:cartera});
+    cuest=(r&&r.cuestionario)?r.cuestionario:null; preguntas=(r&&r.preguntas)?r.preguntas:[]; transiciones=(r&&r.transiciones)?r.transiciones:[];
+    let i=0; preguntas.forEach(p=>{ if(!p.POS_X&&!p.POS_Y){ p.POS_X=60+(i%3)*270; p.POS_Y=40+Math.floor(i/3)*210; } i++; });
+    dirty=false; render();
+  }
+  async function ensureCuest(){
+    if(cuest&&cuest.ID) return cuest.ID;
+    const r=await apiCall('admin-cuestionarios','POST',{action:'upsert_cuestionario',cartera_id:cartera,nombre:'Cuestionario'});
+    if(r&&r.id){ cuest={ID:r.id,NOMBRE:'Cuestionario',ACTIVO:true,PREGUNTA_INICIAL:null}; return r.id; } return null;
+  }
+  async function addPregunta(){
+    if(!cartera){ toast('Selecciona una cartera'); return; }
+    const cid=await ensureCuest(); if(!cid){ toast('No se pudo crear el cuestionario'); return; }
+    const px=60+(preguntas.length%3)*270, py=40+Math.floor(preguntas.length/3)*210;
+    const r=await apiCall('admin-cuestionarios','POST',{action:'upsert_pregunta',cuestionario_id:cid,texto:'Nueva pregunta',tipo:'texto',orden:preguntas.length,pos_x:px,pos_y:py});
+    if(r&&r.id){ preguntas.push({ID:r.id,TEXTO:'Nueva pregunta',TIPO:'texto',OPCIONES:[],REQUERIDA:false,ES_RESULTADO:false,ORDEN:preguntas.length,POS_X:px,POS_Y:py,ACTIVA:true});
+      if(!cuest.PREGUNTA_INICIAL){ cuest.PREGUNTA_INICIAL=r.id; markDirty(); } render(); openDrawer(r.id); }
+  }
+  function openDrawer(id){ editId=id; const p=byId(id); if(!p) return;
+    $('cqfTexto').value=p.TEXTO||''; $('cqfTipo').value=p.TIPO||'texto';
+    $('cqfOpciones').value=(Array.isArray(p.OPCIONES)?p.OPCIONES:[]).join('\n');
+    $('cqfReq').checked=!!p.REQUERIDA; $('cqfRes').checked=!!p.ES_RESULTADO; onTipoChange(); $('cqDrawer').classList.add('open'); }
+  function closeDrawer(){ $('cqDrawer').classList.remove('open'); editId=null; }
+  function onTipoChange(){ const t=$('cqfTipo').value; $('cqfOpcionesWrap').style.display=(t==='opcion'||t==='multi')?'block':'none'; }
+  async function savePregunta(){
+    const p=byId(editId); if(!p) return;
+    const tipo=$('cqfTipo').value;
+    const opciones=$('cqfOpciones').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const body={action:'upsert_pregunta',id:p.ID,cuestionario_id:cuest.ID,texto:$('cqfTexto').value.trim()||'Pregunta',tipo,opciones,requerida:$('cqfReq').checked,es_resultado:$('cqfRes').checked,orden:p.ORDEN||0,pos_x:p.POS_X||0,pos_y:p.POS_Y||0};
+    const r=await apiCall('admin-cuestionarios','POST',body);
+    if(r&&r.success){ Object.assign(p,{TEXTO:body.texto,TIPO:tipo,OPCIONES:opciones,REQUERIDA:body.requerida,ES_RESULTADO:body.es_resultado});
+      if(body.es_resultado) preguntas.forEach(q=>{ if(q.ID!==p.ID) q.ES_RESULTADO=false; });
+      transiciones=transiciones.filter(t=> t.ORIGEN!==p.ID || !t.OPCION || opciones.includes(t.OPCION) || tipo==='boolean');
+      toast('Pregunta guardada'); closeDrawer(); render(); } else toast('Error al guardar');
+  }
+  async function deletePregunta(){
+    const p=byId(editId); if(!p) return; if(!confirm('¿Eliminar esta pregunta?')) return;
+    const r=await apiCall('admin-cuestionarios','POST',{action:'delete_pregunta',id:p.ID});
+    if(r&&r.success){ preguntas=preguntas.filter(q=>q.ID!==p.ID); transiciones=transiciones.filter(t=>t.ORIGEN!==p.ID&&t.DESTINO!==p.ID);
+      if(cuest.PREGUNTA_INICIAL===p.ID){ cuest.PREGUNTA_INICIAL=preguntas[0]?preguntas[0].ID:null; markDirty(); }
+      toast('Pregunta eliminada'); closeDrawer(); render(); }
+  }
+  function setInicial(id){ if(!cuest) return; cuest.PREGUNTA_INICIAL=id; markDirty(); render(); }
+  function markDirty(){ dirty=true; const s=$('cqStatus'); if(s) s.textContent='● cambios sin guardar'; }
+  function setLink(origen,opcion,destino){ transiciones=transiciones.filter(t=>!(t.ORIGEN===origen&&(t.OPCION||'')===(opcion||''))); if(destino) transiciones.push({ORIGEN:origen,OPCION:opcion,DESTINO:destino}); markDirty(); render(); }
+  function removeLink(origen,opcion){ transiciones=transiciones.filter(t=>!(t.ORIGEN===origen&&(t.OPCION||'')===(opcion||''))); markDirty(); render(); }
+  async function save(){
+    if(!cuest||!cuest.ID){ toast('Nada que guardar'); return; }
+    const body={action:'save_grafo',cuestionario_id:cuest.ID,pregunta_inicial_id:cuest.PREGUNTA_INICIAL||null,
+      posiciones:preguntas.map(p=>({id:p.ID,x:Math.round(p.POS_X||0),y:Math.round(p.POS_Y||0)})),
+      transiciones:transiciones.map(t=>({origen_id:t.ORIGEN,opcion:t.OPCION||'',destino_id:t.DESTINO||''}))};
+    const r=await apiCall('admin-cuestionarios','POST',body);
+    if(r&&r.success){ dirty=false; $('cqStatus').textContent='✓ guardado'; toast('Flujo guardado'); } else toast('Error al guardar el flujo');
+  }
+
+  function render(){
+    const canvas=$('cqCanvas'); if(!canvas) return;
+    $('cqHint').style.display=cartera?'none':'block';
+    [...canvas.querySelectorAll('.cq-node')].forEach(n=>n.remove());
+    let maxX=1200,maxY=800;
+    preguntas.forEach(p=>{
+      maxX=Math.max(maxX,(p.POS_X||0)+NODE_W+100); maxY=Math.max(maxY,(p.POS_Y||0)+nodeH(p)+100);
+      const isIni=cuest&&cuest.PREGUNTA_INICIAL===p.ID; const pr=ports(p);
+      const node=document.createElement('div');
+      node.className='cq-node'+(isIni?' ini':'')+(p.ES_RESULTADO?' res':'');
+      node.style.left=(p.POS_X||0)+'px'; node.style.top=(p.POS_Y||0)+'px'; node.style.width=NODE_W+'px';
+      node.dataset.node=p.ID;
+      node.innerHTML=`<div class="cq-in" data-in="${p.ID}"></div>`+
+        `<div class="cq-node-head" data-drag="${p.ID}"><span class="cq-tipo">${p.TIPO}</span>`+
+        (p.ES_RESULTADO?'<span class="cq-star" title="Pregunta de resultado">★</span>':'')+
+        `<span class="cq-ini-btn" title="Marcar como inicio" onclick="event.stopPropagation();CQ.setInicial('${p.ID}')">${isIni?'◉ inicio':'○'}</span></div>`+
+        `<div class="cq-node-body" onclick="CQ.openDrawer('${p.ID}')">${esc((p.TEXTO||'').slice(0,90))||'(sin texto)'}</div>`+
+        pr.map(o=>`<div class="cq-portrow"><span class="cq-portlbl">${esc(o.label)}</span><span class="cq-out" data-out="${p.ID}" data-opt="${encodeURIComponent(o.op)}"></span></div>`).join('');
+      canvas.appendChild(node);
+    });
+    canvas.style.minWidth=maxX+'px'; canvas.style.minHeight=maxY+'px';
+    const svg=$('cqCables'); svg.setAttribute('width',maxX); svg.setAttribute('height',maxY);
+    drawCables();
+  }
+  function drawCables(){
+    const svg=$('cqCables'); [...svg.querySelectorAll('.cq-cable:not(.tmp)')].forEach(c=>c.remove());
+    transiciones.forEach(t=>{
+      const a=outEl(t.ORIGEN,t.OPCION||''), b=inEl(t.DESTINO); if(!a||!b) return;
+      const p=center(a), o=center(b);
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',`M ${p.x} ${p.y} C ${p.x+60} ${p.y}, ${o.x-60} ${o.y}, ${o.x} ${o.y}`);
+      path.setAttribute('class','cq-cable');
+      path.addEventListener('click',()=>{ if(confirm('¿Quitar este enlace?')) removeLink(t.ORIGEN,t.OPCION); });
+      svg.appendChild(path);
+    });
+  }
+
+  function cxy(ev){ const r=$('cqCanvas').getBoundingClientRect(); return { x:ev.clientX-r.left, y:ev.clientY-r.top }; }
+  function onDown(ev){
+    const out=ev.target.closest('[data-out]'); const drag=ev.target.closest('[data-drag]');
+    if(out){ ev.preventDefault(); const c=center(out);
+      gesture={type:'link',origen:out.dataset.out,opcion:decodeURIComponent(out.dataset.opt),ax:c.x,ay:c.y};
+      const tmp=document.createElementNS('http://www.w3.org/2000/svg','path'); tmp.setAttribute('class','cq-cable tmp'); tmp.id='cqTmpCable'; $('cqCables').appendChild(tmp);
+      document.addEventListener('pointermove',onMove); document.addEventListener('pointerup',onUp);
+    } else if(drag){ ev.preventDefault(); const p=byId(drag.dataset.drag); const m=cxy(ev);
+      gesture={type:'drag',id:p.ID,dx:m.x-(p.POS_X||0),dy:m.y-(p.POS_Y||0)};
+      document.addEventListener('pointermove',onMove); document.addEventListener('pointerup',onUp);
+    }
+  }
+  function onMove(ev){
+    if(!gesture) return; const m=cxy(ev);
+    if(gesture.type==='drag'){ const p=byId(gesture.id); p.POS_X=Math.max(0,m.x-gesture.dx); p.POS_Y=Math.max(0,m.y-gesture.dy);
+      const node=$('cqCanvas').querySelector(`[data-node="${gesture.id}"]`); if(node){ node.style.left=p.POS_X+'px'; node.style.top=p.POS_Y+'px'; } drawCables();
+    } else { const tmp=$('cqTmpCable'); if(tmp) tmp.setAttribute('d',`M ${gesture.ax} ${gesture.ay} C ${gesture.ax+60} ${gesture.ay}, ${m.x-60} ${m.y}, ${m.x} ${m.y}`); }
+  }
+  function onUp(ev){
+    document.removeEventListener('pointermove',onMove); document.removeEventListener('pointerup',onUp);
+    if(!gesture) return;
+    if(gesture.type==='drag'){ markDirty(); }
+    else { const tmp=$('cqTmpCable'); if(tmp) tmp.remove();
+      const tgt=document.elementFromPoint(ev.clientX,ev.clientY); const node=tgt&&tgt.closest('[data-node]');
+      if(node&&node.dataset.node!==gesture.origen) setLink(gesture.origen,gesture.opcion,node.dataset.node); }
+    gesture=null;
+  }
+  function bind(){ const c=$('cqCanvas'); if(c&&!c._bound){ c.addEventListener('pointerdown',onDown); c._bound=true; } }
+
+  return { init:async function(){ await init(); bind(); if(cartera) await load(); else render(); },
+    onCartera, addPregunta, openDrawer, closeDrawer, onTipoChange, savePregunta, deletePregunta, setInicial, save };
+})();
+
 </script>
 </body>
 </html>
