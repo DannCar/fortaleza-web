@@ -534,6 +534,20 @@ input{font-family:inherit}
 .adm-chk-dim{opacity:.55;cursor:default}
 .adm-actions{margin-top:16px;display:flex;justify-content:flex-end}
 .adm-empty{color:var(--text-faint);font-size:14px;padding:30px 0}
+.adm-new{border:1px dashed var(--border);border-radius:14px;padding:14px 18px;background:transparent;margin-bottom:4px}
+.adm-new>summary{cursor:pointer;font-size:13.5px;color:var(--teal);font-weight:600;list-style:none}
+.adm-new>summary::-webkit-details-marker{display:none}
+.adm-new-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:14px 0 8px}
+.adm-input{background:var(--navy-700);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 11px;font-size:13px}
+.adm-input:focus{outline:none;border-color:var(--teal)}
+.adm-mini{font-size:11.5px;color:var(--text-faint);line-height:1.5}
+.adm-assign{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+.adm-assign>summary{cursor:pointer;font-size:12.5px;color:var(--text-dim);list-style:none}
+.adm-assign>summary::-webkit-details-marker{display:none}
+.adm-assign-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:12px}
+.adm-sub{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin-bottom:8px}
+.adm-scroll{max-height:190px;overflow:auto;padding-right:6px}
+@media(max-width:680px){.adm-assign-grid{grid-template-columns:1fr}}
 .cq-drawer{position:fixed;top:0;right:0;height:100%;width:340px;max-width:90vw;background:var(--navy-800);border-left:1px solid var(--border-strong);box-shadow:var(--shadow);transform:translateX(100%);transition:transform .25s;z-index:60;padding:20px;overflow-y:auto;box-sizing:border-box}
 .cq-drawer.open{transform:none}
 .cq-drawer-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:16px}
@@ -1168,6 +1182,11 @@ async function loadAdmins(){
   const wrap=document.getElementById('admList'); if(!wrap) return;
   wrap.innerHTML='<div class="adm-empty">Cargando…</div>';
   try{
+    if(!window.CLI_ALL || !CLI_ALL.length || !window.CART_ALL || !CART_ALL.length){
+      const [cRes,kRes]=await Promise.all([ apiCall('admin-clientes','POST',{action:'list'}), apiCall('admin-carteras','POST',{action:'list'}) ]);
+      if(cRes&&cRes.clientes) CLI_ALL=cRes.clientes;
+      if(kRes&&kRes.carteras) CART_ALL=kRes.carteras;
+    }
     const r=await apiCall('admin-administradores','POST',{action:'list'});
     STATE.admins=(r&&r.administradores)?r.administradores:[];
     renderAdmins();
@@ -1176,8 +1195,22 @@ async function loadAdmins(){
 function renderAdmins(){
   const wrap=document.getElementById('admList'); if(!wrap) return;
   const list=STATE.admins||[];
-  if(!list.length){ wrap.innerHTML='<div class="adm-empty">Sin administradores.</div>'; return; }
-  wrap.innerHTML=list.map((a,idx)=>{
+  const cliList=(window.CLI_ALL||[]), cartList=(window.CART_ALL||[]);
+  const formHtml=`
+    <details class="adm-new">
+      <summary>＋ Nuevo administrador</summary>
+      <div class="adm-new-grid">
+        <input id="admNewNombre" class="adm-input" placeholder="Nombre completo">
+        <input id="admNewEmail" class="adm-input" type="email" placeholder="Correo">
+        <input id="admNewPass" class="adm-input" type="password" placeholder="Contraseña (mín. 6)">
+        <input id="admNewTel" class="adm-input" placeholder="Telegram chat_id (para 2FA)">
+        <select id="admNewRol" class="adm-rol">${ADM_ROLES.filter(r=>r!=='Admin Master').map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('')}</select>
+        <button class="cq-btn cq-btn-primary" onclick="createAdmin()">Crear administrador</button>
+      </div>
+      <div class="adm-mini">Iniciará sesión con correo + contraseña y recibirá el código 2FA por Telegram (requiere chat_id). Asigna permisos y clientes/carteras después de crearlo.</div>
+    </details>`;
+  if(!list.length){ wrap.innerHTML=formHtml+'<div class="adm-empty">Sin administradores.</div>'; return; }
+  const cards=list.map((a,idx)=>{
     const isMaster=a.ROL==='Admin Master';
     const perms=Array.isArray(a.PERMISOS)?a.PERMISOS:null;
     const chips=ADM_PANELS.map(([k,lbl])=>{
@@ -1187,6 +1220,19 @@ function renderAdmins(){
     const rolOpts=ADM_ROLES.map(r=>`<option value="${esc(r)}" ${a.ROL===r?'selected':''}>${esc(r)}</option>`).join('');
     const tag = isMaster ? '<span class="adm-master-tag">Acceso total (Admin Master)</span>'
                          : (perms ? '' : '<span class="adm-def-tag">por defecto (rol)</span>');
+    let asignaciones='';
+    if(!isMaster){
+      const aCli=Array.isArray(a.CLIENTES)?a.CLIENTES:[], aCart=Array.isArray(a.CARTERAS)?a.CARTERAS:[];
+      const cliChecks = cliList.length ? cliList.map(c=>`<label class="adm-chk"><input type="checkbox" ${aCli.includes(c.ID_CLIENTE)?'checked':''} onchange="admToggleCliente(${idx},'${c.ID_CLIENTE}',this.checked)"> ${esc(c.NOMBRE||'')}</label>`).join('') : '<span class="adm-mini">Sin clientes</span>';
+      const cartChecks = cartList.length ? cartList.map(k=>`<label class="adm-chk"><input type="checkbox" ${aCart.includes(k.ID_CARTERA)?'checked':''} onchange="admToggleCartera(${idx},'${k.ID_CARTERA}',this.checked)"> ${esc((k.NOMBRE_CLIENTE?k.NOMBRE_CLIENTE+' — ':'')+(k.NOMBRE||''))}</label>`).join('') : '<span class="adm-mini">Sin carteras</span>';
+      asignaciones=`<details class="adm-assign">
+        <summary>Asignaciones · ${aCli.length} cliente(s), ${aCart.length} cartera(s)</summary>
+        <div class="adm-assign-grid">
+          <div><div class="adm-sub">Clientes</div><div class="adm-perms adm-scroll">${cliChecks}</div></div>
+          <div><div class="adm-sub">Carteras</div><div class="adm-perms adm-scroll">${cartChecks}</div></div>
+        </div>
+      </details>`;
+    }
     return `<div class="adm-card">
       <div class="adm-head">
         <div class="adm-id"><div class="adm-name">${esc(a.NOMBRE||'—')}</div><div class="adm-email">${esc(a.EMAIL||'')}</div></div>
@@ -1197,9 +1243,11 @@ function renderAdmins(){
       </div>
       <div class="adm-perms-label">Permisos de paneles ${tag}</div>
       <div class="adm-perms">${chips}</div>
+      ${asignaciones}
       <div class="adm-actions"><button class="cq-btn cq-btn-primary" onclick="saveAdmin(${idx})">Guardar</button></div>
     </div>`;
   }).join('');
+  wrap.innerHTML=formHtml+cards;
 }
 function admTogglePerm(idx,key,on){
   const a=STATE.admins[idx]; if(!a) return;
@@ -1209,15 +1257,43 @@ function admTogglePerm(idx,key,on){
 }
 function admSetRol(idx,v){ const a=STATE.admins[idx]; if(a){ a.ROL=v; renderAdmins(); } }
 function admSetActivo(idx,on){ const a=STATE.admins[idx]; if(a) a.ACTIVO=on; }
+function admToggleCliente(idx,id,on){
+  const a=STATE.admins[idx]; if(!a) return;
+  let p=Array.isArray(a.CLIENTES)?a.CLIENTES.slice():[];
+  if(on){ if(!p.includes(id)) p.push(id); } else { p=p.filter(x=>x!==id); }
+  a.CLIENTES=p;
+}
+function admToggleCartera(idx,id,on){
+  const a=STATE.admins[idx]; if(!a) return;
+  let p=Array.isArray(a.CARTERAS)?a.CARTERAS.slice():[];
+  if(on){ if(!p.includes(id)) p.push(id); } else { p=p.filter(x=>x!==id); }
+  a.CARTERAS=p;
+}
 async function saveAdmin(idx){
   const a=STATE.admins[idx]; if(!a) return;
+  const master=(a.ROL==='Admin Master');
   const body={ action:'update', id:a.ID, rol:a.ROL, activo:!!a.ACTIVO };
-  body.permisos = (a.ROL==='Admin Master') ? null : (Array.isArray(a.PERMISOS)?a.PERMISOS:null);
+  body.permisos = master ? null : (Array.isArray(a.PERMISOS)?a.PERMISOS:null);
+  body.clientes = master ? null : (Array.isArray(a.CLIENTES)?a.CLIENTES:null);
+  body.carteras = master ? null : (Array.isArray(a.CARTERAS)?a.CARTERAS:null);
   try{
     const r=await apiCall('admin-administradores','POST',body);
     if(r&&r.success){ toast('Administrador actualizado'); loadAdmins(); }
     else { toast((r&&r.error)||'No se pudo actualizar'); }
   }catch(e){ toast('Error al guardar'); }
+}
+async function createAdmin(){
+  const nombre=(document.getElementById('admNewNombre').value||'').trim();
+  const email=(document.getElementById('admNewEmail').value||'').trim();
+  const password=document.getElementById('admNewPass').value||'';
+  const telegram_chat_id=(document.getElementById('admNewTel').value||'').trim();
+  const rol=document.getElementById('admNewRol').value||'Admin';
+  if(!nombre||!email||password.length<6){ toast('Completa nombre, correo y contraseña (mín. 6).'); return; }
+  try{
+    const r=await apiCall('admin-administradores','POST',{action:'create',nombre,email,password,telegram_chat_id,rol});
+    if(r&&r.success){ toast('Administrador creado'); loadAdmins(); }
+    else { toast((r&&r.error)||'No se pudo crear'); }
+  }catch(e){ toast('Error al crear'); }
 }
 function onDateChange(){ STATE.selectedDate=document.getElementById('datePick').value||todayLocal(); loadDashboard(); resetCountdown(); }
 
