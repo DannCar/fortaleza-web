@@ -517,6 +517,23 @@ input{font-family:inherit}
 .cq-zoom button{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--navy-700);color:var(--text);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:border-color .15s}
 .cq-zoom button:hover{border-color:var(--teal)}
 .cq-zlabel{font-size:11px;color:var(--text-faint);min-width:36px;text-align:center;font-family:var(--mono)}
+.adm-intro{max-width:920px;color:var(--text-dim);font-size:13.5px;line-height:1.6;margin:0 0 18px}
+.adm-list{display:flex;flex-direction:column;gap:14px;max-width:920px}
+.adm-card{border:1px solid var(--border);border-radius:14px;padding:18px 20px;background:var(--navy-900)}
+.adm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.adm-name{font-size:15px;font-weight:600;color:var(--text)}
+.adm-email{font-size:12.5px;color:var(--text-faint);font-family:var(--mono)}
+.adm-controls{display:flex;align-items:center;gap:12px}
+.adm-rol{background:var(--navy-700);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:7px 10px;font-size:13px;cursor:pointer}
+.adm-toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-dim);cursor:pointer}
+.adm-perms-label{margin:16px 0 9px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-faint)}
+.adm-master-tag{color:var(--teal);letter-spacing:.4px;text-transform:none;font-size:11px;margin-left:6px}
+.adm-def-tag{color:var(--gold);letter-spacing:.4px;text-transform:none;font-size:11px;margin-left:6px}
+.adm-perms{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 14px}
+.adm-chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);cursor:pointer}
+.adm-chk-dim{opacity:.55;cursor:default}
+.adm-actions{margin-top:16px;display:flex;justify-content:flex-end}
+.adm-empty{color:var(--text-faint);font-size:14px;padding:30px 0}
 .cq-drawer{position:fixed;top:0;right:0;height:100%;width:340px;max-width:90vw;background:var(--navy-800);border-left:1px solid var(--border-strong);box-shadow:var(--shadow);transform:translateX(100%);transition:transform .25s;z-index:60;padding:20px;overflow-y:auto;box-sizing:border-box}
 .cq-drawer.open{transform:none}
 .cq-drawer-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:16px}
@@ -825,17 +842,8 @@ input{font-family:inherit}
         </div>
       </section>
       <section class="panel" id="panel-administradores">
-        <div style="max-width:780px">
-          <div style="border:1px solid var(--border);border-radius:14px;padding:28px;background:var(--navy-900)">
-            <h2 style="margin:0 0 10px;font-size:18px;color:var(--text)">Administradores y permisos</h2>
-            <p style="color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 6px">
-              Gestión de cuentas de administrador y edición de permisos por panel. Disponible solo para <b>Admin Master</b>.
-            </p>
-            <p style="color:var(--text-faint);font-size:13px;line-height:1.6;margin:0">
-              Módulo en construcción — pendiente de enlazar el endpoint y confirmar el esquema de la tabla de administradores.
-            </p>
-          </div>
-        </div>
+        <div class="adm-intro">Gestiona cuentas de administrador y sus permisos por panel. Solo <b>Admin Master</b>. Marca los paneles que cada administrador puede ver; <b>Admin Master</b> siempre tiene acceso total.</div>
+        <div id="admList" class="adm-list"></div>
       </section>
       <section class="panel" id="panel-visitas">
         <div class="vis-bar">
@@ -1100,10 +1108,7 @@ function startApp(){
   document.getElementById('sideRole').textContent=u.rol||'—';
   document.getElementById('sideAvatar').textContent=initials(u.nombre||u.email);
   // Config solo para Admin Master
-  document.getElementById('nav-config').classList.toggle('hidden', (u.rol!=='Admin Master'));
-  document.getElementById('nav-clientes').classList.toggle('hidden', (u.rol!=='Admin Master'));
-  document.getElementById('nav-import').classList.toggle('hidden', (u.rol!=='Admin Master'));
-  document.getElementById('nav-administradores').classList.toggle('hidden', (u.rol!=='Admin Master'));
+  applyNavPermisos();
   if(u.rol==='Admin Master'){ document.getElementById('scopeBox').style.display='flex'; loadScopeOptions(); }
   STATE.selectedDate=todayLocal();
   document.getElementById('datePick').value=STATE.selectedDate;
@@ -1132,10 +1137,87 @@ function showPanel(id){
   if(id==='import'){ loadImportModule(); }
   if(id==='titulares'){ loadTitulares(); }
   if(id==='cuestionarios'){ CQ.init(); }
+  if(id==='administradores'){ loadAdmins(); }
   if(id==='gestores'){ loadGestores(); }
   if(id==='visitas'){ loadVisitas(); }
   if(id==='reportes'){ initReportes(); }
   if(id==='config'){ initConfig(); }
+}
+
+/* ════════ ADMINISTRADORES & PERMISOS (solo Admin Master) ════════ */
+const ADM_PANELS = [
+  ['dashboard','Tablero'],['mapa','Mapa en vivo'],['clientes','Clientes'],['import','Importar'],
+  ['gestores','Gestores'],['titulares','Titulares'],['visitas','Visitas'],
+  ['cuestionarios','Cuestionarios'],['reportes','Reportes'],['config','Configuración']
+];
+const ADM_ROLES = ['Admin Master','Admin','Supervisor','Lectura'];
+const ADM_DEFAULT_HIDDEN = ['clientes','import','config']; // ocultos por defecto si no hay permisos definidos
+function admDefaultSet(){ return ADM_PANELS.map(x=>x[0]).filter(k=>!ADM_DEFAULT_HIDDEN.includes(k)); }
+function canSee(panel){
+  const u=STATE.user||{};
+  if(u.rol==='Admin Master') return true;
+  if(panel==='administradores') return false;              // siempre master-only
+  if(Array.isArray(u.permisos)) return u.permisos.includes(panel);
+  return !ADM_DEFAULT_HIDDEN.includes(panel);              // sin permisos definidos -> comportamiento por rol
+}
+function applyNavPermisos(){
+  ['dashboard','mapa','clientes','import','gestores','titulares','visitas','cuestionarios','reportes','config','administradores']
+    .forEach(k=>{ const el=document.getElementById('nav-'+k); if(el) el.classList.toggle('hidden', !canSee(k)); });
+}
+async function loadAdmins(){
+  const wrap=document.getElementById('admList'); if(!wrap) return;
+  wrap.innerHTML='<div class="adm-empty">Cargando…</div>';
+  try{
+    const r=await apiCall('admin-administradores','POST',{action:'list'});
+    STATE.admins=(r&&r.administradores)?r.administradores:[];
+    renderAdmins();
+  }catch(e){ wrap.innerHTML='<div class="adm-empty">No se pudieron cargar los administradores.</div>'; }
+}
+function renderAdmins(){
+  const wrap=document.getElementById('admList'); if(!wrap) return;
+  const list=STATE.admins||[];
+  if(!list.length){ wrap.innerHTML='<div class="adm-empty">Sin administradores.</div>'; return; }
+  wrap.innerHTML=list.map((a,idx)=>{
+    const isMaster=a.ROL==='Admin Master';
+    const perms=Array.isArray(a.PERMISOS)?a.PERMISOS:null;
+    const chips=ADM_PANELS.map(([k,lbl])=>{
+      const on = isMaster ? true : (perms ? perms.includes(k) : !ADM_DEFAULT_HIDDEN.includes(k));
+      return `<label class="adm-chk ${isMaster?'adm-chk-dim':''}"><input type="checkbox" ${on?'checked':''} ${isMaster?'disabled':''} onchange="admTogglePerm(${idx},'${k}',this.checked)"> ${esc(lbl)}</label>`;
+    }).join('');
+    const rolOpts=ADM_ROLES.map(r=>`<option value="${esc(r)}" ${a.ROL===r?'selected':''}>${esc(r)}</option>`).join('');
+    const tag = isMaster ? '<span class="adm-master-tag">Acceso total (Admin Master)</span>'
+                         : (perms ? '' : '<span class="adm-def-tag">por defecto (rol)</span>');
+    return `<div class="adm-card">
+      <div class="adm-head">
+        <div class="adm-id"><div class="adm-name">${esc(a.NOMBRE||'—')}</div><div class="adm-email">${esc(a.EMAIL||'')}</div></div>
+        <div class="adm-controls">
+          <select class="adm-rol" onchange="admSetRol(${idx},this.value)">${rolOpts}</select>
+          <label class="adm-toggle"><input type="checkbox" ${a.ACTIVO?'checked':''} onchange="admSetActivo(${idx},this.checked)"> Activo</label>
+        </div>
+      </div>
+      <div class="adm-perms-label">Permisos de paneles ${tag}</div>
+      <div class="adm-perms">${chips}</div>
+      <div class="adm-actions"><button class="cq-btn cq-btn-primary" onclick="saveAdmin(${idx})">Guardar</button></div>
+    </div>`;
+  }).join('');
+}
+function admTogglePerm(idx,key,on){
+  const a=STATE.admins[idx]; if(!a) return;
+  let p = Array.isArray(a.PERMISOS) ? a.PERMISOS.slice() : admDefaultSet();
+  if(on){ if(!p.includes(key)) p.push(key); } else { p=p.filter(k=>k!==key); }
+  a.PERMISOS=p;
+}
+function admSetRol(idx,v){ const a=STATE.admins[idx]; if(a){ a.ROL=v; renderAdmins(); } }
+function admSetActivo(idx,on){ const a=STATE.admins[idx]; if(a) a.ACTIVO=on; }
+async function saveAdmin(idx){
+  const a=STATE.admins[idx]; if(!a) return;
+  const body={ action:'update', id:a.ID, rol:a.ROL, activo:!!a.ACTIVO };
+  body.permisos = (a.ROL==='Admin Master') ? null : (Array.isArray(a.PERMISOS)?a.PERMISOS:null);
+  try{
+    const r=await apiCall('admin-administradores','POST',body);
+    if(r&&r.success){ toast('Administrador actualizado'); loadAdmins(); }
+    else { toast((r&&r.error)||'No se pudo actualizar'); }
+  }catch(e){ toast('Error al guardar'); }
 }
 function onDateChange(){ STATE.selectedDate=document.getElementById('datePick').value||todayLocal(); loadDashboard(); resetCountdown(); }
 
