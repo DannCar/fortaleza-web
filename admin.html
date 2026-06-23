@@ -512,6 +512,11 @@ input{font-family:inherit}
 .cq-out:hover{background:var(--teal-bright)}
 .cq-in{width:13px;height:13px;border-radius:50%;background:var(--teal);border:2px solid var(--navy-800);position:absolute;left:-7px;top:16px}
 .cq-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text-faint);font-size:14px}
+.cq-canvas{transform-origin:0 0}
+.cq-zoom{position:absolute;right:14px;bottom:14px;z-index:5;display:flex;flex-direction:column;gap:6px;align-items:center}
+.cq-zoom button{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--navy-700);color:var(--text);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:border-color .15s}
+.cq-zoom button:hover{border-color:var(--teal)}
+.cq-zlabel{font-size:11px;color:var(--text-faint);min-width:36px;text-align:center;font-family:var(--mono)}
 .cq-drawer{position:fixed;top:0;right:0;height:100%;width:340px;max-width:90vw;background:var(--navy-800);border-left:1px solid var(--border-strong);box-shadow:var(--shadow);transform:translateX(100%);transition:transform .25s;z-index:60;padding:20px;overflow-y:auto;box-sizing:border-box}
 .cq-drawer.open{transform:none}
 .cq-drawer-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:16px}
@@ -576,16 +581,18 @@ input{font-family:inherit}
       <div class="nav-group">Principal</div>
       <div class="nav-item active" id="nav-dashboard" onclick="showPanel('dashboard')"><span class="nav-ic">◆</span> Tablero <span class="nav-badge" id="badgeDash">—</span></div>
       <div class="nav-item" id="nav-mapa" onclick="showPanel('mapa')"><span class="nav-ic">⊕</span> Mapa en vivo</div>
-      <div class="nav-group">Gestión</div>
       <div class="nav-item hidden" id="nav-clientes" onclick="showPanel('clientes')"><span class="nav-ic">▣</span> Clientes</div>
+      <div class="nav-group">Gestión</div>
+      <div class="nav-item hidden" id="nav-import" onclick="showPanel('import')"><span class="nav-ic">⬆</span> Importar</div>
       <div class="nav-item" id="nav-gestores" onclick="showPanel('gestores')"><span class="nav-ic">⊚</span> Gestores</div>
       <div class="nav-item" id="nav-titulares" onclick="showPanel('titulares')"><span class="nav-ic">▤</span> Titulares</div>
-      <div class="nav-item" id="nav-cuestionarios" onclick="showPanel('cuestionarios')"><span class="nav-ic">❖</span> Cuestionarios</div>
-      <div class="nav-item hidden" id="nav-import" onclick="showPanel('import')"><span class="nav-ic">⬆</span> Importar</div>
       <div class="nav-item" id="nav-visitas" onclick="showPanel('visitas')"><span class="nav-ic">◈</span> Visitas</div>
+      <div class="nav-group">Configuraciones</div>
+      <div class="nav-item" id="nav-cuestionarios" onclick="showPanel('cuestionarios')"><span class="nav-ic">❖</span> Cuestionarios</div>
+      <div class="nav-item hidden" id="nav-administradores" onclick="showPanel('administradores')"><span class="nav-ic">⊛</span> Administradores</div>
       <div class="nav-group">Sistema</div>
-      <div class="nav-item" id="nav-reportes" onclick="showPanel('reportes')"><span class="nav-ic">▦</span> Reportes</div>
       <div class="nav-item hidden" id="nav-config" onclick="showPanel('config')"><span class="nav-ic">⚙</span> Configuración</div>
+      <div class="nav-item" id="nav-reportes" onclick="showPanel('reportes')"><span class="nav-ic">▦</span> Reportes</div>
     </nav>
     <div class="side-user">
       <div class="side-avatar" id="sideAvatar">A</div>
@@ -788,6 +795,12 @@ input{font-family:inherit}
         <div class="cq-canvas-wrap">
           <div class="cq-canvas" id="cqCanvas"><svg class="cq-cables" id="cqCables"></svg></div>
           <div class="cq-hint" id="cqHint">Selecciona una cartera para editar su cuestionario.</div>
+          <div class="cq-zoom">
+            <button onclick="CQ.zoomIn()" title="Acercar">+</button>
+            <div class="cq-zlabel" id="cqZoomLabel">100%</div>
+            <button onclick="CQ.zoomOut()" title="Alejar">−</button>
+            <button onclick="CQ.zoomReset()" title="Restablecer zoom" style="font-size:14px">⤢</button>
+          </div>
         </div>
         <div class="cq-drawer" id="cqDrawer">
           <div class="cq-drawer-head">Editar pregunta <span class="cq-x" onclick="CQ.closeDrawer()">✕</span></div>
@@ -808,6 +821,19 @@ input{font-family:inherit}
           <div class="cq-drawer-actions">
             <button class="cq-btn cq-btn-danger" onclick="CQ.deletePregunta()">Eliminar</button>
             <button class="cq-btn cq-btn-primary" onclick="CQ.savePregunta()">Guardar pregunta</button>
+          </div>
+        </div>
+      </section>
+      <section class="panel" id="panel-administradores">
+        <div style="max-width:780px">
+          <div style="border:1px solid var(--border);border-radius:14px;padding:28px;background:var(--navy-900)">
+            <h2 style="margin:0 0 10px;font-size:18px;color:var(--text)">Administradores y permisos</h2>
+            <p style="color:var(--text-dim);font-size:14px;line-height:1.65;margin:0 0 6px">
+              Gestión de cuentas de administrador y edición de permisos por panel. Disponible solo para <b>Admin Master</b>.
+            </p>
+            <p style="color:var(--text-faint);font-size:13px;line-height:1.6;margin:0">
+              Módulo en construcción — pendiente de enlazar el endpoint y confirmar el esquema de la tabla de administradores.
+            </p>
           </div>
         </div>
       </section>
@@ -979,7 +1005,8 @@ const PANEL_TITLES = {
   dashboard:['Principal','Tablero'], mapa:['Principal','Mapa en vivo'],
   clientes:['Gestión','Clientes y Carteras'],
   import:['Gestión','Importar titulares'],
-  gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], cuestionarios:['Gestión','Cuestionarios'], visitas:['Gestión','Visitas'],
+  gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], visitas:['Gestión','Visitas'],
+  cuestionarios:['Configuración','Cuestionarios'], administradores:['Configuración','Administradores'],
   reportes:['Sistema','Reportes'], config:['Sistema','Configuración'],
 };
 const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:null, mapDash:null, mapFull:null, markers:[], refreshTimer:null, countdown:60, scope:null, currentPanel:'dashboard', challenge:null };
@@ -1076,6 +1103,7 @@ function startApp(){
   document.getElementById('nav-config').classList.toggle('hidden', (u.rol!=='Admin Master'));
   document.getElementById('nav-clientes').classList.toggle('hidden', (u.rol!=='Admin Master'));
   document.getElementById('nav-import').classList.toggle('hidden', (u.rol!=='Admin Master'));
+  document.getElementById('nav-administradores').classList.toggle('hidden', (u.rol!=='Admin Master'));
   if(u.rol==='Admin Master'){ document.getElementById('scopeBox').style.display='flex'; loadScopeOptions(); }
   STATE.selectedDate=todayLocal();
   document.getElementById('datePick').value=STATE.selectedDate;
@@ -2172,6 +2200,11 @@ window.CQ = (function(){
   const NODE_W=222;
   let cartera=null, cuest=null, preguntas=[], transiciones=[], dirty=false, editId=null;
   let gesture=null;
+  let z=1;
+  function applyZoom(){ const c=$('cqCanvas'); if(c) c.style.transform='scale('+z+')'; const l=$('cqZoomLabel'); if(l) l.textContent=Math.round(z*100)+'%'; }
+  function zoomIn(){ z=Math.min(1.4, Math.round((z+0.1)*10)/10); applyZoom(); }
+  function zoomOut(){ z=Math.max(0.5, Math.round((z-0.1)*10)/10); applyZoom(); }
+  function zoomReset(){ z=1; applyZoom(); }
   const $ = id => document.getElementById(id);
   const byId = id => preguntas.find(p=>p.ID===id);
 
@@ -2184,7 +2217,7 @@ window.CQ = (function(){
 
   // centro de un elemento puerto, relativo al lienzo (robusto al scroll y altura variable)
   function center(el){ const cr=$('cqCanvas').getBoundingClientRect(), r=el.getBoundingClientRect();
-    return { x:r.left-cr.left+r.width/2, y:r.top-cr.top+r.height/2 }; }
+    return { x:(r.left-cr.left+r.width/2)/z, y:(r.top-cr.top+r.height/2)/z }; }
   const outEl = (id,op)=> $('cqCanvas').querySelector(`.cq-out[data-out="${id}"][data-opt="${encodeURIComponent(op)}"]`);
   const inEl  = id => $('cqCanvas').querySelector(`.cq-in[data-in="${id}"]`);
 
@@ -2288,7 +2321,7 @@ window.CQ = (function(){
     });
   }
 
-  function cxy(ev){ const r=$('cqCanvas').getBoundingClientRect(); return { x:ev.clientX-r.left, y:ev.clientY-r.top }; }
+  function cxy(ev){ const r=$('cqCanvas').getBoundingClientRect(); return { x:(ev.clientX-r.left)/z, y:(ev.clientY-r.top)/z }; }
   function onDown(ev){
     const out=ev.target.closest('[data-out]'); const drag=ev.target.closest('[data-drag]');
     if(out){ ev.preventDefault(); const c=center(out);
@@ -2317,8 +2350,9 @@ window.CQ = (function(){
   }
   function bind(){ const c=$('cqCanvas'); if(c&&!c._bound){ c.addEventListener('pointerdown',onDown); c._bound=true; } }
 
-  return { init:async function(){ await init(); bind(); if(cartera) await load(); else render(); },
-    onCartera, addPregunta, openDrawer, closeDrawer, onTipoChange, savePregunta, deletePregunta, setInicial, save };
+  return { init:async function(){ await init(); bind(); applyZoom(); if(cartera) await load(); else render(); },
+    onCartera, addPregunta, openDrawer, closeDrawer, onTipoChange, savePregunta, deletePregunta, setInicial, save,
+    zoomIn, zoomOut, zoomReset };
 })();
 
 </script>
