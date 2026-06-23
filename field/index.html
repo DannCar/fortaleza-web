@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Fortaleza Field · build f1.4 · 2026-06-17 · misiones del dia reales (sin demo) -->
+<!-- Fortaleza Field · build f1.5 · 2026-06-22 · fix nunca-visitado + buscador colapsable + apartado Mapa (titulares/visitas/leyenda) -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-title" content="Fortaleza Field">
 <title>Fortaleza Field</title>
 <link rel="manifest" href="manifest.json">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════
@@ -1593,6 +1595,35 @@ input[type="file"].foto-input { display: none; }
   0%   { transform: translateY(0) scale(1); opacity: 1; }
   100% { transform: translateY(200px) scale(0); opacity: 0; }
 }
+
+/* ── Mapa de misiones + buscador colapsable (build f1.5) ── */
+.buscar-toggle{flex-shrink:0;width:40px;height:40px;border-radius:12px;border:1.5px solid var(--border2);background:var(--surface2);color:var(--teal2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.buscar-wrap{display:flex;align-items:center}
+.buscar-wrap .buscar-input{flex:1;margin-left:8px;padding:11px 16px;width:auto}
+.buscar-wrap.colapsado{width:40px}
+.buscar-wrap.colapsado .buscar-input{flex:0;width:0;margin:0;padding:0;border-width:0;opacity:0;pointer-events:none}
+.vista-toggle{display:flex;gap:8px;padding:0 20px 12px}
+.vseg{flex:1;padding:9px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;transition:.18s;font-family:inherit}
+.vseg.active{background:rgba(23,133,130,0.15);border-color:var(--border2);color:var(--teal3)}
+.mis-map-wrap{padding:0 20px}
+.map-hud{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;margin-bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:11px;color:var(--text2);line-height:1.6}
+.map-hud b{color:var(--text);font-weight:700}
+.map-canvas{position:relative;height:calc(100dvh - 312px);min-height:320px;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:var(--navy2)}
+.map-tools{position:absolute;top:10px;left:10px;z-index:5;display:flex;gap:8px}
+.map-tools button{background:rgba(13,31,51,.85);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.map-tools button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.map-pin{width:18px;height:18px;transform:rotate(45deg);border:2px solid rgba(255,255,255,.85);border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,.55);cursor:pointer}
+.map-pin.pend{background:var(--teal2)}
+.map-pin.vis{background:var(--gold2)}
+.map-pin.urg{background:#e84444}
+.map-visit{width:11px;height:11px;border-radius:50%;border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+.map-leyenda{position:absolute;bottom:10px;left:10px;right:10px;z-index:6;background:rgba(13,31,51,.94);border:1px solid var(--border2);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--text2);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.map-leyenda h4{margin:0 0 8px;font-size:12px;color:var(--text);font-weight:700}
+.map-leyenda .lg{display:flex;align-items:center;gap:9px;margin:5px 0}
+.map-leyenda .sw{width:14px;height:14px;flex-shrink:0;display:inline-block}
+.map-leyenda .sw.romb{transform:rotate(45deg);border:1.5px solid rgba(255,255,255,.8);border-radius:2px}
+.map-leyenda .sw.dot{border-radius:50%}
+.map-fallback{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:13px;text-align:center;padding:0 20px}
 </style>
 </head>
 <body>
@@ -1835,17 +1866,21 @@ input[type="file"].foto-input { display: none; }
       <button class="mseg" id="seg-visitados" onclick="switchMis('visitados')">📋 Visitados</button>
     </div>
     <div id="misionesFiltros">
-    <div class="buscar-wrap">
-      <span class="buscar-icon">🔍</span>
+    <div class="vista-toggle">
+      <button class="vseg active" id="vseg-lista" onclick="setVista('lista')">📋 Lista</button>
+      <button class="vseg" id="vseg-mapa" onclick="setVista('mapa')">🗺️ Mapa</button>
+    </div>
+    <div class="buscar-wrap colapsado" id="buscarWrap">
+      <button class="buscar-toggle" id="buscarToggle" onclick="toggleBuscar()" aria-label="Buscar">🔍</button>
       <input class="buscar-input" type="search" id="buscarInput"
         placeholder="Buscar por nombre o ID..."
         inputmode="search" autocomplete="off"
-        oninput="filtrarTitulares()">
+        oninput="filtrarTitulares()" onblur="autoCollapseBuscar()">
     </div>
     <div class="filtros-row">
       <div class="filtro-chip active" data-filtro="todos"     onclick="setFiltro('todos')">Todos</div>
       <div class="filtro-chip"        data-filtro="pendiente" onclick="setFiltro('pendiente')">⏳ Pendientes</div>
-      <div class="filtro-chip"        data-filtro="visitado"  onclick="setFiltro('visitado')">✅ Visitados hoy</div>
+      <div class="filtro-chip"        data-filtro="visitado"  onclick="setFiltro('visitado')">✅ Visitados</div>
       <div class="filtro-chip"        data-filtro="urgente"   onclick="setFiltro('urgente')">⚡ Urgentes</div>
     </div>
     </div>
@@ -1860,6 +1895,26 @@ input[type="file"].foto-input { display: none; }
       </div>
     </div>
     <div class="visitados-list" id="visitadosList" style="display:none"></div>
+    <div class="mis-map-wrap" id="misionesMapWrap" style="display:none">
+      <div class="map-hud" id="mapHud"></div>
+      <div class="map-canvas">
+        <div id="misMap" style="position:absolute;inset:0"></div>
+        <div class="map-tools">
+          <button id="btnMapVisitas" onclick="toggleMapVisitas()">📍 Visitas</button>
+          <button onclick="toggleMapLeyenda()" aria-label="Leyenda">ⓘ</button>
+        </div>
+        <div class="map-leyenda" id="mapLeyenda" style="display:none">
+          <h4>Simbología</h4>
+          <div class="lg"><span class="sw romb" style="background:#1ab5b1"></span> Pendiente (sin visita)</div>
+          <div class="lg"><span class="sw romb" style="background:#e8c990"></span> Visitado (ya gestionado)</div>
+          <div class="lg"><span class="sw romb" style="background:#e84444"></span> Urgente</div>
+          <div class="lg"><span class="sw dot" style="background:#1ab5b1"></span> Visita · realiza pago</div>
+          <div class="lg"><span class="sw dot" style="background:#22c55e"></span> Visita · localizado</div>
+          <div class="lg"><span class="sw dot" style="background:#f59e0b"></span> Visita · carta/tercero</div>
+          <div class="lg"><span class="sw dot" style="background:#e84444"></span> Visita · no localizado</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Bottom nav FIXED -->
@@ -2122,6 +2177,7 @@ input[type="file"].foto-input { display: none; }
 // CONFIGURACIÓN
 // ═══════════════════════════════════════════════
 const N8N_BASE = 'https://n8n.fortalezacontactcenter.com';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w';
 
 // Rangos RPG
 const RANKS = [
@@ -2712,7 +2768,7 @@ function initCaptura() {
     // ── BLOQUEO DE DUPLICADOS ──
     // Bloqueo duro: si ya tiene visita hoy, no permitir capturar
     if(VISITAS_HOY_IDS.has(t.ID_TITULAR)) {
-      showToast('🔒', 'Titular ya visitado hoy', 'No se permite otra visita hoy');
+      showToast('🔒', 'Titular ya visitado', 'Ya tiene una visita registrada');
       goTo('misiones');
       return;
     }
@@ -3199,7 +3255,7 @@ const _goToOriginal = goTo;
 
 let TITULARES_DATA  = [];  // todos del gestor
 let TITULARES_FILTRADOS = [];
-let VISITAS_HOY_IDS = new Set(); // IDs visitados hoy
+let VISITAS_HOY_IDS = new Set(); // IDs visitados alguna vez (1+ visita -> fuera de misiones)
 let TITULAR_ACTIVO  = null; // el que está en pantalla ficha
 let FILTRO_ACTIVO   = 'todos';
 let HISTORIAL_DATA  = [];
@@ -3230,7 +3286,7 @@ async function loadMisiones() {
 
     if (data.titulares) {
       TITULARES_DATA = data.titulares;
-      VISITAS_HOY_IDS = new Set(data.visitados_hoy || []);
+      VISITAS_HOY_IDS = new Set(data.visitados ?? data.visitados_hoy ?? []);
       CARGA_ERROR = false;
     } else {
       throw new Error('Sin datos');
@@ -3255,7 +3311,9 @@ function switchMis(tab){
   document.getElementById('seg-misiones').classList.toggle('active', !isVis);
   document.getElementById('seg-visitados').classList.toggle('active', isVis);
   document.getElementById('misionesFiltros').style.display = isVis ? 'none' : '';
-  document.getElementById('titularesList').style.display   = isVis ? 'none' : '';
+  document.getElementById('titularesList').style.display   = (isVis || MIS_VISTA==='mapa') ? 'none' : '';
+  document.getElementById('misionesMapWrap').style.display = (!isVis && MIS_VISTA==='mapa') ? 'block' : 'none';
+  if(!isVis && MIS_VISTA==='mapa') initMisMap();
   document.getElementById('visitadosList').style.display   = isVis ? 'block' : 'none';
   document.getElementById('misionesCount').style.display   = isVis ? 'none' : '';
   if (isVis) loadMisVisitas();
@@ -3351,7 +3409,7 @@ function renderTitularesList() {
         <div class="titular-tags">
           <span class="tag tag-cartera">${t.CARTERA || 'Sin cartera'}</span>
           ${t.ESTADO ? `<span class="tag tag-estado">${t.ESTADO}</span>` : ''}
-          ${visitadoHoy ? '<span class="tag tag-visit">✅ Visitado hoy</span>' : ''}
+          ${visitadoHoy ? '<span class="tag tag-visit">✅ Visitado</span>' : ''}
         </div>
       </div>
       <div class="titular-right">
@@ -3397,6 +3455,114 @@ function aplicarFiltros() {
   });
 
   renderTitularesList();
+  if(typeof MIS_VISTA!=='undefined' && MIS_VISTA==='mapa') renderMapMarkers();
+}
+
+
+// ════════════════ MAPA DE MISIONES (build f1.5) ════════════════
+let MIS_VISTA = 'lista';
+let MIS_MAP = null, MIS_MARKERS = [], VIS_MARKERS = [];
+let MAP_SHOW_VISITAS = false;
+
+function _coordVis(v){
+  const norm = x => { let n = parseFloat(String(x==null?'':x).replace(',','.')); if(!isFinite(n)) return null; if(Math.abs(n)>180) n=n/1000000; return n; };
+  const lat = norm(v.LATITUD), lng = norm(v.LONGITUD);
+  if(lat===null||lng===null||Math.abs(lat)>90||Math.abs(lng)>180) return null;
+  return {lat,lng};
+}
+
+function setVista(v){
+  MIS_VISTA = v;
+  document.getElementById('vseg-lista').classList.toggle('active', v==='lista');
+  document.getElementById('vseg-mapa').classList.toggle('active', v==='mapa');
+  const mapa = v==='mapa';
+  document.getElementById('titularesList').style.display   = mapa ? 'none' : '';
+  document.getElementById('misionesMapWrap').style.display = mapa ? 'block' : 'none';
+  if(mapa) initMisMap();
+}
+
+function initMisMap(){
+  if(MIS_MAP){ setTimeout(()=>{ try{ MIS_MAP.resize(); }catch(e){} renderMapMarkers(); }, 60); return; }
+  if(typeof mapboxgl === 'undefined'){ document.getElementById('misMap').innerHTML = '<div class="map-fallback">Mapa no disponible (sin conexión)</div>'; return; }
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  MIS_MAP = new mapboxgl.Map({ container:'misMap', style:'mapbox://styles/mapbox/dark-v11', center:[-99.13,19.43], zoom:9, attributionControl:false });
+  MIS_MAP.addControl(new mapboxgl.NavigationControl({showCompass:false}), 'top-right');
+  MIS_MAP.on('load', ()=> renderMapMarkers());
+}
+
+function clearMapMarkers(){ MIS_MARKERS.forEach(m=>m.remove()); MIS_MARKERS = []; }
+function clearVisitMarkers(){ VIS_MARKERS.forEach(m=>m.remove()); VIS_MARKERS = []; }
+
+function renderMapMarkers(){
+  if(!MIS_MAP) return;
+  if(!MIS_MAP.isStyleLoaded()){ MIS_MAP.once('idle', renderMapMarkers); return; }
+  clearMapMarkers(); clearVisitMarkers();
+  const bounds = new mapboxgl.LngLatBounds(); let plotted = 0;
+  TITULARES_FILTRADOS.forEach(t => {
+    const c = _coordTit(t); if(!c) return;
+    const vis = VISITAS_HOY_IDS.has(t.ID_TITULAR);
+    const cls = t.URGENTE ? 'urg' : (vis ? 'vis' : 'pend');
+    const el = document.createElement('div'); el.className = 'map-pin ' + cls;
+    const popup = new mapboxgl.Popup({offset:16,closeButton:false}).setHTML(
+      '<div style="font-family:Outfit,sans-serif"><b>' + escH(t.NOMBRE||'') + '</b><br>' +
+      '<span style="font-family:JetBrains Mono,monospace;font-size:11px;color:#93A6B3">' + escH(t.ID_TITULAR||'') + '</span><br>' +
+      '<span style="font-size:12px;color:#cfd8de">' + escH(t.MUNICIPIO||'') + '</span><br>' +
+      '<a href="' + urlNavegacion(t) + '" target="_blank" rel="noopener" style="color:#1ab5b1;font-size:12px">Cómo llegar ›</a></div>');
+    const mk = new mapboxgl.Marker({element:el}).setLngLat([c.lng,c.lat]).setPopup(popup).addTo(MIS_MAP);
+    MIS_MARKERS.push(mk); bounds.extend([c.lng,c.lat]); plotted++;
+  });
+  if(MAP_SHOW_VISITAS){
+    MIS_VISITAS.forEach(v => {
+      const c = _coordVis(v); if(!c) return;
+      const col = visBadgeColor(v.RESULTADO);
+      const el = document.createElement('div'); el.className = 'map-visit'; el.style.background = col;
+      const popup = new mapboxgl.Popup({offset:10,closeButton:false}).setHTML(
+        '<div style="font-family:Outfit,sans-serif"><b>' + escH(v.TITULAR||'') + '</b><br>' +
+        '<span style="font-size:11px;color:#93A6B3">' + escH(v.FECHA||'') + ' ' + escH(v.HORA||'') + '</span><br>' +
+        '<span style="font-size:12px;color:' + col + '">' + escH(v.RESULTADO||'') + '</span></div>');
+      const mk = new mapboxgl.Marker({element:el}).setLngLat([c.lng,c.lat]).setPopup(popup).addTo(MIS_MAP);
+      VIS_MARKERS.push(mk); bounds.extend([c.lng,c.lat]);
+    });
+  }
+  if(plotted || VIS_MARKERS.length){ try{ MIS_MAP.fitBounds(bounds,{padding:60,maxZoom:15,duration:500}); }catch(e){} }
+  updateMapHud();
+}
+
+function updateMapHud(){
+  const all = TITULARES_DATA.length;
+  const visN = TITULARES_DATA.filter(t => VISITAS_HOY_IDS.has(t.ID_TITULAR)).length;
+  const pend = all - visN;
+  const sinGeo = TITULARES_DATA.filter(t => !_coordTit(t)).length;
+  const el = document.getElementById('mapHud'); if(!el) return;
+  el.innerHTML = '📍 <b>' + all + '</b> asignadas &nbsp; ✅ <b>' + visN + '</b> visitadas &nbsp; ⏳ <b>' + pend + '</b> pendientes &nbsp; 🚫 <b>' + sinGeo + '</b> sin ubicación';
+}
+
+async function ensureMisVisitas(){
+  if(MIS_VISITAS.length) return;
+  try{
+    const res = await fetch(N8N_BASE + '/webhook/field-mis-visitas', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ id_gestor: STATE.user?.idGestor || '' })});
+    const d = await res.json(); MIS_VISITAS = (d && d.visitas) ? d.visitas : [];
+  }catch(e){}
+}
+async function toggleMapVisitas(){
+  MAP_SHOW_VISITAS = !MAP_SHOW_VISITAS;
+  const b = document.getElementById('btnMapVisitas'); if(b) b.classList.toggle('on', MAP_SHOW_VISITAS);
+  if(MAP_SHOW_VISITAS) await ensureMisVisitas();
+  renderMapMarkers();
+}
+function toggleMapLeyenda(){
+  const el = document.getElementById('mapLeyenda'); if(!el) return;
+  el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+}
+
+function toggleBuscar(){
+  const w = document.getElementById('buscarWrap');
+  const col = w.classList.toggle('colapsado');
+  if(!col){ const i = document.getElementById('buscarInput'); if(i) i.focus(); }
+}
+function autoCollapseBuscar(){
+  const i = document.getElementById('buscarInput');
+  if(i && !i.value.trim()){ document.getElementById('buscarWrap').classList.add('colapsado'); }
 }
 
 // ═══════════════════════════════════════════════
@@ -3448,7 +3614,7 @@ async function abrirFicha(idTitular) {
   const btn = document.getElementById('btnIniciarVisita');
   if (visitadoHoy) {
     btn.className = 'btn-iniciar-visita ya-visitado';
-    btn.innerHTML = '<span>✅</span> Ya visitado hoy';
+    btn.innerHTML = '<span>✅</span> Ya visitado';
     btn.style.opacity = '0.55';
     btn.style.pointerEvents = 'none';
   } else {
@@ -3525,7 +3691,7 @@ function iniciarVisita() {
 
   if (yaVisitado) {
     // Bloqueo duro: no se permite registrar otra visita hoy
-    showToast('🔒', 'Titular ya visitado hoy', 'No se permite registrar otra visita hoy');
+    showToast('🔒', 'Titular ya visitado', 'Ya tiene una visita registrada');
     return;
   }
 
@@ -3545,7 +3711,7 @@ function mostrarConfirmDuplicado() {
       <div style="font-size:44px;margin-bottom:12px">⚠️</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px">Titular ya visitado</div>
       <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:20px">
-        <strong>${TITULAR_ACTIVO.NOMBRE}</strong> ya tiene una visita registrada hoy.<br><br>
+        <strong>${TITULAR_ACTIVO.NOMBRE}</strong> ya tiene una visita registrada.<br><br>
         ¿Deseas registrar una visita adicional?
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
