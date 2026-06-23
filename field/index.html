@@ -1645,6 +1645,18 @@ input[type="file"].foto-input { display: none; }
 .misiones-topbar{transition:max-height .25s,opacity .2s,padding .25s;max-height:60px;overflow:hidden}
 .misiones-sticky.collapsed .misiones-topbar{max-height:0;opacity:0;padding-top:0;padding-bottom:0}
 .misiones-sticky.collapsed .misiones-tabs{padding-top:6px}
+
+/* ===== Cuestionario dinámico (Paso 4) ===== */
+.q-body{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.q-opt{text-align:left;padding:14px 16px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.q-opt:active{transform:scale(.99)}
+.q-opt.sel{border-color:var(--teal2);background:rgba(23,133,130,0.15);color:var(--teal3)}
+.q-input{width:100%;padding:13px 15px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;font-family:inherit;box-sizing:border-box;resize:vertical}
+.q-input:focus{outline:none;border-color:var(--teal2)}
+.q-chk{display:flex;align-items:center;gap:11px;padding:12px 15px;border-radius:14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;cursor:pointer}
+.q-chk input{width:18px;height:18px;accent-color:var(--teal2)}
+.q-req{font-size:12px;color:var(--gold2);margin-top:2px}
+.q-res{font-size:12px;color:var(--gold2);margin-top:2px}
 </style>
 </head>
 <body>
@@ -2168,6 +2180,13 @@ input[type="file"].foto-input { display: none; }
     </div>
 
     <!-- ÉXITO -->
+    <!-- PASO Q: CUESTIONARIO DINÁMICO (reemplaza pasos 3-5 si la cartera tiene cuestionario) -->
+    <div class="captura-step" id="paso-q">
+      <div class="step-title" id="qTitle">Cuestionario</div>
+      <div class="step-sub">Responde según lo que ocurrió en la visita.</div>
+      <div class="q-body" id="qBody"></div>
+    </div>
+
     <div class="captura-success" id="capturaSuccess">
       <div class="success-burst">🎯</div>
       <div class="success-title">¡Visita registrada!</div>
@@ -2785,6 +2804,10 @@ let CAPTURA = {
 function initCaptura() {
   // Reset estado
   CAPTURA = { paso:1, lat:null, lon:null, fotos:[null,null,null], fotoFiles:[null,null,null], contacto:null, subDatos:{}, resultado:null, observaciones:'' };
+  // Cuestionario dinámico (se reemplaza el reset por defecto y se carga async)
+  CAPTURA.dinamico = false; CAPTURA.cuest = null;
+  CAPTURA.qNodo = null; CAPTURA.qStack = []; CAPTURA.respuestas = {}; CAPTURA._qOpts = [];
+  cargarCuestionario();
 
   // Rellenar card del titular
   const t = STATE.titularEnVisita;
@@ -2842,8 +2865,23 @@ function initCaptura() {
 
 // ── Retroceder en captura ──
 function retrocederCaptura() {
+  if (CAPTURA.paso === 'q'){
+    if(CAPTURA.qStack.length){
+      CAPTURA.qNodo = CAPTURA.qStack.pop();
+      renderPregunta();
+      document.getElementById('capturaScroll').scrollTop = 0;
+      actualizarBotonPaso();
+    } else {
+      CAPTURA.paso = 2;
+      document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+      document.getElementById('paso-2').classList.add('active');
+      document.getElementById('capturaScroll').scrollTop = 0;
+      actualizarProgreso();
+      actualizarBotonPaso();
+    }
+    return;
+  }
   if (CAPTURA.paso > 1) {
-    // Retroceder al paso anterior
     CAPTURA.paso--;
     document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
     document.getElementById(`paso-${CAPTURA.paso}`).classList.add('active');
@@ -2851,7 +2889,6 @@ function retrocederCaptura() {
     actualizarProgreso();
     actualizarBotonPaso();
   } else {
-    // Paso 1 → volver a la ficha del titular
     goTo('ficha');
   }
 }
@@ -2859,6 +2896,13 @@ function retrocederCaptura() {
 // ── Actualizar barra de progreso ──
 function actualizarProgreso() {
   const p = CAPTURA.paso;
+  if(p === 'q'){
+    for(let i=1;i<=5;i++){ const dot=document.getElementById(`sdot-${i}`); if(dot) dot.className='step-dot'+(i<=2?' done':''); }
+    const lbl=document.getElementById('pasoActualLabel'); if(lbl) lbl.textContent='✓';
+    const nom=document.getElementById('pasoNombreLabel'); if(nom) nom.textContent='Cuestionario';
+    const badge=document.getElementById('capturaStepBadge'); if(badge) badge.textContent='📋';
+    return;
+  }
   for(let i=1;i<=5;i++) {
     const dot = document.getElementById(`sdot-${i}`);
     if(!dot) continue;
@@ -2909,8 +2953,16 @@ function actualizarBotonPaso() {
   const btn = document.getElementById('btnPaso');
   if(!btn) return;
   const p = CAPTURA.paso;
-  let habilitado = false;
 
+  if(p === 'q'){
+    const last = qEsUltima();
+    btn.disabled = !qValido();
+    btn.textContent = last ? '🚀 Registrar visita · +50 XP' : 'Continuar →';
+    btn.className   = last ? 'btn-paso completar' : 'btn-paso';
+    return;
+  }
+
+  let habilitado = false;
   if(p === 1) habilitado = !!(CAPTURA.lat && CAPTURA.lon);
   if(p === 2) habilitado = !!CAPTURA.fotos[0];
   if(p === 3) habilitado = validarPaso3();
@@ -2925,12 +2977,14 @@ function actualizarBotonPaso() {
   } else {
     btn.textContent = `Continuar →`;
     btn.className   = 'btn-paso';
-    if(habilitado) btn.className += '';
   }
 }
 
 function siguientePaso() {
   const p = CAPTURA.paso;
+  if(p === 'q'){ cuestSiguiente(); return; }
+  // Tras fotos: si la cartera tiene cuestionario, entra al recorrido (reemplaza pasos 3-5)
+  if(p === 2 && CAPTURA.dinamico){ CAPTURA.paso = 'q'; iniciarCuestionario(); return; }
   if(p < 5) {
     CAPTURA.paso++;
     document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
@@ -3168,6 +3222,136 @@ function contarObs(textarea) {
 }
 
 // ── REGISTRAR VISITA ──
+/* ════════════════ CUESTIONARIO DINÁMICO (Paso 4) ════════════════ */
+async function cargarCuestionario(){
+  const t = STATE.titularEnVisita;
+  if(!t || !t.ID_TITULAR){ CAPTURA.dinamico = false; return; }
+  try{
+    const res = await fetch(`${N8N_BASE}/webhook/field-cuestionario`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id_titular: t.ID_TITULAR })
+    });
+    const d = await res.json();
+    if(d && d.tiene_cuestionario){
+      CAPTURA.dinamico = true;
+      CAPTURA.cuest = {
+        preguntas:    d.preguntas    || [],
+        transiciones: d.transiciones || [],
+        inicial:      (d.cuestionario && d.cuestionario.INICIAL) || null
+      };
+    } else {
+      CAPTURA.dinamico = false; CAPTURA.cuest = null;
+    }
+  }catch(e){ CAPTURA.dinamico = false; CAPTURA.cuest = null; }
+}
+
+function qPregunta(){ return (CAPTURA.cuest && CAPTURA.cuest.preguntas || []).find(p => p.ID === CAPTURA.qNodo); }
+function qExiste(id){ return (CAPTURA.cuest && CAPTURA.cuest.preguntas || []).some(p => p.ID === id); }
+function qNodoInicial(){
+  const c = CAPTURA.cuest; if(!c) return null;
+  if(c.inicial && qExiste(c.inicial)) return c.inicial;
+  return c.preguntas.length ? c.preguntas[0].ID : null;
+}
+function qOpts(p){
+  if(p.TIPO === 'boolean') return ['Sí','No'];
+  return Array.isArray(p.OPCIONES) ? p.OPCIONES.map(String) : [];
+}
+
+function iniciarCuestionario(){
+  CAPTURA.qNodo = qNodoInicial();
+  CAPTURA.qStack = []; CAPTURA.respuestas = {};
+  document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('paso-q').classList.add('active');
+  document.getElementById('capturaScroll').scrollTop = 0;
+  renderPregunta();
+  actualizarProgreso();
+}
+
+function renderPregunta(){
+  const p = qPregunta();
+  const body = document.getElementById('qBody');
+  const title = document.getElementById('qTitle');
+  if(!p){ registrarVisita(); return; }
+  title.textContent = p.TEXTO || 'Pregunta';
+  const cur = CAPTURA.respuestas[p.ID] || {};
+  let html = '';
+  if(p.TIPO === 'opcion' || p.TIPO === 'boolean'){
+    const opts = qOpts(p); CAPTURA._qOpts = opts;
+    html = opts.map((o,i) => `<button type="button" class="q-opt${cur.valor===o?' sel':''}" onclick="qSelOpcion(${i})">${escH(o)}</button>`).join('');
+  } else if(p.TIPO === 'multi'){
+    const opts = qOpts(p); CAPTURA._qOpts = opts; const sel = cur.valor_json || [];
+    html = opts.map((o,i) => `<label class="q-chk"><input type="checkbox" ${sel.indexOf(o)>=0?'checked':''} onchange="qTogMulti(${i},this.checked)"> ${escH(o)}</label>`).join('');
+  } else if(p.TIPO === 'numero'){
+    html = `<input class="q-input" type="number" inputmode="decimal" value="${escH(cur.valor||'')}" oninput="qSetTexto(this.value)" placeholder="Escribe un número">`;
+  } else if(p.TIPO === 'fecha'){
+    html = `<input class="q-input" type="date" value="${escH(cur.valor||'')}" oninput="qSetTexto(this.value)">`;
+  } else {
+    html = `<textarea class="q-input" rows="3" oninput="qSetTexto(this.value)" placeholder="Escribe tu respuesta">${escH(cur.valor||'')}</textarea>`;
+  }
+  if(p.REQUERIDA)    html += '<div class="q-req">* Obligatoria</div>';
+  if(p.ES_RESULTADO) html += '<div class="q-res">★ Define el resultado de la visita</div>';
+  body.innerHTML = html;
+  actualizarBotonPaso();
+}
+
+function qSelOpcion(i){
+  const p = qPregunta(); const o = (CAPTURA._qOpts || [])[i];
+  CAPTURA.respuestas[p.ID] = { valor: o };
+  renderPregunta();
+}
+function qTogMulti(i,on){
+  const p = qPregunta(); const o = (CAPTURA._qOpts || [])[i];
+  const r = CAPTURA.respuestas[p.ID] || { valor_json: [] };
+  r.valor_json = r.valor_json || [];
+  if(on){ if(r.valor_json.indexOf(o) < 0) r.valor_json.push(o); }
+  else { r.valor_json = r.valor_json.filter(x => x !== o); }
+  r.valor = r.valor_json.join(', ');
+  CAPTURA.respuestas[p.ID] = r;
+  actualizarBotonPaso();
+}
+function qSetTexto(v){
+  const p = qPregunta();
+  CAPTURA.respuestas[p.ID] = { valor: v };
+  actualizarBotonPaso();
+}
+
+function qValido(){
+  const p = qPregunta(); if(!p) return false;
+  if(!p.REQUERIDA) return true;
+  const r = CAPTURA.respuestas[p.ID]; if(!r) return false;
+  if(p.TIPO === 'multi') return (r.valor_json || []).length > 0;
+  return r.valor != null && String(r.valor).trim() !== '';
+}
+
+function qNext(){
+  const p = qPregunta(); if(!p) return null;
+  const r = CAPTURA.respuestas[p.ID] || {};
+  const tr = (CAPTURA.cuest && CAPTURA.cuest.transiciones) || [];
+  const find = op => tr.find(t => t.ORIGEN === p.ID && (t.OPCION || '') === (op || ''));
+  let t = null;
+  if(p.TIPO === 'opcion' || p.TIPO === 'boolean'){ t = find(r.valor); }
+  else if(p.TIPO === 'multi'){
+    const sels = r.valor_json || [];
+    for(let k=0;k<sels.length;k++){ t = find(sels[k]); if(t) break; }
+    if(!t) t = find('');
+  } else { t = find(''); }
+  return t ? t.DESTINO : null;
+}
+function qEsUltima(){
+  const n = qNext();
+  return !n || !qExiste(n);
+}
+
+function cuestSiguiente(){
+  if(!qValido()) return;
+  if(qEsUltima()){ registrarVisita(); return; }
+  CAPTURA.qStack.push(CAPTURA.qNodo);
+  CAPTURA.qNodo = qNext();
+  renderPregunta();
+  document.getElementById('capturaScroll').scrollTop = 0;
+  actualizarBotonPaso();
+}
+
 async function registrarVisita() {
   const btn = document.getElementById('btnPaso');
   btn.disabled  = true;
@@ -3202,6 +3386,31 @@ async function registrarVisita() {
     foto_base64_3:      CAPTURA.fotos[2] || '',
     estatus:            'CONCLUIDA',
   };
+
+  // ── Cuestionario dinámico: arma respuestas y deriva el resultado de la pregunta marcada ──
+  if (CAPTURA.dinamico) {
+    const respuestas = [];
+    let resultadoVal = '';
+    (CAPTURA.cuest && CAPTURA.cuest.preguntas || []).forEach(p => {
+      const r = CAPTURA.respuestas[p.ID]; if(!r) return;
+      const esRes = !!p.ES_RESULTADO;
+      const valor = (r.valor != null ? String(r.valor) : '');
+      if(esRes) resultadoVal = valor;
+      respuestas.push({
+        pregunta_id:    p.ID,
+        pregunta_texto: p.TEXTO,
+        tipo:           p.TIPO,
+        es_resultado:   esRes,
+        valor:          valor,
+        valor_json:     (p.TIPO === 'multi' ? (r.valor_json || []) : null)
+      });
+    });
+    payload.resultado     = resultadoVal;
+    payload.respuestas    = respuestas;
+    payload.tipo_contacto = ''; payload.observaciones = ''; payload.horario_indicado = '';
+    payload.nombre_tercero = ''; payload.conoce_titular = ''; payload.telefono_adicional = ''; payload.sena_particular = '';
+    CAPTURA.resultado = resultadoVal; // para XP local y field-gamificacion
+  }
 
   // ── 1) MARCAR COMO VISITADO AL INSTANTE (optimista) ──
   // Esto actualiza la lista visualmente antes de que Sheets confirme
