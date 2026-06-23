@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Fortaleza Field · build f1.5 · 2026-06-22 · fix nunca-visitado + buscador colapsable + apartado Mapa (titulares/visitas/leyenda) -->
+<!-- Fortaleza Field · build f1.6 · 2026-06-22 · nav flotante glass (Inicio/Misiones/Mapa/Perfil) + pantalla Mapa dedicada + header colapsable -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -1624,6 +1624,27 @@ input[type="file"].foto-input { display: none; }
 .map-leyenda .sw.romb{transform:rotate(45deg);border:1.5px solid rgba(255,255,255,.8);border-radius:2px}
 .map-leyenda .sw.dot{border-radius:50%}
 .map-fallback{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:13px;text-align:center;padding:0 20px}
+
+/* ── Nav flotante glassmorphism + Mapa screen + header colapsable (build f1.6) ── */
+.bottom-nav{display:none!important}
+.float-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + var(--safe-bottom));display:flex;gap:6px;padding:7px 9px;background:rgba(13,31,51,.55);border:1px solid rgba(255,255,255,.12);border-radius:26px;-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);box-shadow:0 12px 40px rgba(0,0,0,.45);z-index:200;transition:opacity .3s,transform .3s}
+.float-nav.dim{opacity:.32}
+.float-nav.hidden{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(22px)}
+.fn-item{width:52px;height:42px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:18px;color:var(--text3);transition:.2s;-webkit-tap-highlight-color:transparent}
+.fn-item svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.fn-item.active{color:var(--teal3);background:rgba(23,133,130,.18)}
+.fn-item:active{transform:scale(.92)}
+.misiones-scroll-area{padding-bottom:calc(98px + var(--safe-bottom))!important}
+/* Pantalla Mapa */
+.mapa-sticky{flex-shrink:0;background:var(--navy);z-index:20;padding:14px 0 6px}
+.mapa-topbar{padding:0 20px 10px}
+.mapa-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:500;color:var(--text)}
+.mapa-body{flex:1;display:flex;flex-direction:column;padding:0 16px;padding-bottom:calc(96px + var(--safe-bottom));overflow:hidden}
+.map-canvas.mapa-full{flex:1;height:auto;min-height:320px;margin-top:2px}
+/* Header colapsable de Misiones */
+.misiones-topbar{transition:max-height .25s,opacity .2s,padding .25s;max-height:60px;overflow:hidden}
+.misiones-sticky.collapsed .misiones-topbar{max-height:0;opacity:0;padding-top:0;padding-bottom:0}
+.misiones-sticky.collapsed .misiones-tabs{padding-top:6px}
 </style>
 </head>
 <body>
@@ -1866,10 +1887,6 @@ input[type="file"].foto-input { display: none; }
       <button class="mseg" id="seg-visitados" onclick="switchMis('visitados')">📋 Visitados</button>
     </div>
     <div id="misionesFiltros">
-    <div class="vista-toggle">
-      <button class="vseg active" id="vseg-lista" onclick="setVista('lista')">📋 Lista</button>
-      <button class="vseg" id="vseg-mapa" onclick="setVista('mapa')">🗺️ Mapa</button>
-    </div>
     <div class="buscar-wrap colapsado" id="buscarWrap">
       <button class="buscar-toggle" id="buscarToggle" onclick="toggleBuscar()" aria-label="Buscar">🔍</button>
       <input class="buscar-input" type="search" id="buscarInput"
@@ -1895,26 +1912,6 @@ input[type="file"].foto-input { display: none; }
       </div>
     </div>
     <div class="visitados-list" id="visitadosList" style="display:none"></div>
-    <div class="mis-map-wrap" id="misionesMapWrap" style="display:none">
-      <div class="map-hud" id="mapHud"></div>
-      <div class="map-canvas">
-        <div id="misMap" style="position:absolute;inset:0"></div>
-        <div class="map-tools">
-          <button id="btnMapVisitas" onclick="toggleMapVisitas()">📍 Visitas</button>
-          <button onclick="toggleMapLeyenda()" aria-label="Leyenda">ⓘ</button>
-        </div>
-        <div class="map-leyenda" id="mapLeyenda" style="display:none">
-          <h4>Simbología</h4>
-          <div class="lg"><span class="sw romb" style="background:#1ab5b1"></span> Pendiente (sin visita)</div>
-          <div class="lg"><span class="sw romb" style="background:#e8c990"></span> Visitado (ya gestionado)</div>
-          <div class="lg"><span class="sw romb" style="background:#e84444"></span> Urgente</div>
-          <div class="lg"><span class="sw dot" style="background:#1ab5b1"></span> Visita · realiza pago</div>
-          <div class="lg"><span class="sw dot" style="background:#22c55e"></span> Visita · localizado</div>
-          <div class="lg"><span class="sw dot" style="background:#f59e0b"></span> Visita · carta/tercero</div>
-          <div class="lg"><span class="sw dot" style="background:#e84444"></span> Visita · no localizado</div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Bottom nav FIXED -->
@@ -1923,6 +1920,39 @@ input[type="file"].foto-input { display: none; }
     <div class="nav-item active"                    id="nav-mis3"> <div class="nav-icon">🗺️</div><span>Misiones</span></div>
     <div class="nav-item" onclick="goTo('captura')" id="nav-cap3"> <div class="nav-icon">📸</div><span>Capturar</span></div>
     <div class="nav-item" onclick="goTo('perfil')"  id="nav-per3"> <div class="nav-icon">👤</div><span>Perfil</span></div>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN: MAPA ════════════════ -->
+<div class="screen" id="screen-mapa">
+  <div class="mapa-sticky">
+    <div class="mapa-topbar"><div class="mapa-title">🗺️ Mapa de campo</div></div>
+    <div class="filtros-row" id="mapaFiltros">
+      <div class="filtro-chip active" data-mf="todos"     onclick="setMapFiltro('todos')">Todos</div>
+      <div class="filtro-chip"        data-mf="pendiente" onclick="setMapFiltro('pendiente')">⏳ Pendientes</div>
+      <div class="filtro-chip"        data-mf="visitado"  onclick="setMapFiltro('visitado')">✅ Visitados</div>
+      <div class="filtro-chip"        data-mf="urgente"   onclick="setMapFiltro('urgente')">⚡ Urgentes</div>
+    </div>
+  </div>
+  <div class="mapa-body">
+    <div class="map-hud" id="mapHud"></div>
+    <div class="map-canvas mapa-full">
+      <div id="misMap" style="position:absolute;inset:0"></div>
+      <div class="map-tools">
+        <button id="btnMapVisitas" onclick="toggleMapVisitas()">📍 Visitas</button>
+        <button onclick="toggleMapLeyenda()" aria-label="Leyenda">ⓘ</button>
+      </div>
+      <div class="map-leyenda" id="mapLeyenda" style="display:none">
+        <h4>Simbología</h4>
+        <div class="lg"><span class="sw romb" style="background:#1ab5b1"></span> Pendiente (sin visita)</div>
+        <div class="lg"><span class="sw romb" style="background:#e8c990"></span> Visitado (ya gestionado)</div>
+        <div class="lg"><span class="sw romb" style="background:#e84444"></span> Urgente</div>
+        <div class="lg"><span class="sw dot" style="background:#1ab5b1"></span> Visita · realiza pago</div>
+        <div class="lg"><span class="sw dot" style="background:#22c55e"></span> Visita · localizado</div>
+        <div class="lg"><span class="sw dot" style="background:#f59e0b"></span> Visita · carta/tercero</div>
+        <div class="lg"><span class="sw dot" style="background:#e84444"></span> Visita · no localizado</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2249,6 +2279,8 @@ function goTo(screen) {
   if (screen === 'home')     renderHome();
   if (screen === 'misiones') { if (typeof switchMis === 'function') switchMis('misiones'); loadMisiones(); }
   if (screen === 'captura')  initCaptura();
+  if (screen === 'mapa')     initMapaScreen();
+  if (typeof updateFloatNav === 'function') updateFloatNav(screen);
 }
 
 // ═══════════════════════════════════════════════
@@ -3311,9 +3343,7 @@ function switchMis(tab){
   document.getElementById('seg-misiones').classList.toggle('active', !isVis);
   document.getElementById('seg-visitados').classList.toggle('active', isVis);
   document.getElementById('misionesFiltros').style.display = isVis ? 'none' : '';
-  document.getElementById('titularesList').style.display   = (isVis || MIS_VISTA==='mapa') ? 'none' : '';
-  document.getElementById('misionesMapWrap').style.display = (!isVis && MIS_VISTA==='mapa') ? 'block' : 'none';
-  if(!isVis && MIS_VISTA==='mapa') initMisMap();
+  document.getElementById('titularesList').style.display   = isVis ? 'none' : '';
   document.getElementById('visitadosList').style.display   = isVis ? 'block' : 'none';
   document.getElementById('misionesCount').style.display   = isVis ? 'none' : '';
   if (isVis) loadMisVisitas();
@@ -3455,12 +3485,11 @@ function aplicarFiltros() {
   });
 
   renderTitularesList();
-  if(typeof MIS_VISTA!=='undefined' && MIS_VISTA==='mapa') renderMapMarkers();
 }
 
 
 // ════════════════ MAPA DE MISIONES (build f1.5) ════════════════
-let MIS_VISTA = 'lista';
+let MAP_FILTRO = 'todos';
 let MIS_MAP = null, MIS_MARKERS = [], VIS_MARKERS = [];
 let MAP_SHOW_VISITAS = false;
 
@@ -3471,15 +3500,47 @@ function _coordVis(v){
   return {lat,lng};
 }
 
-function setVista(v){
-  MIS_VISTA = v;
-  document.getElementById('vseg-lista').classList.toggle('active', v==='lista');
-  document.getElementById('vseg-mapa').classList.toggle('active', v==='mapa');
-  const mapa = v==='mapa';
-  document.getElementById('titularesList').style.display   = mapa ? 'none' : '';
-  document.getElementById('misionesMapWrap').style.display = mapa ? 'block' : 'none';
-  if(mapa) initMisMap();
+function setMapFiltro(f){
+  MAP_FILTRO = f;
+  document.querySelectorAll('#mapaFiltros .filtro-chip').forEach(c=>c.classList.toggle('active', c.dataset.mf===f));
+  renderMapMarkers();
 }
+function mapDataset(){
+  return TITULARES_DATA.filter(t=>{
+    const vis = VISITAS_HOY_IDS.has(t.ID_TITULAR);
+    if(MAP_FILTRO==='pendiente') return !vis;
+    if(MAP_FILTRO==='visitado')  return vis;
+    if(MAP_FILTRO==='urgente')   return !!t.URGENTE;
+    return true;
+  });
+}
+async function initMapaScreen(){
+  if(!TITULARES_DATA.length && !CARGA_ERROR){ await loadMisiones(); }
+  initMisMap();
+}
+// ── Nav flotante + header colapsable ──
+const NAV_MAP = { home:'fn-home', misiones:'fn-misiones', mapa:'fn-mapa', perfil:'fn-perfil' };
+function updateFloatNav(screen){
+  const n = document.getElementById('floatNav'); if(!n) return;
+  n.classList.toggle('hidden', !NAV_MAP[screen]);
+  Object.values(NAV_MAP).forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.toggle('active', id===NAV_MAP[screen]); });
+}
+let _navDimT, _misLastY = 0;
+function _onAnyScroll(e){
+  const n = document.getElementById('floatNav');
+  if(n){ n.classList.add('dim'); clearTimeout(_navDimT); _navDimT = setTimeout(()=>n.classList.remove('dim'), 480); }
+  const sa = e.target;
+  if(sa && sa.classList && sa.classList.contains('misiones-scroll-area')){
+    const sticky = document.querySelector('#screen-misiones .misiones-sticky');
+    if(sticky){
+      const y = sa.scrollTop;
+      if(y > 48 && y > _misLastY) sticky.classList.add('collapsed');
+      else if(y < _misLastY) sticky.classList.remove('collapsed');
+      _misLastY = y;
+    }
+  }
+}
+document.addEventListener('scroll', _onAnyScroll, true);
 
 function initMisMap(){
   if(MIS_MAP){ setTimeout(()=>{ try{ MIS_MAP.resize(); }catch(e){} renderMapMarkers(); }, 60); return; }
@@ -3498,7 +3559,7 @@ function renderMapMarkers(){
   if(!MIS_MAP.isStyleLoaded()){ MIS_MAP.once('idle', renderMapMarkers); return; }
   clearMapMarkers(); clearVisitMarkers();
   const bounds = new mapboxgl.LngLatBounds(); let plotted = 0;
-  TITULARES_FILTRADOS.forEach(t => {
+  mapDataset().forEach(t => {
     const c = _coordTit(t); if(!c) return;
     const vis = VISITAS_HOY_IDS.has(t.ID_TITULAR);
     const cls = t.URGENTE ? 'urg' : (vis ? 'vis' : 'pend');
@@ -3767,5 +3828,11 @@ function getInitials(nombre = '') {
   <button class="cred-close" onclick="cerrarCredencial()">Cerrar</button>
 </div>
 
+<nav class="float-nav hidden" id="floatNav">
+  <button class="fn-item" id="fn-home" onclick="goTo('home')" aria-label="Inicio"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button>
+  <button class="fn-item" id="fn-misiones" onclick="goTo('misiones')" aria-label="Misiones"><svg viewBox="0 0 24 24"><path d="M6 21V4"/><path d="M6 4h11l-2.5 3.5L17 11H6"/></svg></button>
+  <button class="fn-item" id="fn-mapa" onclick="goTo('mapa')" aria-label="Mapa"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></button>
+  <button class="fn-item" id="fn-perfil" onclick="goTo('perfil')" aria-label="Perfil"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c0-3.6 3.4-5.5 7.5-5.5s7.5 1.9 7.5 5.5"/></svg></button>
+</nav>
 </body>
 </html>
