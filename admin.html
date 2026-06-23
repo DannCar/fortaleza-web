@@ -1182,7 +1182,7 @@ async function loadAdmins(){
   const wrap=document.getElementById('admList'); if(!wrap) return;
   wrap.innerHTML='<div class="adm-empty">Cargando…</div>';
   try{
-    if(!window.CLI_ALL || !CLI_ALL.length || !window.CART_ALL || !CART_ALL.length){
+    if(!CLI_ALL || !CLI_ALL.length || !CART_ALL || !CART_ALL.length){
       const [cRes,kRes]=await Promise.all([ apiCall('admin-clientes','POST',{action:'list'}), apiCall('admin-carteras','POST',{action:'list'}) ]);
       if(cRes&&cRes.clientes) CLI_ALL=cRes.clientes;
       if(kRes&&kRes.carteras) CART_ALL=kRes.carteras;
@@ -1195,7 +1195,7 @@ async function loadAdmins(){
 function renderAdmins(){
   const wrap=document.getElementById('admList'); if(!wrap) return;
   const list=STATE.admins||[];
-  const cliList=(window.CLI_ALL||[]), cartList=(window.CART_ALL||[]);
+  const cliList=(CLI_ALL||[]), cartList=(CART_ALL||[]);
   const formHtml=`
     <details class="adm-new">
       <summary>＋ Nuevo administrador</summary>
@@ -2380,7 +2380,7 @@ window.CQ = (function(){
   const inEl  = id => $('cqCanvas').querySelector(`.cq-in[data-in="${id}"]`);
 
   async function init(){
-    if(!window.CART_ALL || !CART_ALL.length){ try{ const k=await apiCall('admin-carteras','POST',{action:'list'}); window.CART_ALL=(k&&k.carteras)?k.carteras:[]; }catch(e){} }
+    if(!CART_ALL || !CART_ALL.length){ try{ const k=await apiCall('admin-carteras','POST',{action:'list'}); CART_ALL=(k&&k.carteras)?k.carteras:[]; }catch(e){} }
     $('cqCartera').innerHTML='<option value="">Selecciona cartera…</option>'+
       (CART_ALL||[]).map(k=>`<option value="${k.ID_CARTERA}">${esc(k.NOMBRE_CLIENTE||'')} — ${esc(k.NOMBRE||'')}</option>`).join('');
     if(cartera) $('cqCartera').value=cartera;
