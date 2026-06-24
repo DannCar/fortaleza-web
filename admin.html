@@ -216,6 +216,11 @@ input{font-family:inherit}
 .tv-btn.active{background:var(--teal);color:#04141a;font-weight:600}
 .map-card{padding:0;overflow:hidden;position:relative}
 .tit-map{width:100%;height:calc(100vh - 250px);min-height:420px}
+.tit-map-wrap{position:relative}
+.tit-legend{position:absolute;left:12px;bottom:12px;z-index:3;background:rgba(6,16,27,.82);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:11px;padding:10px 13px;font-size:12.5px;color:var(--text-dim);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.tit-legend-h{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-faint);margin-bottom:7px}
+.tit-legend-row{display:flex;align-items:center;gap:8px;line-height:1.85}
+.tit-legend-row span{font-size:15px;width:16px;text-align:center}
 .tit-map-meta{position:absolute;top:14px;right:14px;background:rgba(6,16,27,.82);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:9px;padding:6px 12px;font-family:var(--mono);font-size:11px;color:var(--text-dim);z-index:2}
 /* Selección múltiple */
 .tit-cbx{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;vertical-align:middle}
@@ -811,7 +816,16 @@ input{font-family:inherit}
           <div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>
         </div></div>
         <div class="card map-card" id="titMapCard" style="display:none">
-          <div id="titMap" class="tit-map"></div>
+          <div class="tit-map-wrap">
+            <div id="titMap" class="tit-map"></div>
+            <div class="tit-legend" id="titLegend">
+              <div class="tit-legend-h">Simbología</div>
+              <div class="tit-legend-row"><span style="color:#2BC4BE">●</span> Pendiente</div>
+              <div class="tit-legend-row"><span style="color:#5FB98E">◆</span> Visitado</div>
+              <div class="tit-legend-row"><span style="color:#E0A04A">▲</span> Urgente</div>
+              <div class="tit-legend-row"><span style="color:#7A8A98">○</span> Inactivo / sin asignar</div>
+            </div>
+          </div>
           <div class="tit-map-meta" id="titMapMeta">—</div>
         </div>
       </section>
@@ -1737,17 +1751,23 @@ function initTitMap(){
   TIT_MAP.addControl(new mapboxgl.NavigationControl(),'top-right');
   TIT_MAP.on('load',()=>{
     TIT_MAP.addSource('tit',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
-    TIT_MAP.addLayer({ id:'tit-pts', type:'circle', source:'tit',
+    TIT_MAP.addLayer({ id:'tit-pts', type:'symbol', source:'tit',
+      layout:{
+        'text-field':['get','sym'],
+        'text-font':['Arial Unicode MS Regular'],
+        'text-size':['interpolate',['linear'],['zoom'],7,12,12,18,15,26],
+        'text-allow-overlap':true,
+        'text-ignore-placement':true
+      },
       paint:{
-        'circle-radius':['interpolate',['linear'],['zoom'],7,3.5,12,6,15,9],
-        'circle-color':['case',['get','urg'],'#E0A04A',['get','act'],'#2BC4BE','#7A8A98'],
-        'circle-stroke-width':1.5,'circle-stroke-color':'#06101B','circle-opacity':.9
+        'text-color':['get','col'],
+        'text-halo-color':'#06101B','text-halo-width':1.6
       }
     });
     TIT_MAP.on('click','tit-pts',e=>{
       const p=e.features[0].properties, c=e.features[0].geometry.coordinates.slice();
       new mapboxgl.Popup({offset:12,closeButton:false}).setLngLat(c).setHTML(
-        `<div style="font-family:Outfit,sans-serif;max-width:230px"><b>${p.nombre}</b>${p.urg==='true'||p.urg===true?' <span style="color:#E0A04A;font-size:11px">⚑ URGENTE</span>':''}<br><span style="font-family:JetBrains Mono,monospace;font-size:10px;color:#93A6B3">${p.id}</span><br><span style="font-size:12px;color:#B9C6D0">${p.dir||''}</span><br><span style="font-size:11px;color:#7A8A98">Gestor: ${p.gestor||'Sin asignar'}</span></div>`
+        `<div style="font-family:Outfit,sans-serif;max-width:230px"><b>${p.nombre}</b>${p.urg==='true'||p.urg===true?' <span style="color:#E0A04A;font-size:11px">⚑ URGENTE</span>':''}<br><span style="font-size:11px;color:${p.col}">${p.sym} ${p.est}</span><br><span style="font-family:JetBrains Mono,monospace;font-size:10px;color:#93A6B3">${p.id}</span><br><span style="font-size:12px;color:#B9C6D0">${p.dir||''}</span><br><span style="font-size:11px;color:#7A8A98">Gestor: ${p.gestor||'Sin asignar'}</span></div>`
       ).addTo(TIT_MAP);
     });
     TIT_MAP.on('mouseenter','tit-pts',()=>TIT_MAP.getCanvas().style.cursor='pointer');
@@ -1761,8 +1781,13 @@ function paintTitMap(){
   for(const t of TIT_FILTERED){
     const lat=fixCoord(t.LATITUD), lon=fixCoord(t.LONGITUD);
     if(lat===null||lon===null||Math.abs(lat)>90||Math.abs(lon)>180) continue;
+    let ico,est,sym,col;
+    if(t.URGENTE){ ico='tit-urgente'; est='Urgente'; sym='▲'; col='#E0A04A'; }
+    else if(t.VISITADO){ ico='tit-visitado'; est='Visitado'; sym='◆'; col='#5FB98E'; }
+    else if(t.ACTIVO){ ico='tit-pendiente'; est='Pendiente'; sym='●'; col='#2BC4BE'; }
+    else { ico='tit-sinasignar'; est='Inactivo / sin asignar'; sym='○'; col='#7A8A98'; }
     feats.push({ type:'Feature', geometry:{type:'Point',coordinates:[lon,lat]},
-      properties:{ nombre:t.NOMBRE||'—', id:t.ID_TITULAR, dir:t.DIRECCION||'', gestor:t.NOMBRE_GESTOR||'', urg:!!t.URGENTE, act:!!t.ACTIVO } });
+      properties:{ nombre:t.NOMBRE||'—', id:t.ID_TITULAR, dir:t.DIRECCION||'', gestor:t.NOMBRE_GESTOR||'', urg:!!t.URGENTE, act:!!t.ACTIVO, ico, est, sym, col } });
     bounds.extend([lon,lat]); n++;
   }
   TIT_MAP.getSource('tit').setData({type:'FeatureCollection',features:feats});
