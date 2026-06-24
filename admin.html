@@ -539,6 +539,8 @@ input{font-family:inherit}
 .adm-chk-dim{opacity:.55;cursor:default}
 .adm-actions{margin-top:16px;display:flex;justify-content:flex-end}
 .adm-empty{color:var(--text-faint);font-size:14px;padding:30px 0}
+.cfg-pw{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.cfg-pw-msg{font-size:12.5px;line-height:1.5;margin-top:2px}
 .adm-new{border:1px dashed var(--border);border-radius:14px;padding:14px 18px;background:transparent;margin-bottom:4px}
 .adm-new>summary{cursor:pointer;font-size:13.5px;color:var(--teal);font-weight:600;list-style:none}
 .adm-new>summary::-webkit-details-marker{display:none}
@@ -589,6 +591,39 @@ input{font-family:inherit}
         <span class="spin" id="loginSpin"></span>
         <span id="loginBtnText">Entrar</span>
       </button>
+      <div class="login-back" onclick="showRecover()">¿Olvidaste tu contraseña?</div>
+    </div>
+    <div id="loginStepRecover" style="display:none">
+      <div class="login-p" style="margin-top:2px">Te enviaremos un código por Telegram para restablecer tu contraseña.</div>
+      <div class="field">
+        <label for="recEmail">Correo</label>
+        <input type="email" id="recEmail" autocomplete="username" placeholder="tu@fortaleza.com" onkeydown="if(event.key==='Enter')recoverRequest()">
+      </div>
+      <button class="login-btn" id="recBtn" onclick="recoverRequest()">
+        <span class="spin" id="recSpin"></span>
+        <span id="recBtnText">Enviar código</span>
+      </button>
+      <div class="login-back" onclick="backToLogin()">← Volver al inicio</div>
+    </div>
+    <div id="loginStepRecoverOtp" style="display:none">
+      <div class="login-p" style="margin-top:2px">Escribe el código que te llegó por Telegram y tu nueva contraseña.</div>
+      <div class="field">
+        <label for="recOtp">Código de verificación</label>
+        <input type="text" id="recOtp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" style="letter-spacing:8px;text-align:center;font-family:var(--mono)">
+      </div>
+      <div class="field">
+        <label for="recNew">Nueva contraseña</label>
+        <input type="password" id="recNew" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div class="field">
+        <label for="recNew2">Confirmar contraseña</label>
+        <input type="password" id="recNew2" autocomplete="new-password" placeholder="Repite la contraseña" onkeydown="if(event.key==='Enter')recoverConfirm()">
+      </div>
+      <button class="login-btn" id="recOtpBtn" onclick="recoverConfirm()">
+        <span class="spin" id="recOtpSpin"></span>
+        <span id="recOtpBtnText">Cambiar contraseña</span>
+      </button>
+      <div class="login-back" onclick="backToLogin()">← Volver al inicio</div>
     </div>
     <div id="loginStep2" style="display:none">
       <div class="login-p" style="margin-top:2px">Te enviamos un código de 6 dígitos por Telegram. Escríbelo para entrar.</div>
@@ -921,6 +956,16 @@ input{font-family:inherit}
             <div class="cfg-param"><span class="k">Versión del panel</span><span class="v">v2.16</span></div>
             <button class="cfg-logout" onclick="doLogout()">Cerrar sesión</button>
           </div>
+          <div class="card cfg-card">
+            <div class="cfg-title">Cambiar contraseña</div>
+            <div class="cfg-pw">
+              <input type="password" id="pwCurrent" class="adm-input" autocomplete="current-password" placeholder="Contraseña actual">
+              <input type="password" id="pwNew" class="adm-input" autocomplete="new-password" placeholder="Nueva contraseña (mín. 6)">
+              <input type="password" id="pwNew2" class="adm-input" autocomplete="new-password" placeholder="Confirmar nueva contraseña">
+              <button class="ges-new" id="pwBtn" onclick="cambiarPassword()">Actualizar contraseña</button>
+              <div class="cfg-pw-msg" id="pwMsg" style="display:none"></div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -1110,21 +1155,73 @@ async function verifyOtp(){
     btn.disabled=false; spin.style.display='none'; document.getElementById('otpBtnText').textContent='Verificar código';
   }
 }
+function hideAllLoginSteps(){
+  ['loginStep1','loginStep2','loginStepRecover','loginStepRecoverOtp'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display='none'; });
+}
 function backToLogin(){
   STATE.challenge=null;
-  document.getElementById('loginStep2').style.display='none';
+  hideAllLoginSteps();
   document.getElementById('loginStep1').style.display='block';
   document.getElementById('loginError').style.display='none';
   document.getElementById('password').value='';
 }
-function showLoginError(m){ const el=document.getElementById('loginError'); el.textContent=m; el.style.display='block'; }
+function showRecover(){
+  STATE.challenge=null;
+  hideAllLoginSteps();
+  document.getElementById('loginStepRecover').style.display='block';
+  document.getElementById('loginError').style.display='none';
+  const e=document.getElementById('recEmail'), le=document.getElementById('email');
+  if(le&&le.value) e.value=le.value;
+  setTimeout(()=>e.focus(),50);
+}
+async function recoverRequest(){
+  const email=(document.getElementById('recEmail').value||'').trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ return showLoginError('Escribe un correo válido.'); }
+  const btn=document.getElementById('recBtn'), spin=document.getElementById('recSpin');
+  btn.disabled=true; spin.style.display='block'; document.getElementById('recBtnText').textContent='Enviando…';
+  try{
+    const res=await fetch(`${CFG.N8N_BASE}/webhook/admin-auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'recover_request',email})});
+    const data=await res.json();
+    if(data && data.success && data.challenge_id){
+      STATE.challenge=data.challenge_id;
+      hideAllLoginSteps();
+      document.getElementById('loginStepRecoverOtp').style.display='block';
+      document.getElementById('loginError').style.display='none';
+      const oc=document.getElementById('recOtp'); oc.value=''; setTimeout(()=>oc.focus(),50);
+    } else { showLoginError((data&&data.message)||'No se pudo enviar el código.'); }
+  }catch(e){ showLoginError('Error de conexión.'); }
+  finally{ btn.disabled=false; spin.style.display='none'; document.getElementById('recBtnText').textContent='Enviar código'; }
+}
+async function recoverConfirm(){
+  const otp=(document.getElementById('recOtp').value||'').trim();
+  const np=document.getElementById('recNew').value||'';
+  const np2=document.getElementById('recNew2').value||'';
+  if(!/^\d{6}$/.test(otp)){ return showLoginError('Escribe el código de 6 dígitos.'); }
+  if(np.length<6){ return showLoginError('La nueva contraseña debe tener al menos 6 caracteres.'); }
+  if(np!==np2){ return showLoginError('Las contraseñas no coinciden.'); }
+  const btn=document.getElementById('recOtpBtn'), spin=document.getElementById('recOtpSpin');
+  btn.disabled=true; spin.style.display='block'; document.getElementById('recOtpBtnText').textContent='Guardando…';
+  try{
+    const res=await fetch(`${CFG.N8N_BASE}/webhook/admin-auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'recover_confirm',challenge_id:STATE.challenge,otp,new_password:np})});
+    const data=await res.json();
+    if(data && data.success){
+      STATE.challenge=null;
+      hideAllLoginSteps();
+      document.getElementById('loginStep1').style.display='block';
+      const err=document.getElementById('loginError'); err.style.display='block'; err.style.color='var(--good)'; err.textContent='✓ Contraseña actualizada. Inicia sesión con tu nueva contraseña.';
+      document.getElementById('password').value='';
+    } else { showLoginError((data&&data.message)||'No se pudo cambiar la contraseña.'); }
+  }catch(e){ showLoginError('Error de conexión.'); }
+  finally{ btn.disabled=false; spin.style.display='none'; document.getElementById('recOtpBtnText').textContent='Cambiar contraseña'; }
+}
+function showLoginError(m){ const el=document.getElementById('loginError'); el.textContent=m||''; el.style.color=''; el.style.display=m?'block':'none'; }
 function doLogout(){
   localStorage.removeItem('fcc_session'); STATE.token=null; STATE.user=null; STATE.challenge=null;
   if(STATE.refreshTimer) clearInterval(STATE.refreshTimer);
   document.getElementById('appPage').style.display='none';
   document.getElementById('loginPage').style.display='flex';
+  hideAllLoginSteps();
   document.getElementById('loginStep1').style.display='block';
-  document.getElementById('loginStep2').style.display='none';
 }
 
 /* ════════ START ════════ */
@@ -2326,6 +2423,23 @@ const CFG_EPS=[
   {path:'admin-titulares-import', desc:'Importación de Excel',   escritura:true, test:false},
   {path:'admin-titulares-bulk',   desc:'Acciones masivas',       escritura:true, test:false}
 ];
+async function cambiarPassword(){
+  const current=document.getElementById('pwCurrent').value||'';
+  const np=document.getElementById('pwNew').value||'';
+  const np2=document.getElementById('pwNew2').value||'';
+  const msg=document.getElementById('pwMsg');
+  const set=(t,ok)=>{ msg.textContent=t; msg.style.display='block'; msg.style.color=ok?'var(--good)':'#e06a5a'; };
+  if(!current){ return set('Escribe tu contraseña actual.',false); }
+  if(np.length<6){ return set('La nueva contraseña debe tener al menos 6 caracteres.',false); }
+  if(np!==np2){ return set('Las contraseñas no coinciden.',false); }
+  const btn=document.getElementById('pwBtn'); btn.disabled=true; btn.textContent='Actualizando…';
+  try{
+    const r=await apiCall('admin-password','POST',{action:'change',current,new_password:np});
+    if(r&&r.success){ set('✓ '+(r.message||'Contraseña actualizada.'),true); document.getElementById('pwCurrent').value=''; document.getElementById('pwNew').value=''; document.getElementById('pwNew2').value=''; }
+    else { set((r&&r.message)||'No se pudo actualizar.',false); }
+  }catch(e){ set('Error de conexión.',false); }
+  finally{ btn.disabled=false; btn.textContent='Actualizar contraseña'; }
+}
 function initConfig(){
   document.getElementById('cfgN8n').textContent=CFG.N8N_BASE;
   document.getElementById('cfgSheet').textContent=CFG.SHEET_ID;
