@@ -2150,21 +2150,49 @@ input[type="file"].foto-input { display: none; }
       <div class="step-title">📋 Resultado</div>
       <div class="step-sub">¿Cuál fue el resultado de la visita?</div>
       <div class="resultado-opciones">
-        <div class="resultado-btn" id="rbtn-localiza"   onclick="seleccionarResultado('Se localiza a domicilio')">
+        <div class="resultado-btn" data-res="Se contacta titular" onclick="seleccionarResultado('Se contacta titular')">
           <div class="resultado-dot" style="background:#22c55e"></div>
-          <div class="resultado-text">Se localiza a domicilio</div>
+          <div class="resultado-text">Se contacta titular</div>
         </div>
-        <div class="resultado-btn" id="rbtn-nolocaliza" onclick="seleccionarResultado('No se localiza a domicilio')">
-          <div class="resultado-dot" style="background:#e84444"></div>
-          <div class="resultado-text">No se localiza a domicilio</div>
+        <div class="resultado-btn" data-res="Se localiza domicilio" onclick="seleccionarResultado('Se localiza domicilio')">
+          <div class="resultado-dot" style="background:#2BC4BE"></div>
+          <div class="resultado-text">Se localiza domicilio</div>
         </div>
-        <div class="resultado-btn" id="rbtn-carta"      onclick="seleccionarResultado('Se deja carta con tercero')">
-          <div class="resultado-dot" style="background:#f59e0b"></div>
-          <div class="resultado-text">Se deja carta con tercero</div>
+        <div class="resultado-btn" data-res="Pagó" onclick="seleccionarResultado('Pagó')">
+          <div class="resultado-dot" style="background:#16a34a"></div>
+          <div class="resultado-text">Pagó</div>
         </div>
-        <div class="resultado-btn" id="rbtn-pago"       onclick="seleccionarResultado('Realiza pago')">
+        <div class="resultado-btn" data-res="Promesa de pago" onclick="seleccionarResultado('Promesa de pago')">
           <div class="resultado-dot" style="background:#1ab5b1"></div>
-          <div class="resultado-text">Realiza pago</div>
+          <div class="resultado-text">Promesa de pago</div>
+        </div>
+        <div class="resultado-btn" data-res="Validación exitosa" onclick="seleccionarResultado('Validación exitosa')">
+          <div class="resultado-dot" style="background:#22c55e"></div>
+          <div class="resultado-text">Validación exitosa</div>
+        </div>
+        <div class="resultado-btn" data-res="Se deja mensaje con tercero" onclick="seleccionarResultado('Se deja mensaje con tercero')">
+          <div class="resultado-dot" style="background:#f59e0b"></div>
+          <div class="resultado-text">Se deja mensaje con tercero</div>
+        </div>
+        <div class="resultado-btn" data-res="No conoce a titular" onclick="seleccionarResultado('No conoce a titular')">
+          <div class="resultado-dot" style="background:#f59e0b"></div>
+          <div class="resultado-text">No conoce a titular</div>
+        </div>
+        <div class="resultado-btn" data-res="No pagó" onclick="seleccionarResultado('No pagó')">
+          <div class="resultado-dot" style="background:#e84444"></div>
+          <div class="resultado-text">No pagó</div>
+        </div>
+        <div class="resultado-btn" data-res="No se localiza dirección" onclick="seleccionarResultado('No se localiza dirección')">
+          <div class="resultado-dot" style="background:#e84444"></div>
+          <div class="resultado-text">No se localiza dirección</div>
+        </div>
+        <div class="resultado-btn" data-res="Lote baldío" onclick="seleccionarResultado('Lote baldío')">
+          <div class="resultado-dot" style="background:#7A8A98"></div>
+          <div class="resultado-text">Lote baldío</div>
+        </div>
+        <div class="resultado-btn" data-res="Zona de alto riesgo" onclick="seleccionarResultado('Zona de alto riesgo')">
+          <div class="resultado-dot" style="background:#e0552b"></div>
+          <div class="resultado-text">Zona de alto riesgo</div>
         </div>
       </div>
     </div>
@@ -2787,6 +2815,8 @@ function showToast(icon, text, xp='') {
 // FASE 3 — CAPTURA DE VISITA
 // ═══════════════════════════════════════════════
 const PASOS_NOMBRES = ['Ubicación GPS','Fotografías','Tipo de contacto','Resultado','Observaciones'];
+// Etiquetas homologadas para KPIs (todas las carteras)
+const TIPO_CONTACTO_LABEL = { titular:'Titular', tercero:'Tercero/Familiar', vecino:'Vecino', nadie:'Nadie' };
 
 let CAPTURA = {
   paso:         1,
@@ -2881,6 +2911,17 @@ function retrocederCaptura() {
     }
     return;
   }
+  if (CAPTURA.dinamico && CAPTURA.paso === 3){
+    // Volver al grafo (última pregunta del cuestionario)
+    CAPTURA.paso = 'q';
+    document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('paso-q').classList.add('active');
+    document.getElementById('capturaScroll').scrollTop = 0;
+    renderPregunta();
+    actualizarProgreso();
+    actualizarBotonPaso();
+    return;
+  }
   if (CAPTURA.paso > 1) {
     CAPTURA.paso--;
     document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
@@ -2918,6 +2959,7 @@ function actualizarProgreso() {
 // Bloquea "Continuar" hasta que los campos NO opcionales estén llenos
 function validarPaso3() {
   if (!CAPTURA.contacto) return false;
+  if (CAPTURA.dinamico) return true; // en modo grafo basta elegir la categoría
   const s = CAPTURA.subDatos || {};
   const txt = v => typeof v === 'string' && v.trim().length > 0;
 
@@ -2955,10 +2997,9 @@ function actualizarBotonPaso() {
   const p = CAPTURA.paso;
 
   if(p === 'q'){
-    const last = qEsUltima();
     btn.disabled = !qValido();
-    btn.textContent = last ? '🚀 Registrar visita · +50 XP' : 'Continuar →';
-    btn.className   = last ? 'btn-paso completar' : 'btn-paso';
+    btn.textContent = 'Continuar →';
+    btn.className   = 'btn-paso';
     return;
   }
 
@@ -2971,7 +3012,8 @@ function actualizarBotonPaso() {
 
   btn.disabled = !habilitado;
 
-  if(p === 5) {
+  const esUltimoFijo = (p === 5) || (p === 4 && CAPTURA.dinamico);
+  if(esUltimoFijo) {
     btn.textContent = '🚀 Registrar visita · +50 XP';
     btn.className   = 'btn-paso completar';
   } else {
@@ -2983,8 +3025,10 @@ function actualizarBotonPaso() {
 function siguientePaso() {
   const p = CAPTURA.paso;
   if(p === 'q'){ cuestSiguiente(); return; }
-  // Tras fotos: si la cartera tiene cuestionario, entra al recorrido (reemplaza pasos 3-5)
+  // Tras fotos: si la cartera tiene cuestionario, entra al grafo (enriquecimiento) antes de las preguntas fijas
   if(p === 2 && CAPTURA.dinamico){ CAPTURA.paso = 'q'; iniciarCuestionario(); return; }
+  // En modo dinámico el cierre es el Resultado (paso 4); se omite Observaciones
+  if(p === 4 && CAPTURA.dinamico){ registrarVisita(); return; }
   if(p < 5) {
     CAPTURA.paso++;
     document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
@@ -3105,6 +3149,9 @@ function seleccionarContacto(tipo) {
   sp.innerHTML = '';
   sp.style.display = 'none';
 
+  // En modo cuestionario, la pregunta fija de contacto es SOLO la categoría (el grafo capturó el detalle)
+  if (CAPTURA.dinamico){ actualizarBotonPaso(); return; }
+
   let html = '';
 
   if(tipo === 'titular') {
@@ -3201,16 +3248,7 @@ function setSiNo(campo, valor, btn) {
 // ── PASO 4: RESULTADO ──
 function seleccionarResultado(resultado) {
   CAPTURA.resultado = resultado;
-  document.querySelectorAll('.resultado-btn').forEach(b => b.classList.remove('selected'));
-  // Highlight el correcto
-  const map = {
-    'Se localiza a domicilio':    'rbtn-localiza',
-    'No se localiza a domicilio': 'rbtn-nolocaliza',
-    'Se deja carta con tercero':  'rbtn-carta',
-    'Realiza pago':               'rbtn-pago',
-  };
-  const el = document.getElementById(map[resultado]);
-  if(el) el.classList.add('selected');
+  document.querySelectorAll('.resultado-btn').forEach(b => b.classList.toggle('selected', b.dataset.res === resultado));
   actualizarBotonPaso();
 }
 
@@ -3344,7 +3382,16 @@ function qEsUltima(){
 
 function cuestSiguiente(){
   if(!qValido()) return;
-  if(qEsUltima()){ registrarVisita(); return; }
+  if(qEsUltima()){
+    // Fin del grafo → continuar a las preguntas FIJAS (contacto → resultado)
+    CAPTURA.paso = 3;
+    document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('paso-3').classList.add('active');
+    document.getElementById('capturaScroll').scrollTop = 0;
+    actualizarProgreso();
+    actualizarBotonPaso();
+    return;
+  }
   CAPTURA.qStack.push(CAPTURA.qNodo);
   CAPTURA.qNodo = qNext();
   renderPregunta();
@@ -3371,7 +3418,7 @@ async function registrarVisita() {
     nombre_gestor:      STATE.user?.nombre    || '',
     fecha_visita:       fecha,
     hora_visita:        hora,
-    tipo_contacto:      CAPTURA.contacto  || '',
+    tipo_contacto:      (TIPO_CONTACTO_LABEL[CAPTURA.contacto] || CAPTURA.contacto || ''),
     resultado:          CAPTURA.resultado || '',
     latitud:            CAPTURA.lat       || '',
     longitud:           CAPTURA.lon       || '',
@@ -3387,29 +3434,22 @@ async function registrarVisita() {
     estatus:            'CONCLUIDA',
   };
 
-  // ── Cuestionario dinámico: arma respuestas y deriva el resultado de la pregunta marcada ──
+  // ── Cuestionario dinámico: adjunta las respuestas del grafo como ENRIQUECIMIENTO.
+  //    El resultado y el tipo de contacto SIEMPRE vienen de los pasos fijos (no del grafo). ──
   if (CAPTURA.dinamico) {
     const respuestas = [];
-    let resultadoVal = '';
     (CAPTURA.cuest && CAPTURA.cuest.preguntas || []).forEach(p => {
       const r = CAPTURA.respuestas[p.ID]; if(!r) return;
-      const esRes = !!p.ES_RESULTADO;
-      const valor = (r.valor != null ? String(r.valor) : '');
-      if(esRes) resultadoVal = valor;
       respuestas.push({
         pregunta_id:    p.ID,
         pregunta_texto: p.TEXTO,
         tipo:           p.TIPO,
-        es_resultado:   esRes,
-        valor:          valor,
+        es_resultado:   !!p.ES_RESULTADO,
+        valor:          (r.valor != null ? String(r.valor) : ''),
         valor_json:     (p.TIPO === 'multi' ? (r.valor_json || []) : null)
       });
     });
-    payload.resultado     = resultadoVal;
-    payload.respuestas    = respuestas;
-    payload.tipo_contacto = ''; payload.observaciones = ''; payload.horario_indicado = '';
-    payload.nombre_tercero = ''; payload.conoce_titular = ''; payload.telefono_adicional = ''; payload.sena_particular = '';
-    CAPTURA.resultado = resultadoVal; // para XP local y field-gamificacion
+    payload.respuestas = respuestas;
   }
 
   // ── 1) MARCAR COMO VISITADO AL INSTANTE (optimista) ──
@@ -3418,7 +3458,7 @@ async function registrarVisita() {
 
   // ── 2) AGREGAR XP LOCAL ──
   if(STATE.user) {
-    const xpBonus = CAPTURA.resultado === 'Realiza pago' ? 100 : 50;
+    const xpBonus = CAPTURA.resultado === 'Pagó' ? 100 : 50;
     STATE.user.xp         = (STATE.user.xp      || 0) + xpBonus;
     STATE.user.visitas    = (STATE.user.visitas  || 0) + 1;
     STATE.user.visitasHoy = (STATE.user.visitasHoy || 0) + 1;
@@ -3480,7 +3520,7 @@ async function registrarVisita() {
   // Mostrar éxito
   btn.style.display = 'none';
   document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
-  document.getElementById('successXp').textContent = CAPTURA.resultado === 'Realiza pago' ? '+100 XP 💰' : '+50 XP';
+  document.getElementById('successXp').textContent = CAPTURA.resultado === 'Pagó' ? '+100 XP 💰' : '+50 XP';
   document.getElementById('successSub').textContent = `${t.NOMBRE || 'Titular'} · ${CAPTURA.resultado}`;
   document.getElementById('capturaSuccess').classList.add('show');
   spawnParticles();
@@ -3569,10 +3609,16 @@ async function loadMisVisitas(){
 }
 function visBadgeColor(r){
   if(!r) return '#888';
-  if(/realiza pago/i.test(r))   return '#1ab5b1';
-  if(/no se localiza/i.test(r)) return '#e84444';
-  if(/carta|tercero/i.test(r))  return '#f59e0b';
-  if(/localiza/i.test(r))       return '#22c55e';
+  const s = r.toLowerCase();
+  if(/no pag/.test(s))                 return '#e84444';
+  if(/pag/.test(s))                    return '#16a34a';   // Pagó
+  if(/promesa/.test(s))                return '#1ab5b1';
+  if(/validaci/.test(s))               return '#22c55e';
+  if(/alto riesgo/.test(s))            return '#e0552b';
+  if(/lote bald/.test(s))              return '#7A8A98';
+  if(/no se localiza|no conoce/.test(s)) return '#e84444';
+  if(/mensaje|tercero/.test(s))        return '#f59e0b';
+  if(/contacta titular|localiza/.test(s)) return '#22c55e';
   return '#888888';
 }
 function renderMisVisitas(){
@@ -3940,10 +3986,17 @@ function renderHistorial() {
   }
 
   const colores = {
-    'Se localiza a domicilio':    '#22c55e',
-    'No se localiza a domicilio': '#e84444',
-    'Se deja carta con tercero':  '#f59e0b',
-    'Realiza pago':               '#1ab5b1',
+    'Se contacta titular':         '#22c55e',
+    'Se localiza domicilio':       '#2BC4BE',
+    'Pagó':                        '#16a34a',
+    'Promesa de pago':             '#1ab5b1',
+    'Validación exitosa':          '#22c55e',
+    'Se deja mensaje con tercero': '#f59e0b',
+    'No conoce a titular':         '#f59e0b',
+    'No pagó':                     '#e84444',
+    'No se localiza dirección':    '#e84444',
+    'Lote baldío':                 '#7A8A98',
+    'Zona de alto riesgo':         '#e0552b',
   };
 
   el.innerHTML = HISTORIAL_DATA.slice(0, 5).map(v => {
