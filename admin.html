@@ -562,6 +562,26 @@ input{font-family:inherit}
 .rt-visitado{background:rgba(95,185,142,.16);color:#5FB98E}
 .rt-urgente{background:rgba(224,160,74,.16);color:#E0A04A}
 .rt-inactivo{background:rgba(122,138,152,.16);color:#7A8A98}
+.deck-insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:18px}
+.ins-wrap{padding:4px 2px}
+.ins-empty{color:var(--text-faint);font-size:13px;padding:24px 0;text-align:center}
+.ins-bar{margin-bottom:13px}
+.ins-bar-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+.ins-bar-l{color:var(--text-dim)}
+.ins-bar-v{color:var(--text-faint);font-family:var(--mono);font-size:11.5px}
+.ins-bar-track{height:8px;background:var(--navy-700);border-radius:6px;overflow:hidden}
+.ins-bar-fill{height:100%;border-radius:6px;transition:width .6s ease}
+.ins-hours{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:10px}
+.ins-hcol{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:6px}
+.ins-hbar{width:100%;max-width:26px;background:linear-gradient(180deg,var(--teal-bright,#2BC4BE),rgba(43,196,190,.35));border-radius:5px 5px 0 0;transition:height .6s ease}
+.ins-hlbl{font-size:10.5px;color:var(--text-faint);font-family:var(--mono)}
+.ins-lead{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)}
+.ins-lead:last-child{border-bottom:none}
+.ins-lead-rank{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;background:var(--navy-700);color:var(--text-dim);flex-shrink:0}
+.ins-rank-1{background:rgba(191,161,129,.25);color:var(--gold)}
+.ins-rank-2{background:rgba(43,196,190,.2);color:var(--teal-bright,#2BC4BE)}
+.ins-lead-name{flex:1;font-size:13.5px;color:var(--text)}
+.ins-lead-stat{font-size:12px;color:var(--text-faint);font-family:var(--mono)}
 .adm-new{border:1px dashed var(--border);border-radius:14px;padding:14px 18px;background:transparent;margin-bottom:4px}
 .adm-new>summary{cursor:pointer;font-size:13.5px;color:var(--teal);font-weight:600;list-style:none}
 .adm-new>summary::-webkit-details-marker{display:none}
@@ -757,6 +777,12 @@ input{font-family:inherit}
             <div class="card-head"><h3>Actividad reciente</h3><span class="meta" id="feedCount">—</span></div>
             <div class="feed" id="feed"></div>
           </div>
+        </div>
+
+        <div class="deck deck-insights">
+          <div class="card"><div class="card-head"><h3>Desglose de resultados</h3><span class="meta" id="insResMeta">—</span></div><div id="insResultados" class="ins-wrap"></div></div>
+          <div class="card"><div class="card-head"><h3>Actividad por hora</h3></div><div id="insHoras" class="ins-wrap"></div></div>
+          <div class="card"><div class="card-head"><h3>Top gestores hoy</h3></div><div id="insGestores" class="ins-wrap"></div></div>
         </div>
       </section>
 
@@ -1481,7 +1507,7 @@ async function loadDashboard(){
   const [vRes,gRes]=await Promise.all([ apiCall(`admin-dashboard?fecha=${fecha}${scopeQuery()}`), apiCall('admin-gestores','POST',{action:'list'}) ]);
   STATE.visitas = (vRes && vRes.visitas) ? vRes.visitas : [];
   STATE.gestores= (gRes && gRes.gestores)? gRes.gestores: [];
-  updateKPIs(); renderFeed(); paintMarkers(STATE.mapDash,'mapMeta'); if(STATE.mapFull) paintMarkers(STATE.mapFull,'mapFullMeta');
+  updateKPIs(); renderFeed(); renderInsights(); paintMarkers(STATE.mapDash,'mapMeta'); if(STATE.mapFull) paintMarkers(STATE.mapFull,'mapFullMeta');
   document.getElementById('badgeDash').textContent=STATE.visitas.length;
 }
 function num(id,val){
@@ -1521,6 +1547,30 @@ function renderFeed(){
       </div>
       <div class="feed-time">${v.HORA_VISITA||''}</div>
     </div>`).join('');
+}
+function renderInsights(){
+  const v=STATE.visitas||[];
+  const pal=['#2BC4BE','#5FB98E','#BFA181','#E0A04A','#7FB0D0','#9B8CCE','#7A8A98'];
+  // A) Desglose de resultados
+  const byRes={}; v.forEach(x=>{ const r=((x.RESULTADO||'').trim())||'Sin resultado'; byRes[r]=(byRes[r]||0)+1; });
+  const resArr=Object.entries(byRes).sort((a,b)=>b[1]-a[1]);
+  const maxRes=resArr.length?resArr[0][1]:1;
+  const resHtml=resArr.length?resArr.slice(0,7).map((e,i)=>{ const [r,c]=e; const pct=v.length?Math.round(c/v.length*100):0;
+    return `<div class="ins-bar"><div class="ins-bar-top"><span class="ins-bar-l">${esc(resShort(r))}</span><span class="ins-bar-v">${c} · ${pct}%</span></div><div class="ins-bar-track"><div class="ins-bar-fill" style="width:${Math.round(c/maxRes*100)}%;background:${pal[i%pal.length]}"></div></div></div>`;
+  }).join(''):'<div class="ins-empty">Sin visitas hoy.</div>';
+  const rm=document.getElementById('insResMeta'); if(rm) rm.textContent=`${resArr.length} tipo(s)`;
+  // B) Actividad por hora
+  const byH={}; v.forEach(x=>{ const h=(x.HORA_VISITA||'').slice(0,2); if(/^\d\d$/.test(h)) byH[h]=(byH[h]||0)+1; });
+  const hours=Object.keys(byH).sort(); const maxH=hours.length?Math.max(...hours.map(h=>byH[h])):1;
+  const hourHtml=hours.length?`<div class="ins-hours">`+hours.map(h=>`<div class="ins-hcol" title="${h}:00 — ${byH[h]} visita(s)"><div class="ins-hbar" style="height:${Math.max(10,Math.round(byH[h]/maxH*100))}%"></div><div class="ins-hlbl">${h}</div></div>`).join('')+`</div>`:'<div class="ins-empty">Sin actividad horaria.</div>';
+  // C) Top gestores hoy
+  const byG={}; v.forEach(x=>{ const k=x.NOMBRE_GESTOR||x.ID_GESTOR||'—'; const o=byG[k]||(byG[k]={v:0,c:0}); o.v++; const r=(x.RESULTADO||'').toLowerCase(); if(r.includes('localiza a')&&!r.startsWith('no')) o.c++; });
+  const gArr=Object.entries(byG).sort((a,b)=>b[1].v-a[1].v).slice(0,5);
+  const gHtml=gArr.length?gArr.map((e,i)=>{ const [n,o]=e; const rate=o.v?Math.round(o.c/o.v*100):0;
+    return `<div class="ins-lead"><div class="ins-lead-rank ins-rank-${i+1}">${i+1}</div><div class="ins-lead-name">${esc(n)}</div><div class="ins-lead-stat">${o.v} vis · ${rate}%</div></div>`;
+  }).join(''):'<div class="ins-empty">Sin gestores hoy.</div>';
+  const set=(id,html)=>{ const e=document.getElementById(id); if(e) e.innerHTML=html; };
+  set('insResultados',resHtml); set('insHoras',hourHtml); set('insGestores',gHtml);
 }
 
 /* ════════ MAPA ════════ */
