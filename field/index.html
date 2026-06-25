@@ -3584,6 +3584,14 @@ function renderMisVisitas(){
   el.innerHTML = MIS_VISITAS.map(v=>{
     const col = visBadgeColor(v.RESULTADO);
     const rows = [];
+    (v.RESPUESTAS||[]).forEach(r=>{
+      let val = (r.VALOR!=null && String(r.VALOR).trim()!=='') ? String(r.VALOR) : '';
+      if(!val && r.VALOR_JSON!=null){
+        val = Array.isArray(r.VALOR_JSON) ? r.VALOR_JSON.join(', ')
+            : (typeof r.VALOR_JSON==='object' ? Object.values(r.VALOR_JSON).join(', ') : String(r.VALOR_JSON));
+      }
+      if(r.PREGUNTA) rows.push([String(r.PREGUNTA), val || '—']);
+    });
     if(v.OBSERVACIONES)      rows.push(['Observaciones', v.OBSERVACIONES]);
     if(v.CONOCE_TITULAR)     rows.push(['¿Conoce al titular?', v.CONOCE_TITULAR]);
     if(v.NOMBRE_TERCERO)     rows.push(['Tercero', v.NOMBRE_TERCERO]);
