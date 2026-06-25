@@ -180,6 +180,8 @@ input{font-family:inherit}
 .tit-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px}
 .tit-search{flex:1;min-width:220px;background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:11px 15px;color:var(--text);font-size:14px}
 .tit-search:focus{outline:none;border-color:var(--teal)}
+.tit-export{background:var(--navy-700);border:1px solid var(--border);color:var(--text-dim);border-radius:11px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.tit-export:hover{border-color:var(--teal);color:var(--teal)}
 .tit-sel{background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:11px 13px;color:var(--text);font-size:13px;cursor:pointer}
 .tit-sel:focus{outline:none;border-color:var(--teal)}
 .tit-chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);cursor:pointer;user-select:none}
@@ -853,6 +855,7 @@ input{font-family:inherit}
         <div class="ges-bar">
           <input class="tit-search" id="gesSearch" placeholder="Buscar gestor por nombre, ID o Telegram…" oninput="renderGestores()">
           <span class="tit-count" id="gesCount">—</span>
+          <button class="tit-export" onclick="exportarGestores()">⬇ Excel</button>
           <button class="ges-new" onclick="abrirGestorModal()">＋ Nuevo gestor</button>
         </div>
         <div class="ges-grid" id="gesGrid">
@@ -864,6 +867,7 @@ input{font-family:inherit}
           <input class="tit-search" id="titSearch" placeholder="Buscar nombre, ID o dirección…" oninput="applyTitFilters()">
           <button class="tit-filt-btn" id="titFiltBtn" onclick="toggleTitFilters()"><span>⚙</span> Filtros<span class="tit-filt-badge" id="titFiltBadge" style="display:none">0</span></button>
           <span class="tit-count" id="titCount">—</span>
+          <button class="tit-export" onclick="exportarTitulares()">⬇ Excel</button>
         </div>
         <div class="tit-filters" id="titFilters" style="display:none">
           <select class="tit-sel" id="titEstado" onchange="onEstadoChange()"><option value="">Estado · todos</option></select>
@@ -962,6 +966,7 @@ input{font-family:inherit}
           <label class="vis-date">Hasta <input type="date" id="visHasta" onchange="loadVisitas(true)"></label>
           <select class="tit-sel" id="visGestor" onchange="applyVisFilters()"><option value="">Gestor · todos</option></select>
           <span class="tit-count" id="visCount">—</span>
+          <button class="tit-export" onclick="exportarVisitas()">⬇ Excel</button>
         </div>
         <div class="card"><div class="tit-wrap" id="visWrap">
           <div class="empty"><div class="empty-ic">◆</div><p>Cargando visitas…</p></div>
@@ -1987,7 +1992,7 @@ function paintTitMap(){
 }
 
 /* ════════ GESTORES (Fase 2) ════════ */
-let GES_ALL=[], GES_LOADED=false, GES_EDIT_ID=null;
+let GES_ALL=[], GES_LOADED=false, GES_EDIT_ID=null, GES_FILTERED=[];
 const _gv=id=>{ const e=document.getElementById(id); return e?e.value:''; };
 function iniciales(n){ const p=String(n||'').trim().split(/\s+/); return (((p[0]||'')[0]||'')+((p[1]||'')[0]||'')||'?').toUpperCase(); }
 
@@ -2004,6 +2009,7 @@ function renderGestores(){
   const grid=document.getElementById('gesGrid');
   const q=(_gv('gesSearch')||'').toLowerCase().trim();
   const rows=GES_ALL.filter(g=> !q || (g.NOMBRE+' '+g.ID_GESTOR+' '+g.USUARIO_TELEGRAM).toLowerCase().includes(q));
+  GES_FILTERED=rows;
   document.getElementById('gesCount').textContent=`${rows.length} gestor${rows.length!==1?'es':''}`;
   if(!rows.length){ grid.innerHTML='<div class="empty"><div class="empty-ic">◎</div><p>Sin gestores para esta búsqueda.</p></div>'; return; }
   grid.innerHTML=rows.map(g=>`
@@ -2304,7 +2310,7 @@ async function toggleGestor(id,val){
 }
 
 /* ════════ VISITAS (Fase 3) ════════ */
-let VIS_ALL=[], VIS_GESTORES=[], VIS_LOADED=false, VIS_MAP=null, VIS_VISIBLE=[];
+let VIS_ALL=[], VIS_GESTORES=[], VIS_LOADED=false, VIS_MAP=null, VIS_VISIBLE=[], VIS_FILTERED=[];
 
 async function loadVisitas(force){
   if(VIS_LOADED && !force) return;
@@ -2334,6 +2340,7 @@ function applyVisFilters(){
 }
 function resClass(r){ const s=(r||'').toLowerCase(); if(s.includes('pago')&&!s.includes('promesa'))return'res-pago'; if(s.includes('promesa'))return'res-promesa'; if(s.includes('no se localiza')||s.includes('no localiza')||s.includes('negativ'))return'res-nolocaliza'; if(s.includes('localiza')||s.includes('contacto')||s.includes('tercero')||s.includes('vecino'))return'res-contacto'; return'res-otro'; }
 function renderVisitas(rows){
+  VIS_FILTERED=rows||[];
   document.getElementById('visCount').textContent=`${rows.length} visita${rows.length!==1?'s':''}`;
   const wrap=document.getElementById('visWrap');
   if(!rows.length){ wrap.innerHTML='<div class="empty"><div class="empty-ic">◆</div><p>Sin visitas para estos filtros.</p></div>'; return; }
@@ -2495,6 +2502,50 @@ function renderRepTit(){
     <div class="rt-tablewrap"><table class="rt-table"><thead><tr><th>Gestor</th><th>Total</th><th>Visitados</th><th>Pendientes</th><th>Urgentes</th><th>Cobertura</th></tr></thead><tbody>${gRows||'<tr><td colspan="6">Sin datos</td></tr>'}</tbody></table></div>
     <div class="rt-sec">Detalle ${rows.length>50?`(primeros 50 de ${rows.length})`:`(${rows.length})`}</div>
     <div class="rt-tablewrap"><table class="rt-table"><thead><tr><th>ID</th><th>Nombre</th><th>Cartera</th><th>Gestor</th><th>Estado</th><th>Días asig.</th><th>Municipio</th></tr></thead><tbody>${prev||'<tr><td colspan="7">Sin titulares con esos filtros</td></tr>'}</tbody></table></div>`;
+}
+// ===== Export rápido por panel (Titulares / Visitas / Gestores) =====
+function _dlXLSX(filename, sheetName, aoa){
+  if(typeof XLSX==='undefined'){ toast('La librería de Excel no cargó'); return false; }
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  XLSX.writeFile(wb, filename);
+  return true;
+}
+function _exToday(){ return new Date().toISOString().slice(0,10); }
+function exportarTitulares(){
+  const rows = (typeof TIT_FILTERED!=='undefined') ? TIT_FILTERED : (TIT_ALL||[]);
+  if(!rows || !rows.length){ toast('No hay titulares para exportar'); return; }
+  const aoa=[['ID','Nombre','Status','Activo','Urgente','Municipio','Estado','Cartera','ID Gestor','Gestor','Visitado','Fecha importación','Fecha asignación','Días asignado','Latitud','Longitud']];
+  rows.forEach(t=>aoa.push([
+    t.ID_TITULAR||'', t.NOMBRE||'', (TIT_ESTADO_LABEL[titEstado(t)]||''),
+    t.ACTIVO?'Sí':'No', t.URGENTE?'Sí':'No', t.MUNICIPIO||'', t.ESTADO||'', t.CARTERA||'',
+    t.ID_GESTOR||'', t.NOMBRE_GESTOR||'', t.VISITADO?'Sí':'No',
+    t.FECHA_IMPORTACION||'', t.FECHA_ASIGNACION||'', (t.DIAS_ASIGNADO==null?'':t.DIAS_ASIGNADO),
+    t.LATITUD||'', t.LONGITUD||''
+  ]));
+  if(_dlXLSX(`titulares_${_exToday()}.xlsx`,'Titulares',aoa)) toast(`Exportados ${rows.length} titulares`);
+}
+function exportarVisitas(){
+  const rows = (typeof VIS_FILTERED!=='undefined') ? VIS_FILTERED : (VIS_ALL||[]);
+  if(!rows || !rows.length){ toast('No hay visitas para exportar'); return; }
+  const aoa=[['Fecha','Hora','ID Titular','Titular','ID Gestor','Gestor','Resultado','Tipo de contacto','Monto promesa','Fecha promesa','Observaciones','Fotos','Latitud','Longitud']];
+  rows.forEach(v=>aoa.push([
+    v.FECHA||'', v.HORA||'', v.ID_TITULAR||'', v.NOMBRE_TITULAR||'', v.ID_GESTOR||'', v.NOMBRE_GESTOR||'',
+    v.RESULTADO||'', v.TIPO_CONTACTO||'', (v.MONTO_PROMESA||''), v.FECHA_PROMESA||'', v.OBSERVACIONES||'',
+    (v.FOTOS&&v.FOTOS.length)?v.FOTOS.length:0, v.LATITUD||'', v.LONGITUD||''
+  ]));
+  if(_dlXLSX(`visitas_${_exToday()}.xlsx`,'Visitas',aoa)) toast(`Exportadas ${rows.length} visitas`);
+}
+function exportarGestores(){
+  const rows = (typeof GES_FILTERED!=='undefined') ? GES_FILTERED : (GES_ALL||[]);
+  if(!rows || !rows.length){ toast('No hay gestores para exportar'); return; }
+  const aoa=[['ID','Nombre','Usuario Telegram','Telegram ID','Activo','Nivel','XP','Visitas','Racha']];
+  rows.forEach(g=>aoa.push([
+    g.ID_GESTOR||'', g.NOMBRE||'', g.USUARIO_TELEGRAM||'', g.TELEGRAM_ID||'',
+    g.ACTIVO?'Sí':'No', g.NIVEL||1, g.XP_TOTAL||0, g.VISITAS_TOTAL||0, g.STREAK_ACTUAL||0
+  ]));
+  if(_dlXLSX(`gestores_${_exToday()}.xlsx`,'Gestores',aoa)) toast(`Exportados ${rows.length} gestores`);
 }
 function descargarReporteTitulares(){
   if(typeof XLSX==='undefined'){ toast('La librería de Excel no cargó'); return; }
