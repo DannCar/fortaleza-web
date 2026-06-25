@@ -541,6 +541,27 @@ input{font-family:inherit}
 .adm-empty{color:var(--text-faint);font-size:14px;padding:30px 0}
 .cfg-pw{display:flex;flex-direction:column;gap:10px;margin-top:6px}
 .cfg-pw-msg{font-size:12.5px;line-height:1.5;margin-top:2px}
+.rep-tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border)}
+.rep-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-dim);font-size:14px;padding:10px 14px;cursor:pointer;margin-bottom:-1px}
+.rep-tab:hover{color:var(--text)}
+.rep-tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.rt-search{background:var(--navy-700);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:8px 12px;font-size:13px;min-width:220px;flex:1}
+.rt-search:focus{outline:none;border-color:var(--teal)}
+.rt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin:4px 0 18px}
+.rt-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:var(--navy-900)}
+.rt-card-v{font-size:24px;font-weight:600;font-family:var(--mono)}
+.rt-card-l{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-faint);margin-top:4px}
+.rt-sec{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-faint);margin:20px 0 10px}
+.rt-tablewrap{border:1px solid var(--border);border-radius:12px;overflow:auto;max-height:440px}
+.rt-table{width:100%;border-collapse:collapse;font-size:13px}
+.rt-table th{position:sticky;top:0;background:var(--navy-900);text-align:left;padding:9px 12px;color:var(--text-faint);font-weight:600;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.rt-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text-dim)}
+.rt-table tr:last-child td{border-bottom:none}
+.rt-est{font-size:11px;padding:2px 9px;border-radius:20px;text-transform:capitalize}
+.rt-pendiente{background:rgba(43,196,190,.16);color:#2BC4BE}
+.rt-visitado{background:rgba(95,185,142,.16);color:#5FB98E}
+.rt-urgente{background:rgba(224,160,74,.16);color:#E0A04A}
+.rt-inactivo{background:rgba(122,138,152,.16);color:#7A8A98}
 .adm-new{border:1px dashed var(--border);border-radius:14px;padding:14px 18px;background:transparent;margin-bottom:4px}
 .adm-new>summary{cursor:pointer;font-size:13.5px;color:var(--teal);font-weight:600;list-style:none}
 .adm-new>summary::-webkit-details-marker{display:none}
@@ -921,15 +942,38 @@ input{font-family:inherit}
         </div></div>
       </section>
       <section class="panel" id="panel-reportes">
-        <div class="rep-bar">
-          <label class="vis-date">Desde <input type="date" id="repDesde"></label>
-          <label class="vis-date">Hasta <input type="date" id="repHasta"></label>
-          <select class="tit-sel" id="repGestor"><option value="">Gestor · todos</option></select>
-          <button class="ges-new" onclick="generarReporte()">▦ Generar reporte</button>
-          <button class="rep-dl" id="repDl" onclick="descargarExcel()" disabled>⬇ Descargar Excel</button>
+        <div class="rep-tabs">
+          <button class="rep-tab active" id="rtTabVis" onclick="setRepMode('visitas')">Productividad de visitas</button>
+          <button class="rep-tab" id="rtTabTit" onclick="setRepMode('titulares')">Titulares por cartera</button>
         </div>
-        <div id="repBody">
-          <div class="empty"><div class="empty-ic">▦</div><p>Elige un rango de fechas (opcional) y genera el reporte de productividad.</p></div>
+        <div id="repModeVisitas">
+          <div class="rep-bar">
+            <label class="vis-date">Desde <input type="date" id="repDesde"></label>
+            <label class="vis-date">Hasta <input type="date" id="repHasta"></label>
+            <select class="tit-sel" id="repGestor"><option value="">Gestor · todos</option></select>
+            <button class="ges-new" onclick="generarReporte()">▦ Generar reporte</button>
+            <button class="rep-dl" id="repDl" onclick="descargarExcel()" disabled>⬇ Descargar Excel</button>
+          </div>
+          <div id="repBody">
+            <div class="empty"><div class="empty-ic">▦</div><p>Elige un rango de fechas (opcional) y genera el reporte de productividad.</p></div>
+          </div>
+        </div>
+        <div id="repModeTitulares" style="display:none">
+          <div class="rep-bar">
+            <select class="tit-sel" id="rtCliente" onchange="renderRepTit()"><option value="">Cliente · todos</option></select>
+            <select class="tit-sel" id="rtCartera" onchange="renderRepTit()"><option value="">Cartera · todas</option></select>
+            <select class="tit-sel" id="rtGestor" onchange="renderRepTit()"><option value="">Gestor · todos</option></select>
+            <select class="tit-sel" id="rtEstado" onchange="renderRepTit()">
+              <option value="">Estado · todos</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="visitado">Visitado</option>
+              <option value="urgente">Urgente</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+            <input class="rt-search" id="rtSearch" oninput="renderRepTit()" placeholder="Buscar nombre, ID o dirección…">
+            <button class="rep-dl" id="rtDl" onclick="descargarReporteTitulares()">⬇ Descargar Excel</button>
+          </div>
+          <div id="repTitBody"><div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div></div>
         </div>
       </section>
       <section class="panel" id="panel-config">
@@ -2308,6 +2352,121 @@ async function initReportes(){
   const sel=document.getElementById('repGestor'); const cur=sel.value;
   sel.innerHTML='<option value="">Gestor · todos</option>'+gs.map(g=>`<option value="${g.ID_GESTOR}">${g.NOMBRE}</option>`).join('');
   sel.value=cur;
+}
+
+/* ════════ REPORTERÍA DE TITULARES ════════ */
+let REP_MODE='visitas', REP_C2C={};
+function setRepMode(mode){
+  REP_MODE=mode;
+  document.getElementById('rtTabVis').classList.toggle('active',mode==='visitas');
+  document.getElementById('rtTabTit').classList.toggle('active',mode==='titulares');
+  document.getElementById('repModeVisitas').style.display=(mode==='visitas')?'block':'none';
+  document.getElementById('repModeTitulares').style.display=(mode==='titulares')?'block':'none';
+  if(mode==='titulares') loadRepTit();
+}
+async function loadRepTit(){
+  const body=document.getElementById('repTitBody');
+  if(!TIT_LOADED){ if(body) body.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>'; await loadTitulares(); }
+  if(!CART_ALL || !CART_ALL.length){ try{ const k=await apiCall('admin-carteras','POST',{action:'list'}); if(k&&k.carteras) CART_ALL=k.carteras; }catch(e){} }
+  populateRepTitFilters();
+  renderRepTit();
+}
+function populateRepTitFilters(){
+  REP_C2C={}; (CART_ALL||[]).forEach(c=>{ if(c.NOMBRE) REP_C2C[c.NOMBRE]=c.NOMBRE_CLIENTE||''; });
+  const carteras=[...new Set(TIT_ALL.map(t=>t.CARTERA).filter(Boolean))].sort();
+  const gestores=[...new Map(TIT_ALL.filter(t=>t.ID_GESTOR).map(t=>[t.ID_GESTOR,t.NOMBRE_GESTOR])).entries()].sort((a,b)=>String(a[1]||'').localeCompare(String(b[1]||'')));
+  const clientes=[...new Set(carteras.map(k=>REP_C2C[k]).filter(Boolean))].sort();
+  const cliSel=document.getElementById('rtCliente'), cartSel=document.getElementById('rtCartera'), gesSel=document.getElementById('rtGestor');
+  const cv=cliSel.value, kv=cartSel.value, gv=gesSel.value;
+  cliSel.innerHTML='<option value="">Cliente · todos</option>'+clientes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  cartSel.innerHTML='<option value="">Cartera · todas</option>'+carteras.map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join('');
+  gesSel.innerHTML='<option value="">Gestor · todos</option>'+gestores.map(([id,nom])=>`<option value="${esc(id)}">${esc(nom||id)}</option>`).join('');
+  cliSel.value=cv; cartSel.value=kv; gesSel.value=gv;
+}
+function repTitEstado(t){
+  if(t.URGENTE) return 'urgente';
+  if(t.VISITADO) return 'visitado';
+  if(t.ACTIVO) return 'pendiente';
+  return 'inactivo';
+}
+function repTitFiltered(){
+  const cli=document.getElementById('rtCliente').value, cart=document.getElementById('rtCartera').value;
+  const ges=document.getElementById('rtGestor').value, est=document.getElementById('rtEstado').value;
+  const qq=(document.getElementById('rtSearch').value||'').trim().toLowerCase();
+  return (TIT_ALL||[]).filter(t=>{
+    if(cart && t.CARTERA!==cart) return false;
+    if(cli && (REP_C2C[t.CARTERA]||'')!==cli) return false;
+    if(ges && t.ID_GESTOR!==ges) return false;
+    if(est && repTitEstado(t)!==est) return false;
+    if(qq){ const hay=`${t.NOMBRE||''} ${t.ID_TITULAR||''} ${t.DIRECCION||''}`.toLowerCase(); if(!hay.includes(qq)) return false; }
+    return true;
+  });
+}
+function repTitMetrics(rows){
+  const m={total:rows.length,urgente:0,visitado:0,pendiente:0,inactivo:0}; const byG={}; const carts=new Set();
+  rows.forEach(t=>{ const e=repTitEstado(t); m[e]=(m[e]||0)+1; if(t.CARTERA) carts.add(t.CARTERA);
+    const g=t.NOMBRE_GESTOR||t.ID_GESTOR||'Sin asignar';
+    const o=byG[g]||(byG[g]={total:0,visitado:0,pendiente:0,urgente:0});
+    o.total++; if(e==='visitado')o.visitado++; else if(e==='pendiente')o.pendiente++; else if(e==='urgente')o.urgente++;
+  });
+  return {m, byG, carteras:carts.size};
+}
+function renderRepTit(){
+  const body=document.getElementById('repTitBody'); if(!body) return;
+  if(!TIT_LOADED){ body.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>'; return; }
+  const rows=repTitFiltered();
+  const {m,byG,carteras}=repTitMetrics(rows);
+  const cob=m.total?Math.round(m.visitado/m.total*100):0;
+  const card=(lbl,val,col)=>`<div class="rt-card"><div class="rt-card-v" style="color:${col||'var(--text)'}">${val}</div><div class="rt-card-l">${lbl}</div></div>`;
+  const gRows=Object.entries(byG).sort((a,b)=>b[1].total-a[1].total).map(([g,o])=>`<tr><td>${esc(g)}</td><td>${o.total}</td><td>${o.visitado}</td><td>${o.pendiente}</td><td>${o.urgente}</td><td>${o.total?Math.round(o.visitado/o.total*100):0}%</td></tr>`).join('');
+  const prev=rows.slice(0,50).map(t=>{ const e=repTitEstado(t); return `<tr><td>${esc(t.ID_TITULAR||'')}</td><td>${esc(t.NOMBRE||'')}</td><td>${esc(t.CARTERA||'')}</td><td>${esc(t.NOMBRE_GESTOR||'Sin asignar')}</td><td><span class="rt-est rt-${e}">${e}</span></td><td>${esc(t.MUNICIPIO||'')}</td></tr>`; }).join('');
+  body.innerHTML=`
+    <div class="rt-cards">
+      ${card('Titulares',m.total)}
+      ${card('Pendientes',m.pendiente,'#2BC4BE')}
+      ${card('Visitados',m.visitado,'#5FB98E')}
+      ${card('Urgentes',m.urgente,'#E0A04A')}
+      ${card('Inactivos',m.inactivo,'#7A8A98')}
+      ${card('Cobertura',cob+'%')}
+      ${card('Carteras',carteras)}
+    </div>
+    <div class="rt-sec">Por gestor</div>
+    <div class="rt-tablewrap"><table class="rt-table"><thead><tr><th>Gestor</th><th>Total</th><th>Visitados</th><th>Pendientes</th><th>Urgentes</th><th>Cobertura</th></tr></thead><tbody>${gRows||'<tr><td colspan="6">Sin datos</td></tr>'}</tbody></table></div>
+    <div class="rt-sec">Detalle ${rows.length>50?`(primeros 50 de ${rows.length})`:`(${rows.length})`}</div>
+    <div class="rt-tablewrap"><table class="rt-table"><thead><tr><th>ID</th><th>Nombre</th><th>Cartera</th><th>Gestor</th><th>Estado</th><th>Municipio</th></tr></thead><tbody>${prev||'<tr><td colspan="6">Sin titulares con esos filtros</td></tr>'}</tbody></table></div>`;
+}
+function descargarReporteTitulares(){
+  if(typeof XLSX==='undefined'){ toast('La librería de Excel no cargó'); return; }
+  const rows=repTitFiltered();
+  if(!rows.length){ toast('No hay titulares con esos filtros'); return; }
+  const {m,byG}=repTitMetrics(rows);
+  const cli=document.getElementById('rtCliente').value, cart=document.getElementById('rtCartera').value;
+  const gesSel=document.getElementById('rtGestor'); const ges=(gesSel.value?gesSel.selectedOptions[0].textContent:'Todos');
+  const est=document.getElementById('rtEstado').value;
+  const wb=XLSX.utils.book_new();
+  const resumen=[
+    ['Fortaleza Contact Center — Reporte de titulares'],
+    ['Generado', new Date().toLocaleString('es-MX')],
+    ['Cliente', cli||'Todos'], ['Cartera', cart||'Todas'], ['Gestor', ges||'Todos'], ['Estado', est||'Todos'],
+    [],
+    ['Métrica','Valor'],
+    ['Titulares', m.total], ['Pendientes', m.pendiente], ['Visitados', m.visitado], ['Urgentes', m.urgente], ['Inactivos', m.inactivo],
+    ['Cobertura', m.total?(m.visitado/m.total):0],
+    [],
+    ['Por gestor'],
+    ['Gestor','Total','Visitados','Pendientes','Urgentes','Cobertura'],
+    ...Object.entries(byG).sort((a,b)=>b[1].total-a[1].total).map(([g,o])=>[g,o.total,o.visitado,o.pendiente,o.urgente,(o.total?o.visitado/o.total:0)])
+  ];
+  const wsR=XLSX.utils.aoa_to_sheet(resumen);
+  wsR['!cols']=[{wch:28},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
+  if(wsR['B14']) wsR['B14'].z='0%';
+  XLSX.utils.book_append_sheet(wb,wsR,'Resumen');
+  const det=[['ID Titular','Nombre','Dirección','Estado','Municipio','Cartera','Gestor','Estado visita','Urgente','Latitud','Longitud']];
+  rows.forEach(t=>det.push([t.ID_TITULAR,t.NOMBRE,t.DIRECCION,t.ESTADO,t.MUNICIPIO,t.CARTERA,t.NOMBRE_GESTOR||'Sin asignar',repTitEstado(t),t.URGENTE?'Sí':'No',t.LATITUD,t.LONGITUD]));
+  const wsD=XLSX.utils.aoa_to_sheet(det);
+  wsD['!cols']=[{wch:14},{wch:26},{wch:40},{wch:16},{wch:16},{wch:20},{wch:18},{wch:13},{wch:8},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,wsD,'Detalle');
+  XLSX.writeFile(wb,`reporte_titulares_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 function _money(x){ return parseFloat(String(x==null?'':x).replace(/[^0-9.\-]/g,''))||0; }
 function calcMetrics(visitas){
