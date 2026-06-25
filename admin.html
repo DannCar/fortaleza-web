@@ -2404,22 +2404,31 @@ function repTitFiltered(){
 }
 function repTitMetrics(rows){
   const m={total:rows.length,urgente:0,visitado:0,pendiente:0,inactivo:0}; const byG={}; const carts=new Set();
+  let agingSum=0, agingN=0, agingMax=0;
   rows.forEach(t=>{ const e=repTitEstado(t); m[e]=(m[e]||0)+1; if(t.CARTERA) carts.add(t.CARTERA);
     const g=t.NOMBRE_GESTOR||t.ID_GESTOR||'Sin asignar';
     const o=byG[g]||(byG[g]={total:0,visitado:0,pendiente:0,urgente:0});
     o.total++; if(e==='visitado')o.visitado++; else if(e==='pendiente')o.pendiente++; else if(e==='urgente')o.urgente++;
+    if(!t.VISITADO && t.DIAS_ASIGNADO!=null){ const d=Number(t.DIAS_ASIGNADO)||0; agingSum+=d; agingN++; if(d>agingMax) agingMax=d; }
   });
-  return {m, byG, carteras:carts.size};
+  return {m, byG, carteras:carts.size, agingProm:(agingN?Math.round(agingSum/agingN):0), agingMax, agingN};
+}
+function repDiasCell(t){
+  if(t.DIAS_ASIGNADO==null||t.DIAS_ASIGNADO==='') return '<span style="color:var(--text-faint)">—</span>';
+  const d=Number(t.DIAS_ASIGNADO)||0, pend=!t.VISITADO;
+  let col='var(--text-dim)';
+  if(pend && d>=60) col='#e06a5a'; else if(pend && d>=30) col='#E0A04A';
+  return `<span style="color:${col};font-family:var(--mono)">${d}d</span>`;
 }
 function renderRepTit(){
   const body=document.getElementById('repTitBody'); if(!body) return;
   if(!TIT_LOADED){ body.innerHTML='<div class="empty"><div class="empty-ic">▤</div><p>Cargando titulares…</p></div>'; return; }
   const rows=repTitFiltered();
-  const {m,byG,carteras}=repTitMetrics(rows);
+  const {m,byG,carteras,agingProm,agingMax}=repTitMetrics(rows);
   const cob=m.total?Math.round(m.visitado/m.total*100):0;
   const card=(lbl,val,col)=>`<div class="rt-card"><div class="rt-card-v" style="color:${col||'var(--text)'}">${val}</div><div class="rt-card-l">${lbl}</div></div>`;
   const gRows=Object.entries(byG).sort((a,b)=>b[1].total-a[1].total).map(([g,o])=>`<tr><td>${esc(g)}</td><td>${o.total}</td><td>${o.visitado}</td><td>${o.pendiente}</td><td>${o.urgente}</td><td>${o.total?Math.round(o.visitado/o.total*100):0}%</td></tr>`).join('');
-  const prev=rows.slice(0,50).map(t=>{ const e=repTitEstado(t); return `<tr><td>${esc(t.ID_TITULAR||'')}</td><td>${esc(t.NOMBRE||'')}</td><td>${esc(t.CARTERA||'')}</td><td>${esc(t.NOMBRE_GESTOR||'Sin asignar')}</td><td><span class="rt-est rt-${e}">${e}</span></td><td>${esc(t.MUNICIPIO||'')}</td></tr>`; }).join('');
+  const prev=rows.slice(0,50).map(t=>{ const e=repTitEstado(t); return `<tr><td>${esc(t.ID_TITULAR||'')}</td><td>${esc(t.NOMBRE||'')}</td><td>${esc(t.CARTERA||'')}</td><td>${esc(t.NOMBRE_GESTOR||'Sin asignar')}</td><td><span class="rt-est rt-${e}">${e}</span></td><td>${repDiasCell(t)}</td><td>${esc(t.MUNICIPIO||'')}</td></tr>`; }).join('');
   body.innerHTML=`
     <div class="rt-cards">
       ${card('Titulares',m.total)}
@@ -2428,18 +2437,20 @@ function renderRepTit(){
       ${card('Urgentes',m.urgente,'#E0A04A')}
       ${card('Inactivos',m.inactivo,'#7A8A98')}
       ${card('Cobertura',cob+'%')}
+      ${card('Antigüedad prom.',agingProm+'d')}
+      ${card('Máx días',agingMax+'d','#E0A04A')}
       ${card('Carteras',carteras)}
     </div>
     <div class="rt-sec">Por gestor</div>
     <div class="rt-tablewrap"><table class="rt-table"><thead><tr><th>Gestor</th><th>Total</th><th>Visitados</th><th>Pendientes</th><th>Urgentes</th><th>Cobertura</th></tr></thead><tbody>${gRows||'<tr><td colspan="6">Sin datos</td></tr>'}</tbody></table></div>
     <div class="rt-sec">Detalle ${rows.length>50?`(primeros 50 de ${rows.length})`:`(${rows.length})`}</div>
-    <div class="rt-tablewrap"><table class="rt-table"><thead><tr><th>ID</th><th>Nombre</th><th>Cartera</th><th>Gestor</th><th>Estado</th><th>Municipio</th></tr></thead><tbody>${prev||'<tr><td colspan="6">Sin titulares con esos filtros</td></tr>'}</tbody></table></div>`;
+    <div class="rt-tablewrap"><table class="rt-table"><thead><tr><th>ID</th><th>Nombre</th><th>Cartera</th><th>Gestor</th><th>Estado</th><th>Días asig.</th><th>Municipio</th></tr></thead><tbody>${prev||'<tr><td colspan="7">Sin titulares con esos filtros</td></tr>'}</tbody></table></div>`;
 }
 function descargarReporteTitulares(){
   if(typeof XLSX==='undefined'){ toast('La librería de Excel no cargó'); return; }
   const rows=repTitFiltered();
   if(!rows.length){ toast('No hay titulares con esos filtros'); return; }
-  const {m,byG}=repTitMetrics(rows);
+  const {m,byG,agingProm,agingMax}=repTitMetrics(rows);
   const cli=document.getElementById('rtCliente').value, cart=document.getElementById('rtCartera').value;
   const gesSel=document.getElementById('rtGestor'); const ges=(gesSel.value?gesSel.selectedOptions[0].textContent:'Todos');
   const est=document.getElementById('rtEstado').value;
@@ -2452,19 +2463,21 @@ function descargarReporteTitulares(){
     ['Métrica','Valor'],
     ['Titulares', m.total], ['Pendientes', m.pendiente], ['Visitados', m.visitado], ['Urgentes', m.urgente], ['Inactivos', m.inactivo],
     ['Cobertura', m.total?(m.visitado/m.total):0],
+    ['Antigüedad prom. (días, sin concluir)', agingProm],
+    ['Máx días asignado (sin concluir)', agingMax],
     [],
     ['Por gestor'],
     ['Gestor','Total','Visitados','Pendientes','Urgentes','Cobertura'],
     ...Object.entries(byG).sort((a,b)=>b[1].total-a[1].total).map(([g,o])=>[g,o.total,o.visitado,o.pendiente,o.urgente,(o.total?o.visitado/o.total:0)])
   ];
   const wsR=XLSX.utils.aoa_to_sheet(resumen);
-  wsR['!cols']=[{wch:28},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
+  wsR['!cols']=[{wch:32},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
   if(wsR['B14']) wsR['B14'].z='0%';
   XLSX.utils.book_append_sheet(wb,wsR,'Resumen');
-  const det=[['ID Titular','Nombre','Dirección','Estado','Municipio','Cartera','Gestor','Estado visita','Urgente','Latitud','Longitud']];
-  rows.forEach(t=>det.push([t.ID_TITULAR,t.NOMBRE,t.DIRECCION,t.ESTADO,t.MUNICIPIO,t.CARTERA,t.NOMBRE_GESTOR||'Sin asignar',repTitEstado(t),t.URGENTE?'Sí':'No',t.LATITUD,t.LONGITUD]));
+  const det=[['ID Titular','Nombre','Dirección','Estado','Municipio','Cartera','Gestor','Estado visita','Urgente','Fecha importación','Fecha asignación','Días asignado','Latitud','Longitud']];
+  rows.forEach(t=>det.push([t.ID_TITULAR,t.NOMBRE,t.DIRECCION,t.ESTADO,t.MUNICIPIO,t.CARTERA,t.NOMBRE_GESTOR||'Sin asignar',repTitEstado(t),t.URGENTE?'Sí':'No',t.FECHA_IMPORTACION||'',t.FECHA_ASIGNACION||'',(t.DIAS_ASIGNADO==null?'':t.DIAS_ASIGNADO),t.LATITUD,t.LONGITUD]));
   const wsD=XLSX.utils.aoa_to_sheet(det);
-  wsD['!cols']=[{wch:14},{wch:26},{wch:40},{wch:16},{wch:16},{wch:20},{wch:18},{wch:13},{wch:8},{wch:12},{wch:12}];
+  wsD['!cols']=[{wch:14},{wch:26},{wch:40},{wch:16},{wch:16},{wch:20},{wch:18},{wch:13},{wch:8},{wch:16},{wch:16},{wch:13},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb,wsD,'Detalle');
   XLSX.writeFile(wb,`reporte_titulares_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
