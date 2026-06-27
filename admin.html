@@ -182,6 +182,17 @@ input{font-family:inherit}
 .tit-search:focus{outline:none;border-color:var(--teal)}
 .tit-export{background:var(--navy-700);border:1px solid var(--border);color:var(--text-dim);border-radius:11px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
 .tit-export:hover{border-color:var(--teal);color:var(--teal)}
+.etq-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border)}
+.etq-row:last-child{border-bottom:none}
+.etq-row.etq-off{opacity:.5}
+.etq-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.etq-texto{flex:1;min-width:120px;background:var(--navy-700);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px}
+.etq-texto:focus{outline:none;border-color:var(--teal)}
+.etq-cat{background:var(--navy-700);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:7px 8px;font-size:12px}
+.etq-cartera{font-size:12px;color:var(--text-dim);min-width:120px}
+.etq-act{font-size:12px;color:var(--text-faint);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.etq-del{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:14px;padding:4px 7px;border-radius:6px}
+.etq-del:hover{background:rgba(232,68,68,.15);color:#e84444}
 .tit-sel{background:var(--navy-700);border:1px solid var(--border);border-radius:11px;padding:11px 13px;color:var(--text);font-size:13px;cursor:pointer}
 .tit-sel:focus{outline:none;border-color:var(--teal)}
 .tit-chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);cursor:pointer;user-select:none}
@@ -704,6 +715,7 @@ input{font-family:inherit}
       <div class="nav-group">Configuraciones</div>
       <div class="nav-item" id="nav-cuestionarios" onclick="showPanel('cuestionarios')"><span class="nav-ic">❖</span> Cuestionarios</div>
       <div class="nav-item hidden" id="nav-administradores" onclick="showPanel('administradores')"><span class="nav-ic">⊛</span> Administradores</div>
+      <div class="nav-item hidden" id="nav-etiquetas" onclick="showPanel('etiquetas')"><span class="nav-ic">❏</span> Etiquetas</div>
       <div class="nav-group">Sistema</div>
       <div class="nav-item hidden" id="nav-config" onclick="showPanel('config')"><span class="nav-ic">⚙</span> Configuración</div>
       <div class="nav-item" id="nav-reportes" onclick="showPanel('reportes')"><span class="nav-ic">▦</span> Reportes</div>
@@ -959,6 +971,26 @@ input{font-family:inherit}
         <div class="adm-intro">Gestiona cuentas de administrador y sus permisos por panel. Solo <b>Admin Master</b>. Marca los paneles que cada administrador puede ver; <b>Admin Master</b> siempre tiene acceso total.</div>
         <div id="admList" class="adm-list"></div>
       </section>
+      <section class="panel" id="panel-etiquetas">
+        <div class="adm-intro">Catálogo de <b>etiquetas de resultado de visita</b>. El <b>texto</b> lo ve el gestor (puede variar por cartera); la <b>categoría KPI</b> es la que alimenta los reportes (enum fijo). <b>Global</b> = disponible para todas las carteras. Solo <b>Admin Master</b>.</div>
+        <div class="vis-bar">
+          <select class="tit-sel" id="etqFilterCartera" onchange="renderEtiquetas()"><option value="">Todas</option><option value="__global">Solo globales</option></select>
+          <span class="tit-count" id="etqCount">—</span>
+          <button class="ges-new" onclick="document.getElementById('etqNew').open=true">＋ Nueva etiqueta</button>
+        </div>
+        <details class="adm-new" id="etqNew">
+          <summary>＋ Nueva etiqueta</summary>
+          <div class="adm-new-grid">
+            <input id="etqNewTexto" class="adm-input" placeholder="Texto (lo que ve el gestor)">
+            <select id="etqNewCat" class="adm-rol"></select>
+            <select id="etqNewCartera" class="adm-rol"><option value="">Global (todas)</option></select>
+            <input id="etqNewOrden" class="adm-input" type="number" placeholder="Orden" value="0" style="max-width:90px">
+            <button class="cq-btn cq-btn-primary" onclick="createEtiqueta()">Crear etiqueta</button>
+          </div>
+          <div class="adm-mini">El texto puede variar por cartera; la categoría KPI es la que mide. "Global" = aplica a todas las carteras.</div>
+        </details>
+        <div class="card" style="padding:8px 6px"><div id="etqList"><div class="adm-empty">Cargando…</div></div></div>
+      </section>
       <section class="panel" id="panel-visitas">
         <div class="vis-bar">
           <input class="tit-search" id="visSearch" placeholder="Buscar titular, gestor o resultado…" oninput="applyVisFilters()">
@@ -1163,6 +1195,7 @@ const PANEL_TITLES = {
   import:['Gestión','Importar titulares'],
   gestores:['Gestión','Gestores'], titulares:['Gestión','Titulares'], visitas:['Gestión','Visitas'],
   cuestionarios:['Configuración','Cuestionarios'], administradores:['Configuración','Administradores'],
+  etiquetas:['Configuración','Etiquetas de resultado'],
   reportes:['Sistema','Reportes'], config:['Sistema','Configuración'],
 };
 const STATE = { token:null, user:null, visitas:[], gestores:[], selectedDate:null, mapDash:null, mapFull:null, markers:[], refreshTimer:null, countdown:60, scope:null, currentPanel:'dashboard', challenge:null };
@@ -1338,6 +1371,7 @@ function showPanel(id){
   if(id==='titulares'){ loadTitulares(); }
   if(id==='cuestionarios'){ CQ.init(); }
   if(id==='administradores'){ loadAdmins(); }
+  if(id==='etiquetas'){ loadEtiquetas(); }
   if(id==='gestores'){ loadGestores(); }
   if(id==='visitas'){ loadVisitas(); }
   if(id==='reportes'){ initReportes(); }
@@ -1352,16 +1386,88 @@ const ADM_PANELS = [
 ];
 const ADM_ROLES = ['Admin Master','Admin','Supervisor','Lectura'];
 const ADM_DEFAULT_HIDDEN = ['clientes','import','config']; // ocultos por defecto si no hay permisos definidos
+const ETQ_CATS = [['pago','Pago'],['promesa','Promesa'],['gestion_efectiva','Gestión efectiva (titular)'],['gestion_indirecta','Gestión indirecta (tercero)'],['sin_resultado','Sin resultado'],['ilocalizable','Ilocalizable'],['acceso_restringido','Acceso restringido'],['otro','Otro']];
+const ETQ_CAT_COLOR = { pago:'#16a34a', promesa:'#1ab5b1', gestion_efectiva:'#22c55e', gestion_indirecta:'#7FB0D0', sin_resultado:'#7A8A98', ilocalizable:'#e84444', acceso_restringido:'#e0552b', otro:'#9B8CCE' };
+let ETQ_ALL=[];
 function admDefaultSet(){ return ADM_PANELS.map(x=>x[0]).filter(k=>!ADM_DEFAULT_HIDDEN.includes(k)); }
+async function loadEtiquetas(){
+  const wrap=document.getElementById('etqList'); if(!wrap) return;
+  wrap.innerHTML='<div class="adm-empty">Cargando…</div>';
+  try{
+    if(!CART_ALL || !CART_ALL.length){ const k=await apiCall('admin-carteras','POST',{action:'list'}); if(k&&k.carteras) CART_ALL=k.carteras; }
+    const r=await apiCall('admin-etiquetas','POST',{action:'list'});
+    ETQ_ALL=(r&&r.etiquetas)?r.etiquetas:[];
+    populateEtqSelects();
+    renderEtiquetas();
+  }catch(e){ wrap.innerHTML='<div class="adm-empty">No se pudieron cargar las etiquetas.</div>'; }
+}
+function populateEtqSelects(){
+  const opts=(CART_ALL||[]).map(c=>`<option value="${c.ID_CARTERA}">${esc((c.NOMBRE_CLIENTE?c.NOMBRE_CLIENTE+' · ':'')+c.NOMBRE)}</option>`).join('');
+  const f=document.getElementById('etqFilterCartera'); if(f) f.innerHTML=`<option value="">Todas</option><option value="__global">Solo globales</option>${opts}`;
+  const nc=document.getElementById('etqNewCartera'); if(nc) nc.innerHTML=`<option value="">Global (todas)</option>${opts}`;
+  const cc=document.getElementById('etqNewCat'); if(cc) cc.innerHTML=ETQ_CATS.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join('');
+}
+function renderEtiquetas(){
+  const wrap=document.getElementById('etqList'); if(!wrap) return;
+  const fEl=document.getElementById('etqFilterCartera'); const f=fEl?fEl.value:'';
+  let list=ETQ_ALL.slice();
+  if(f==='__global') list=list.filter(e=>e.GLOBAL);
+  else if(f) list=list.filter(e=>e.CARTERA_ID===f);
+  const cnt=document.getElementById('etqCount'); if(cnt) cnt.textContent=`${list.length} etiqueta${list.length!==1?'s':''}`;
+  if(!list.length){ wrap.innerHTML='<div class="adm-empty">Sin etiquetas. Crea una con “＋ Nueva etiqueta”.</div>'; return; }
+  wrap.innerHTML=list.map(e=>{
+    const idx=ETQ_ALL.indexOf(e);
+    const col=ETQ_CAT_COLOR[e.CATEGORIA]||'#888';
+    return `<div class="etq-row ${e.ACTIVO?'':'etq-off'}">
+      <span class="etq-dot" style="background:${col}" title="${esc(e.CATEGORIA)}"></span>
+      <input class="etq-texto" value="${esc(e.TEXTO)}" onchange="updateEtiqueta(${idx},'texto',this.value)">
+      <select class="etq-cat" onchange="updateEtiqueta(${idx},'categoria_kpi',this.value)">${ETQ_CATS.map(([k,l])=>`<option value="${k}" ${e.CATEGORIA===k?'selected':''}>${esc(l)}</option>`).join('')}</select>
+      <span class="etq-cartera">${e.GLOBAL?'<b>Global</b>':esc(e.NOMBRE_CARTERA||'—')}</span>
+      <label class="etq-act"><input type="checkbox" ${e.ACTIVO?'checked':''} onchange="toggleEtiqueta(${idx},this.checked)"> Activa</label>
+      <button class="etq-del" onclick="deleteEtiqueta(${idx})" title="Eliminar">✕</button>
+    </div>`;
+  }).join('');
+}
+async function createEtiqueta(){
+  const texto=document.getElementById('etqNewTexto').value.trim();
+  const cat=document.getElementById('etqNewCat').value;
+  const cartera=document.getElementById('etqNewCartera').value;
+  const orden=parseInt(document.getElementById('etqNewOrden').value)||0;
+  if(!texto){ toast('Escribe el texto de la etiqueta'); return; }
+  const body={action:'create',texto,categoria_kpi:cat,orden};
+  if(cartera) body.cartera_id=cartera;
+  const r=await apiCall('admin-etiquetas','POST',body);
+  if(r&&r.success){ toast('Etiqueta creada'); document.getElementById('etqNewTexto').value=''; document.getElementById('etqNew').open=false; loadEtiquetas(); }
+  else toast((r&&r.error)||'No se pudo crear la etiqueta');
+}
+async function updateEtiqueta(idx,field,value){
+  const e=ETQ_ALL[idx]; if(!e) return;
+  const body={action:'update',id:e.ID}; body[field]=value;
+  const r=await apiCall('admin-etiquetas','POST',body);
+  if(r&&r.success){ if(field==='texto')e.TEXTO=value; if(field==='categoria_kpi'){ e.CATEGORIA=value; renderEtiquetas(); } toast('Guardado'); }
+  else { toast((r&&r.error)||'No se pudo guardar'); loadEtiquetas(); }
+}
+async function toggleEtiqueta(idx,val){
+  const e=ETQ_ALL[idx]; if(!e) return;
+  const r=await apiCall('admin-etiquetas','POST',{action:'toggle_activo',id:e.ID,activo:val});
+  if(r&&r.success){ e.ACTIVO=val; renderEtiquetas(); } else { toast('No se pudo cambiar el estado'); loadEtiquetas(); }
+}
+async function deleteEtiqueta(idx){
+  const e=ETQ_ALL[idx]; if(!e) return;
+  if(!confirm(`¿Eliminar la etiqueta "${e.TEXTO}"? Esta acción no se puede deshacer.`)) return;
+  const r=await apiCall('admin-etiquetas','POST',{action:'delete',id:e.ID});
+  if(r&&r.success){ toast('Etiqueta eliminada'); loadEtiquetas(); } else toast('No se pudo eliminar');
+}
 function canSee(panel){
   const u=STATE.user||{};
   if(u.rol==='Admin Master') return true;
   if(panel==='administradores') return false;              // siempre master-only
+  if(panel==='etiquetas') return false;                    // catálogo de etiquetas: master-only
   if(Array.isArray(u.permisos)) return u.permisos.includes(panel);
   return !ADM_DEFAULT_HIDDEN.includes(panel);              // sin permisos definidos -> comportamiento por rol
 }
 function applyNavPermisos(){
-  ['dashboard','mapa','clientes','import','gestores','titulares','visitas','cuestionarios','reportes','config','administradores']
+  ['dashboard','mapa','clientes','import','gestores','titulares','visitas','cuestionarios','reportes','config','administradores','etiquetas']
     .forEach(k=>{ const el=document.getElementById('nav-'+k); if(el) el.classList.toggle('hidden', !canSee(k)); });
 }
 async function loadAdmins(){
