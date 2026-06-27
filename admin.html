@@ -1150,7 +1150,7 @@ input{font-family:inherit}
       <div class="cart-newtitle">Nueva cartera</div>
       <div class="cart-newrow">
         <input id="cartfNombre" class="ges-input" placeholder="Nombre (p. ej. Tarjetas 2026)">
-        <input id="cartfTipo" class="ges-input" placeholder="Tipo (opcional)" style="max-width:170px">
+        <select id="cartfTipo" class="ges-input" style="max-width:200px"><option value="">Tipo de cartera…</option><option value="Cobranza">Cobranza</option><option value="Validación de domicilio">Validación de domicilio</option><option value="Firma de documentos">Firma de documentos</option><option value="Otro">Otro</option></select>
       </div>
       <button class="imp-go" id="cartfSave" onclick="guardarCartera()" style="margin-top:10px;width:100%">＋ Agregar cartera</button>
     </div>
