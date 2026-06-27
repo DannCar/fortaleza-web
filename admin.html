@@ -1626,13 +1626,19 @@ function num(id,val){
   const start=0,dur=600,t0=performance.now();
   (function step(now){ const p=Math.min((now-t0)/dur,1); el.textContent=Math.round(p*val); if(p<1)requestAnimationFrame(step); else el.textContent=val; })(performance.now());
 }
-// ── Clasificadores KPI homologados (catálogo fijo) ──
+// ── Clasificadores KPI homologados (por categoría; fallback a texto para datos viejos) ──
 function kpiTipo(v){ return (v.TIPO_CONTACTO||'').trim().toLowerCase(); }
 function kpiResultado(v){ return (v.RESULTADO||'').trim().toLowerCase(); }
+function kpiCat(v){ return (v.RESULTADO_CATEGORIA||'').trim().toLowerCase(); }
 function esContactoTitular(v){ return kpiTipo(v)==='titular'; }
 function esConContacto(v){ const t=kpiTipo(v); return !!t && t!=='nadie'; }
-function esPago(v){ const r=kpiResultado(v); return r==='pagó'||r==='pago'||r==='realiza pago'; }
-function esPromesa(v){ return kpiResultado(v)==='promesa de pago'; }
+function esPago(v){ const c=kpiCat(v); if(c) return c==='pago'; const r=kpiResultado(v); return r==='pagó'||r==='pago'||r==='realiza pago'; }
+function esPromesa(v){ const c=kpiCat(v); if(c) return c==='promesa'; return kpiResultado(v)==='promesa de pago'; }
+function esGestionDirecta(v){ const c=kpiCat(v); if(c) return c==='gestion_efectiva'; const r=kpiResultado(v); return r.includes('contacta titular')||r.includes('localiza domicilio')||r.includes('validaci'); }
+function esGestionIndirecta(v){ const c=kpiCat(v); if(c) return c==='gestion_indirecta'; const r=kpiResultado(v); return r.includes('mensaje con tercero'); }
+function esGestionProductiva(v){ return esGestionDirecta(v)||esGestionIndirecta(v); }
+function esIlocalizable(v){ const c=kpiCat(v); if(c) return c==='ilocalizable'; const r=kpiResultado(v); return r.includes('no se localiza')||r.includes('lote bald')||r.includes('alto riesgo'); }
+function esAccesoRestringido(v){ const c=kpiCat(v); if(c) return c==='acceso_restringido'; return kpiResultado(v).includes('sin acceso'); }
 function montoPromesa(v){ const n=parseFloat(String(v.MONTO_PROMESA||'').replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
 function updateKPIs(){
   const v=STATE.visitas, g=STATE.gestores;
@@ -2644,10 +2650,10 @@ function exportarTitulares(){
 function exportarVisitas(){
   const rows = (typeof VIS_FILTERED!=='undefined') ? VIS_FILTERED : (VIS_ALL||[]);
   if(!rows || !rows.length){ toast('No hay visitas para exportar'); return; }
-  const aoa=[['Fecha','Hora','ID Titular','Titular','ID Gestor','Gestor','Resultado','Tipo de contacto','Monto promesa','Fecha promesa','Observaciones','Fotos','Latitud','Longitud']];
+  const aoa=[['Fecha','Hora','ID Titular','Titular','ID Gestor','Gestor','Resultado','Categoría','Tipo de contacto','Monto promesa','Fecha promesa','Observaciones','Fotos','Latitud','Longitud']];
   rows.forEach(v=>aoa.push([
     v.FECHA||'', v.HORA||'', v.ID_TITULAR||'', v.NOMBRE_TITULAR||'', v.ID_GESTOR||'', v.NOMBRE_GESTOR||'',
-    v.RESULTADO||'', v.TIPO_CONTACTO||'', (v.MONTO_PROMESA||''), v.FECHA_PROMESA||'', v.OBSERVACIONES||'',
+    v.RESULTADO||'', v.RESULTADO_CATEGORIA||'', v.TIPO_CONTACTO||'', (v.MONTO_PROMESA||''), v.FECHA_PROMESA||'', v.OBSERVACIONES||'',
     (v.FOTOS&&v.FOTOS.length)?v.FOTOS.length:0, v.LATITUD||'', v.LONGITUD||''
   ]));
   if(_dlXLSX(`visitas_${_exToday()}.xlsx`,'Visitas',aoa)) toast(`Exportadas ${rows.length} visitas`);
@@ -2699,19 +2705,26 @@ function descargarReporteTitulares(){
 }
 function _money(x){ return parseFloat(String(x==null?'':x).replace(/[^0-9.\-]/g,''))||0; }
 function calcMetrics(visitas){
-  let total=visitas.length, contacto=0, titular=0, pagos=0, promesas=0, montoProm=0;
+  let total=visitas.length, contacto=0, titular=0, pagos=0, promesas=0, montoProm=0,
+      gDir=0, gInd=0, iloc=0, acceso=0;
   const porGestor={};
   for(const v of visitas){
-    const cc=esConContacto(v), ct=esContactoTitular(v), pg=esPago(v), pr=esPromesa(v), monto=montoPromesa(v);
+    const cc=esConContacto(v), ct=esContactoTitular(v), pg=esPago(v), pr=esPromesa(v), monto=montoPromesa(v),
+          gd=esGestionDirecta(v), gi=esGestionIndirecta(v), il=esIlocalizable(v), ar=esAccesoRestringido(v);
     if(cc) contacto++;
     if(ct) titular++;
     if(pg) pagos++;
     if(pr){ promesas++; montoProm+=monto; }
+    if(gd) gDir++;
+    if(gi) gInd++;
+    if(il) iloc++;
+    if(ar) acceso++;
     const g=v.NOMBRE_GESTOR||v.ID_GESTOR||'—';
-    if(!porGestor[g]) porGestor[g]={gestor:g,visitas:0,contacto:0,titular:0,pagos:0,promesas:0,monto:0};
-    const pgr=porGestor[g]; pgr.visitas++; if(cc)pgr.contacto++; if(ct)pgr.titular++; if(pg)pgr.pagos++; if(pr){pgr.promesas++; pgr.monto+=monto;}
+    if(!porGestor[g]) porGestor[g]={gestor:g,visitas:0,contacto:0,titular:0,pagos:0,promesas:0,monto:0,gprod:0};
+    const pgr=porGestor[g]; pgr.visitas++; if(cc)pgr.contacto++; if(ct)pgr.titular++; if(pg)pgr.pagos++; if(pr){pgr.promesas++; pgr.monto+=monto;} if(gd||gi)pgr.gprod++;
   }
   return { total, contacto, titular, pagos, promesas, montoProm,
+    gprod:gDir+gInd, gDir, gInd, iloc, acceso,
     tasa: total?Math.round(titular/total*100):0,
     porGestor:Object.values(porGestor).sort((a,b)=>b.visitas-a.visitas) };
 }
@@ -2752,6 +2765,9 @@ function renderReporte(m){
       <div class="rep-kpi"><div class="n">${fmt(m.contacto)}</div><div class="l">Con contacto</div></div>
       <div class="rep-kpi"><div class="n">${fmt(m.pagos)}</div><div class="l">Pagos</div></div>
       <div class="rep-kpi"><div class="n">${fmt(m.promesas)}</div><div class="l">Promesas</div></div>
+      <div class="rep-kpi"><div class="n">${fmt(m.gprod)}</div><div class="l">Gestión productiva <span style="opacity:.6">(${fmt(m.gDir)} dir · ${fmt(m.gInd)} ind)</span></div></div>
+      <div class="rep-kpi"><div class="n">${fmt(m.iloc)}</div><div class="l">Ilocalizables</div></div>
+      <div class="rep-kpi"><div class="n">${fmt(m.acceso)}</div><div class="l">Acceso restringido</div></div>
       <div class="rep-kpi gold"><div class="n">${money(m.montoProm)}</div><div class="l">Monto prometido</div></div>
     </div>
     <div class="card" style="padding:8px 6px">
@@ -2780,6 +2796,11 @@ function descargarExcel(){
     ['Pagos', m.pagos],
     ['Promesas', m.promesas],
     ['Monto prometido', m.montoProm],
+    ['Gestión productiva', m.gprod],
+    ['  · directa (titular)', m.gDir],
+    ['  · indirecta (tercero)', m.gInd],
+    ['Ilocalizables', m.iloc],
+    ['Acceso restringido', m.acceso],
     [],
     ['Productividad por gestor'],
     ['Gestor','Visitas','Contacto','Titular','Tasa','Pagos','Promesas','Monto prometido'],
@@ -2790,14 +2811,27 @@ function descargarExcel(){
   // formato % y moneda
   ['B10'].forEach(c=>{ if(wsR[c]) wsR[c].z='0%'; });
   ['B13'].forEach(c=>{ if(wsR[c]) wsR[c].z='"$"#,##0.00'; });
-  // tasa por gestor (col E, desde fila 17) en %
-  for(let i=0;i<m.porGestor.length;i++){ const c='E'+(17+i); if(wsR[c]) wsR[c].z='0%'; }
+  // tasa por gestor (col E) en %
+  for(let i=0;i<m.porGestor.length;i++){ const c='E'+(22+i); if(wsR[c]) wsR[c].z='0%'; }
   XLSX.utils.book_append_sheet(wb, wsR, 'Resumen');
-  const det=[['Fecha','Hora','ID Titular','Titular','Gestor','Resultado','Tipo contacto','Monto promesa','Fecha promesa','Observaciones','Latitud','Longitud']];
-  visitas.forEach(v=>det.push([v.FECHA,v.HORA,v.ID_TITULAR,v.NOMBRE_TITULAR,v.NOMBRE_GESTOR,v.RESULTADO,v.TIPO_CONTACTO,_money(v.MONTO_PROMESA)||'',v.FECHA_PROMESA,v.OBSERVACIONES,v.LATITUD,v.LONGITUD]));
+  const det=[['Fecha','Hora','ID Titular','Titular','Gestor','Resultado','Categoría','Tipo contacto','Monto promesa','Fecha promesa','Observaciones','Latitud','Longitud']];
+  visitas.forEach(v=>det.push([v.FECHA,v.HORA,v.ID_TITULAR,v.NOMBRE_TITULAR,v.NOMBRE_GESTOR,v.RESULTADO,v.RESULTADO_CATEGORIA||'',v.TIPO_CONTACTO,_money(v.MONTO_PROMESA)||'',v.FECHA_PROMESA,v.OBSERVACIONES,v.LATITUD,v.LONGITUD]));
   const wsD=XLSX.utils.aoa_to_sheet(det);
-  wsD['!cols']=[{wch:11},{wch:7},{wch:13},{wch:26},{wch:18},{wch:22},{wch:14},{wch:13},{wch:13},{wch:50},{wch:12},{wch:12}];
+  wsD['!cols']=[{wch:11},{wch:7},{wch:13},{wch:26},{wch:18},{wch:22},{wch:18},{wch:14},{wch:13},{wch:13},{wch:50},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb, wsD, 'Detalle');
+  // Hoja de respuestas del cuestionario (una fila por respuesta — escalable por cartera)
+  const resp=[['ID Visita','Fecha','Titular','Gestor','Pregunta','Respuesta','Es resultado']];
+  visitas.forEach(v=>{
+    (v.RESPUESTAS||[]).forEach(r=>{
+      let val=(r.VALOR!=null && String(r.VALOR).trim()!=='')?String(r.VALOR):(Array.isArray(r.VALOR_JSON)?r.VALOR_JSON.join(', '):'');
+      resp.push([v.ID_VISITA||'', v.FECHA||'', v.NOMBRE_TITULAR||'', v.NOMBRE_GESTOR||'', r.PREGUNTA||'', val, r.ES_RESULTADO?'Sí':'']);
+    });
+  });
+  if(resp.length>1){
+    const wsResp=XLSX.utils.aoa_to_sheet(resp);
+    wsResp['!cols']=[{wch:14},{wch:11},{wch:24},{wch:18},{wch:40},{wch:40},{wch:11}];
+    XLSX.utils.book_append_sheet(wb, wsResp, 'Respuestas');
+  }
   XLSX.writeFile(wb, `reporte_visitas_${desde||'inicio'}_${hasta||'hoy'}.xlsx`);
 }
 
