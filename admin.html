@@ -1172,7 +1172,7 @@ function todayLocal(){ const d=new Date(); return `${d.getFullYear()}-${String(d
 function initials(n){ if(!n) return '?'; return n.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
 function fixCoord(v){ let n=parseFloat(String(v==null?'':v).replace(',','.')); if(!isFinite(n)) return null; if(Math.abs(n)>180) n=n/1000000; return n; }
-function resClass(r){ r=(r||'').toLowerCase(); if(r.includes('pago'))return'res-pago'; if(r.includes('localiza a domicilio')&&!r.includes('no'))return'res-loc'; if(r.startsWith('no')||r.includes('no se localiza'))return'res-no'; return'res-otro'; }
+function resClass(r){ const s=(r||'').trim().toLowerCase(); if(s==='no pagó'||s==='no pago')return'res-nolocaliza'; if(s==='pagó'||s==='pago'||s==='realiza pago')return'res-pago'; if(s.includes('promesa'))return'res-promesa'; if(s.includes('no se localiza')||s.includes('no conoce')||s.includes('alto riesgo')||s.includes('lote bald'))return'res-nolocaliza'; if(s.includes('contacta titular')||s.includes('localiza')||s.includes('validaci')||s.includes('mensaje')||s.includes('contacto')||s.includes('tercero')||s.includes('vecino'))return'res-contacto'; return'res-otro'; }
 function resShort(r){ if(!r)return'—'; return r.length>26?r.slice(0,25)+'…':r; }
 
 /* ════════ AUTH ════════ */
@@ -1520,20 +1520,29 @@ function num(id,val){
   const start=0,dur=600,t0=performance.now();
   (function step(now){ const p=Math.min((now-t0)/dur,1); el.textContent=Math.round(p*val); if(p<1)requestAnimationFrame(step); else el.textContent=val; })(performance.now());
 }
+// ── Clasificadores KPI homologados (catálogo fijo) ──
+function kpiTipo(v){ return (v.TIPO_CONTACTO||'').trim().toLowerCase(); }
+function kpiResultado(v){ return (v.RESULTADO||'').trim().toLowerCase(); }
+function esContactoTitular(v){ return kpiTipo(v)==='titular'; }
+function esConContacto(v){ const t=kpiTipo(v); return !!t && t!=='nadie'; }
+function esPago(v){ const r=kpiResultado(v); return r==='pagó'||r==='pago'||r==='realiza pago'; }
+function esPromesa(v){ return kpiResultado(v)==='promesa de pago'; }
+function montoPromesa(v){ const n=parseFloat(String(v.MONTO_PROMESA||'').replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
 function updateKPIs(){
   const v=STATE.visitas, g=STATE.gestores;
   const total=v.length;
-  const localizan=v.filter(x=>(x.RESULTADO||'').toLowerCase().includes('localiza a')&&!(x.RESULTADO||'').toLowerCase().startsWith('no')).length;
-  const pagos=v.filter(x=>(x.RESULTADO||'').toLowerCase().includes('pago')).length;
+  const conContacto=v.filter(esConContacto).length;
+  const titulares=v.filter(esContactoTitular).length;
+  const pagos=v.filter(esPago).length;
   const activos=g.filter(x=>x.ACTIVO===true||x.ACTIVO==='TRUE'||x.ACTIVO==='SI').length;
   const enCampo=[...new Set(v.map(x=>x.ID_GESTOR))].filter(Boolean).length;
-  const tasa=total>0?Math.round(localizan/total*100):0;
+  const tasa=total>0?Math.round(titulares/total*100):0;
   num('kpiVisitas',total); document.getElementById('kpiVisitas').classList.remove('skeleton');
   document.getElementById('kpiTasa').classList.remove('skeleton'); document.getElementById('kpiTasa').textContent=tasa+'%';
   num('kpiPagos',pagos);
   document.getElementById('kpiGestores').classList.remove('skeleton'); document.getElementById('kpiGestores').textContent=enCampo;
   document.getElementById('kpiVisitasSub').innerHTML=`<span class="kpi-chip ${total>5?'chip-up':'chip-flat'}">${total}</span> registros hoy`;
-  document.getElementById('kpiTasaSub').innerHTML=`<span class="kpi-chip ${tasa>=50?'chip-up':'chip-down'}">${localizan}</span> con contacto`;
+  document.getElementById('kpiTasaSub').innerHTML=`<span class="kpi-chip ${tasa>=50?'chip-up':'chip-down'}">${titulares}</span> titular · ${conContacto} con contacto`;
   document.getElementById('kpiPagosSub').innerHTML=`<span class="kpi-chip ${pagos>0?'chip-up':'chip-flat'}">${pagos}</span> confirmados`;
   document.getElementById('kpiGestoresSub').innerHTML=`<span class="kpi-chip chip-flat">${activos}</span> activos en nómina`;
 }
@@ -1569,7 +1578,7 @@ function renderInsights(){
   const hours=Object.keys(byH).sort(); const maxH=hours.length?Math.max(...hours.map(h=>byH[h])):1;
   const hourHtml=hours.length?`<div class="ins-hours">`+hours.map(h=>`<div class="ins-hcol" title="${h}:00 — ${byH[h]} visita(s)"><div class="ins-hbar" style="height:${Math.max(10,Math.round(byH[h]/maxH*100))}%"></div><div class="ins-hlbl">${h}</div></div>`).join('')+`</div>`:'<div class="ins-empty">Sin actividad horaria.</div>';
   // C) Top gestores hoy
-  const byG={}; v.forEach(x=>{ const k=x.NOMBRE_GESTOR||x.ID_GESTOR||'—'; const o=byG[k]||(byG[k]={v:0,c:0}); o.v++; const r=(x.RESULTADO||'').toLowerCase(); if(r.includes('localiza a')&&!r.startsWith('no')) o.c++; });
+  const byG={}; v.forEach(x=>{ const k=x.NOMBRE_GESTOR||x.ID_GESTOR||'—'; const o=byG[k]||(byG[k]={v:0,c:0}); o.v++; if(esConContacto(x)) o.c++; });
   const gArr=Object.entries(byG).sort((a,b)=>b[1].v-a[1].v).slice(0,5);
   const gHtml=gArr.length?gArr.map((e,i)=>{ const [n,o]=e; const rate=o.v?Math.round(o.c/o.v*100):0;
     return `<div class="ins-lead"><div class="ins-lead-rank ins-rank-${i+1}">${i+1}</div><div class="ins-lead-name">${esc(n)}</div><div class="ins-lead-stat">${o.v} vis · ${rate}%</div></div>`;
@@ -2338,7 +2347,7 @@ function applyVisFilters(){
   });
   renderVisitas(rows);
 }
-function resClass(r){ const s=(r||'').toLowerCase(); if(s.includes('pago')&&!s.includes('promesa'))return'res-pago'; if(s.includes('promesa'))return'res-promesa'; if(s.includes('no se localiza')||s.includes('no localiza')||s.includes('negativ'))return'res-nolocaliza'; if(s.includes('localiza')||s.includes('contacto')||s.includes('tercero')||s.includes('vecino'))return'res-contacto'; return'res-otro'; }
+function resClass(r){ const s=(r||'').trim().toLowerCase(); if(s==='no pagó'||s==='no pago')return'res-nolocaliza'; if(s==='pagó'||s==='pago'||s==='realiza pago')return'res-pago'; if(s.includes('promesa'))return'res-promesa'; if(s.includes('no se localiza')||s.includes('no conoce')||s.includes('alto riesgo')||s.includes('lote bald'))return'res-nolocaliza'; if(s.includes('contacta titular')||s.includes('localiza')||s.includes('validaci')||s.includes('mensaje')||s.includes('contacto')||s.includes('tercero')||s.includes('vecino'))return'res-contacto'; return'res-otro'; }
 function renderVisitas(rows){
   VIS_FILTERED=rows||[];
   document.getElementById('visCount').textContent=`${rows.length} visita${rows.length!==1?'s':''}`;
@@ -2584,23 +2593,20 @@ function descargarReporteTitulares(){
 }
 function _money(x){ return parseFloat(String(x==null?'':x).replace(/[^0-9.\-]/g,''))||0; }
 function calcMetrics(visitas){
-  let total=visitas.length, contacto=0, pagos=0, promesas=0, montoProm=0;
+  let total=visitas.length, contacto=0, titular=0, pagos=0, promesas=0, montoProm=0;
   const porGestor={};
   for(const v of visitas){
-    const r=(v.RESULTADO||'').trim().toLowerCase();
-    const conContacto = !!r && !r.startsWith('no ');
-    const esPago = r.includes('pago') && !r.includes('promesa');
-    const monto=_money(v.MONTO_PROMESA);
-    const esPromesa = r.includes('promesa') || monto>0;
-    if(conContacto) contacto++;
-    if(esPago) pagos++;
-    if(esPromesa){ promesas++; montoProm+=monto; }
+    const cc=esConContacto(v), ct=esContactoTitular(v), pg=esPago(v), pr=esPromesa(v), monto=montoPromesa(v);
+    if(cc) contacto++;
+    if(ct) titular++;
+    if(pg) pagos++;
+    if(pr){ promesas++; montoProm+=monto; }
     const g=v.NOMBRE_GESTOR||v.ID_GESTOR||'—';
-    if(!porGestor[g]) porGestor[g]={gestor:g,visitas:0,contacto:0,pagos:0,promesas:0,monto:0};
-    const pg=porGestor[g]; pg.visitas++; if(conContacto)pg.contacto++; if(esPago)pg.pagos++; if(esPromesa){pg.promesas++; pg.monto+=monto;}
+    if(!porGestor[g]) porGestor[g]={gestor:g,visitas:0,contacto:0,titular:0,pagos:0,promesas:0,monto:0};
+    const pgr=porGestor[g]; pgr.visitas++; if(cc)pgr.contacto++; if(ct)pgr.titular++; if(pg)pgr.pagos++; if(pr){pgr.promesas++; pgr.monto+=monto;}
   }
-  return { total, contacto, pagos, promesas, montoProm,
-    tasa: total?Math.round(contacto/total*100):0,
+  return { total, contacto, titular, pagos, promesas, montoProm,
+    tasa: total?Math.round(titular/total*100):0,
     porGestor:Object.values(porGestor).sort((a,b)=>b.visitas-a.visitas) };
 }
 async function generarReporte(){
@@ -2626,7 +2632,8 @@ function renderReporte(m){
     <td class="g">${g.gestor}</td>
     <td class="num">${fmt(g.visitas)}</td>
     <td class="num">${fmt(g.contacto)}</td>
-    <td class="num">${g.visitas?Math.round(g.contacto/g.visitas*100):0}%</td>
+    <td class="num">${fmt(g.titular)}</td>
+    <td class="num">${g.visitas?Math.round(g.titular/g.visitas*100):0}%</td>
     <td class="num">${fmt(g.pagos)}</td>
     <td class="num">${fmt(g.promesas)}</td>
     <td class="num">${money(g.monto)}</td></tr>`).join('');
@@ -2635,6 +2642,7 @@ function renderReporte(m){
     <div class="rep-kpis">
       <div class="rep-kpi"><div class="n">${fmt(m.total)}</div><div class="l">Visitas totales</div></div>
       <div class="rep-kpi accent"><div class="n">${m.tasa}%</div><div class="l">Tasa de contacto</div></div>
+      <div class="rep-kpi"><div class="n">${fmt(m.titular)}</div><div class="l">Contacto titular</div></div>
       <div class="rep-kpi"><div class="n">${fmt(m.contacto)}</div><div class="l">Con contacto</div></div>
       <div class="rep-kpi"><div class="n">${fmt(m.pagos)}</div><div class="l">Pagos</div></div>
       <div class="rep-kpi"><div class="n">${fmt(m.promesas)}</div><div class="l">Promesas</div></div>
@@ -2643,8 +2651,8 @@ function renderReporte(m){
     <div class="card" style="padding:8px 6px">
       <div class="rep-sec" style="padding:10px 14px 4px">Productividad por gestor</div>
       <table class="rep-table">
-        <thead><tr><th>Gestor</th><th class="num">Visitas</th><th class="num">Contacto</th><th class="num">Tasa</th><th class="num">Pagos</th><th class="num">Promesas</th><th class="num">Monto prometido</th></tr></thead>
-        <tbody>${rows||'<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:24px">Sin visitas en el rango.</td></tr>'}</tbody>
+        <thead><tr><th>Gestor</th><th class="num">Visitas</th><th class="num">Contacto</th><th class="num">Titular</th><th class="num">Tasa</th><th class="num">Pagos</th><th class="num">Promesas</th><th class="num">Monto prometido</th></tr></thead>
+        <tbody>${rows||'<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:24px">Sin visitas en el rango.</td></tr>'}</tbody>
       </table>
     </div>`;
 }
@@ -2661,20 +2669,23 @@ function descargarExcel(){
     ['Métrica','Valor'],
     ['Visitas totales', m.total],
     ['Con contacto', m.contacto],
+    ['Contacto titular', m.titular],
     ['Tasa de contacto', (m.tasa/100)],
     ['Pagos', m.pagos],
     ['Promesas', m.promesas],
     ['Monto prometido', m.montoProm],
     [],
     ['Productividad por gestor'],
-    ['Gestor','Visitas','Contacto','Tasa','Pagos','Promesas','Monto prometido'],
-    ...m.porGestor.map(g=>[g.gestor,g.visitas,g.contacto,(g.visitas?g.contacto/g.visitas:0),g.pagos,g.promesas,g.monto])
+    ['Gestor','Visitas','Contacto','Titular','Tasa','Pagos','Promesas','Monto prometido'],
+    ...m.porGestor.map(g=>[g.gestor,g.visitas,g.contacto,g.titular,(g.visitas?g.titular/g.visitas:0),g.pagos,g.promesas,g.monto])
   ];
   const wsR=XLSX.utils.aoa_to_sheet(resumen);
   wsR['!cols']=[{wch:26},{wch:14},{wch:12},{wch:10},{wch:10},{wch:12},{wch:16}];
   // formato % y moneda
-  ['B9'].forEach(c=>{ if(wsR[c]) wsR[c].z='0%'; });
-  ['B12'].forEach(c=>{ if(wsR[c]) wsR[c].z='"$"#,##0.00'; });
+  ['B10'].forEach(c=>{ if(wsR[c]) wsR[c].z='0%'; });
+  ['B13'].forEach(c=>{ if(wsR[c]) wsR[c].z='"$"#,##0.00'; });
+  // tasa por gestor (col E, desde fila 17) en %
+  for(let i=0;i<m.porGestor.length;i++){ const c='E'+(17+i); if(wsR[c]) wsR[c].z='0%'; }
   XLSX.utils.book_append_sheet(wb, wsR, 'Resumen');
   const det=[['Fecha','Hora','ID Titular','Titular','Gestor','Resultado','Tipo contacto','Monto promesa','Fecha promesa','Observaciones','Latitud','Longitud']];
   visitas.forEach(v=>det.push([v.FECHA,v.HORA,v.ID_TITULAR,v.NOMBRE_TITULAR,v.NOMBRE_GESTOR,v.RESULTADO,v.TIPO_CONTACTO,_money(v.MONTO_PROMESA)||'',v.FECHA_PROMESA,v.OBSERVACIONES,v.LATITUD,v.LONGITUD]));
