@@ -2149,51 +2149,12 @@ input[type="file"].foto-input { display: none; }
     <div class="captura-step" id="paso-4">
       <div class="step-title">📋 Resultado</div>
       <div class="step-sub">¿Cuál fue el resultado de la visita?</div>
-      <div class="resultado-opciones">
-        <div class="resultado-btn" data-res="Se contacta titular" onclick="seleccionarResultado('Se contacta titular')">
-          <div class="resultado-dot" style="background:#22c55e"></div>
-          <div class="resultado-text">Se contacta titular</div>
-        </div>
-        <div class="resultado-btn" data-res="Se localiza domicilio" onclick="seleccionarResultado('Se localiza domicilio')">
-          <div class="resultado-dot" style="background:#2BC4BE"></div>
-          <div class="resultado-text">Se localiza domicilio</div>
-        </div>
-        <div class="resultado-btn" data-res="Pagó" onclick="seleccionarResultado('Pagó')">
-          <div class="resultado-dot" style="background:#16a34a"></div>
-          <div class="resultado-text">Pagó</div>
-        </div>
-        <div class="resultado-btn" data-res="Promesa de pago" onclick="seleccionarResultado('Promesa de pago')">
-          <div class="resultado-dot" style="background:#1ab5b1"></div>
-          <div class="resultado-text">Promesa de pago</div>
-        </div>
-        <div class="resultado-btn" data-res="Validación exitosa" onclick="seleccionarResultado('Validación exitosa')">
-          <div class="resultado-dot" style="background:#22c55e"></div>
-          <div class="resultado-text">Validación exitosa</div>
-        </div>
-        <div class="resultado-btn" data-res="Se deja mensaje con tercero" onclick="seleccionarResultado('Se deja mensaje con tercero')">
-          <div class="resultado-dot" style="background:#f59e0b"></div>
-          <div class="resultado-text">Se deja mensaje con tercero</div>
-        </div>
-        <div class="resultado-btn" data-res="No conoce a titular" onclick="seleccionarResultado('No conoce a titular')">
-          <div class="resultado-dot" style="background:#f59e0b"></div>
-          <div class="resultado-text">No conoce a titular</div>
-        </div>
-        <div class="resultado-btn" data-res="No pagó" onclick="seleccionarResultado('No pagó')">
-          <div class="resultado-dot" style="background:#e84444"></div>
-          <div class="resultado-text">No pagó</div>
-        </div>
-        <div class="resultado-btn" data-res="No se localiza dirección" onclick="seleccionarResultado('No se localiza dirección')">
-          <div class="resultado-dot" style="background:#e84444"></div>
-          <div class="resultado-text">No se localiza dirección</div>
-        </div>
-        <div class="resultado-btn" data-res="Lote baldío" onclick="seleccionarResultado('Lote baldío')">
-          <div class="resultado-dot" style="background:#7A8A98"></div>
-          <div class="resultado-text">Lote baldío</div>
-        </div>
-        <div class="resultado-btn" data-res="Zona de alto riesgo" onclick="seleccionarResultado('Zona de alto riesgo')">
-          <div class="resultado-dot" style="background:#e0552b"></div>
-          <div class="resultado-text">Zona de alto riesgo</div>
-        </div>
+      <div class="resultado-opciones" id="resultado-opciones"></div>
+      <div id="promesaBox" style="display:none;margin-top:16px;padding:14px;background:rgba(26,181,177,.08);border:1px solid rgba(26,181,177,.32);border-radius:14px">
+        <div style="font-size:14px;font-weight:600;color:#1ab5b1;margin-bottom:10px">💰 Promesa de pago</div>
+        <input id="montoPromesa" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Monto acordado ($)" oninput="setMonto(this.value)" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.22);color:#fff;font-size:15px;margin-bottom:10px">
+        <label style="font-size:12px;color:#9fb3bd;display:block;margin-bottom:5px">Fecha de pago acordada (opcional)</label>
+        <input id="fechaPromesa" type="date" oninput="setFechaPromesa(this.value)" style="width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.22);color:#fff;font-size:15px">
       </div>
     </div>
 
@@ -2833,7 +2794,7 @@ let CAPTURA = {
 // ── Inicializar captura al entrar a la pantalla ──
 function initCaptura() {
   // Reset estado
-  CAPTURA = { paso:1, lat:null, lon:null, fotos:[null,null,null], fotoFiles:[null,null,null], contacto:null, subDatos:{}, resultado:null, observaciones:'' };
+  CAPTURA = { paso:1, lat:null, lon:null, fotos:[null,null,null], fotoFiles:[null,null,null], contacto:null, subDatos:{}, resultado:null, resultado_categoria:null, observaciones:'', etiquetas:[], cartera_tipo:'', monto_promesa:'', fecha_promesa:'' };
   // Cuestionario dinámico (se reemplaza el reset por defecto y se carga async)
   CAPTURA.dinamico = false; CAPTURA.cuest = null;
   CAPTURA.qNodo = null; CAPTURA.qStack = []; CAPTURA.respuestas = {}; CAPTURA._qOpts = [];
@@ -3007,13 +2968,12 @@ function actualizarBotonPaso() {
   if(p === 1) habilitado = !!(CAPTURA.lat && CAPTURA.lon);
   if(p === 2) habilitado = !!CAPTURA.fotos[0];
   if(p === 3) habilitado = validarPaso3();
-  if(p === 4) habilitado = !!CAPTURA.resultado;
+  if(p === 4) habilitado = !!CAPTURA.resultado && (!necesitaMonto() || !!String(CAPTURA.monto_promesa||'').trim());
   if(p === 5) habilitado = CAPTURA.observaciones.length >= 10;
 
   btn.disabled = !habilitado;
 
-  const esUltimoFijo = (p === 5) || (p === 4 && CAPTURA.dinamico);
-  if(esUltimoFijo) {
+  if(p === 5) {
     btn.textContent = '🚀 Registrar visita · +50 XP';
     btn.className   = 'btn-paso completar';
   } else {
@@ -3027,8 +2987,6 @@ function siguientePaso() {
   if(p === 'q'){ cuestSiguiente(); return; }
   // Tras fotos: si la cartera tiene cuestionario, entra al grafo (enriquecimiento) antes de las preguntas fijas
   if(p === 2 && CAPTURA.dinamico){ CAPTURA.paso = 'q'; iniciarCuestionario(); return; }
-  // En modo dinámico el cierre es el Resultado (paso 4); se omite Observaciones
-  if(p === 4 && CAPTURA.dinamico){ registrarVisita(); return; }
   if(p < 5) {
     CAPTURA.paso++;
     document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
@@ -3245,12 +3203,54 @@ function setSiNo(campo, valor, btn) {
   actualizarBotonPaso();
 }
 
-// ── PASO 4: RESULTADO ──
-function seleccionarResultado(resultado) {
+// ── PASO 4: RESULTADO (catálogo dinámico de etiquetas de la cartera) ──
+const ETQ_CAT_COLOR_F = { pago:'#16a34a', promesa:'#1ab5b1', gestion_efectiva:'#22c55e', gestion_indirecta:'#7FB0D0', sin_resultado:'#7A8A98', ilocalizable:'#e84444', acceso_restringido:'#e0552b', otro:'#9B8CCE' };
+const ETQ_FALLBACK = [
+  {TEXTO:'Se contacta titular',CATEGORIA:'gestion_efectiva'},
+  {TEXTO:'Se localiza domicilio',CATEGORIA:'gestion_efectiva'},
+  {TEXTO:'Pagó',CATEGORIA:'pago'},
+  {TEXTO:'Promesa de pago',CATEGORIA:'promesa'},
+  {TEXTO:'Validación exitosa',CATEGORIA:'gestion_efectiva'},
+  {TEXTO:'Se deja mensaje con tercero',CATEGORIA:'gestion_indirecta'},
+  {TEXTO:'No conoce a titular',CATEGORIA:'sin_resultado'},
+  {TEXTO:'No pagó',CATEGORIA:'sin_resultado'},
+  {TEXTO:'No se localiza dirección',CATEGORIA:'ilocalizable'},
+  {TEXTO:'Lote baldío',CATEGORIA:'ilocalizable'},
+  {TEXTO:'Zona de alto riesgo',CATEGORIA:'ilocalizable'},
+  {TEXTO:'Sin acceso',CATEGORIA:'acceso_restringido'},
+];
+function renderEtiquetasResultado(){
+  const cont = document.getElementById('resultado-opciones'); if(!cont) return;
+  const list = (CAPTURA.etiquetas && CAPTURA.etiquetas.length) ? CAPTURA.etiquetas : ETQ_FALLBACK;
+  cont.innerHTML = list.map(e=>{
+    const texto = String(e.TEXTO||'');
+    const cat   = String(e.CATEGORIA||'otro');
+    const col   = ETQ_CAT_COLOR_F[cat] || '#888';
+    return `<div class="resultado-btn" data-res="${escH(texto)}" data-cat="${escH(cat)}" onclick="seleccionarResultado(this.dataset.res, this.dataset.cat)">
+      <div class="resultado-dot" style="background:${col}"></div>
+      <div class="resultado-text">${escH(texto)}</div>
+    </div>`;
+  }).join('');
+  // re-marcar si ya había selección
+  if(CAPTURA.resultado){ document.querySelectorAll('.resultado-btn').forEach(b=>b.classList.toggle('selected', b.dataset.res===CAPTURA.resultado)); }
+}
+function seleccionarResultado(resultado, categoria) {
   CAPTURA.resultado = resultado;
+  CAPTURA.resultado_categoria = categoria || '';
   document.querySelectorAll('.resultado-btn').forEach(b => b.classList.toggle('selected', b.dataset.res === resultado));
+  const box = document.getElementById('promesaBox');
+  if(box){
+    const show = necesitaMonto();
+    box.style.display = show ? 'block' : 'none';
+    if(!show){ CAPTURA.monto_promesa=''; CAPTURA.fecha_promesa='';
+      const mi=document.getElementById('montoPromesa'); if(mi) mi.value='';
+      const fi=document.getElementById('fechaPromesa'); if(fi) fi.value=''; }
+  }
   actualizarBotonPaso();
 }
+function necesitaMonto(){ return CAPTURA.resultado_categoria==='promesa' && String(CAPTURA.cartera_tipo||'').trim().toLowerCase()==='cobranza'; }
+function setMonto(v){ CAPTURA.monto_promesa = String(v||'').trim(); actualizarBotonPaso(); }
+function setFechaPromesa(v){ CAPTURA.fecha_promesa = String(v||'').trim(); }
 
 // ── PASO 5: OBSERVACIONES ──
 function contarObs(textarea) {
@@ -3270,6 +3270,8 @@ async function cargarCuestionario(){
       body: JSON.stringify({ id_titular: t.ID_TITULAR })
     });
     const d = await res.json();
+    CAPTURA.etiquetas = (d && Array.isArray(d.etiquetas)) ? d.etiquetas : [];
+    CAPTURA.cartera_tipo = (d && d.cartera_tipo) || '';
     if(d && d.tiene_cuestionario){
       CAPTURA.dinamico = true;
       CAPTURA.cuest = {
@@ -3280,7 +3282,8 @@ async function cargarCuestionario(){
     } else {
       CAPTURA.dinamico = false; CAPTURA.cuest = null;
     }
-  }catch(e){ CAPTURA.dinamico = false; CAPTURA.cuest = null; }
+    renderEtiquetasResultado();
+  }catch(e){ CAPTURA.dinamico = false; CAPTURA.cuest = null; renderEtiquetasResultado(); }
 }
 
 function qPregunta(){ return (CAPTURA.cuest && CAPTURA.cuest.preguntas || []).find(p => p.ID === CAPTURA.qNodo); }
@@ -3420,6 +3423,9 @@ async function registrarVisita() {
     hora_visita:        hora,
     tipo_contacto:      (TIPO_CONTACTO_LABEL[CAPTURA.contacto] || CAPTURA.contacto || ''),
     resultado:          CAPTURA.resultado || '',
+    resultado_categoria: CAPTURA.resultado_categoria || '',
+    monto_promesa:      (necesitaMonto() ? (CAPTURA.monto_promesa || '') : ''),
+    fecha_promesa:      (necesitaMonto() ? (CAPTURA.fecha_promesa || '') : ''),
     latitud:            CAPTURA.lat       || '',
     longitud:           CAPTURA.lon       || '',
     observaciones:      CAPTURA.observaciones || '',
