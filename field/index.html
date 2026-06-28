@@ -1657,9 +1657,17 @@ input[type="file"].foto-input { display: none; }
 .q-chk input{width:18px;height:18px;accent-color:var(--teal2)}
 .q-req{font-size:12px;color:var(--gold2);margin-top:2px}
 .q-res{font-size:12px;color:var(--gold2);margin-top:2px}
+.offline-bar{position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 14px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.offline-bar.is-off{background:linear-gradient(90deg,#6b7280,#4b5563)}
+.offline-bar.is-pend{background:linear-gradient(90deg,#178582,#1ab5b1)}
+.offline-bar button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font-weight:700;font-size:12px;padding:5px 12px;border-radius:999px;cursor:pointer}
+.offline-bar button:active{transform:scale(.96)}
 </style>
 </head>
 <body>
+
+<div id="offlineBar" class="offline-bar" style="display:none"></div>
+
 
 <!-- ════════════════ SCREEN: LOGIN ════════════════ -->
 <div class="screen active" id="screen-login">
@@ -2371,14 +2379,54 @@ function doLogout() {
 // ═══════════════════════════════════════════════
 let SYNCING = false;
 
+// ── Cola offline en IndexedDB (robusta: aguanta fotos sin reventar la cuota) ──
+const IDB_NAME='fortaleza_field', IDB_STORE='pendientes', IDB_VER=1;
+function idbOpen(){
+  return new Promise((resolve,reject)=>{
+    let req;
+    try{ req=indexedDB.open(IDB_NAME,IDB_VER); }catch(e){ return reject(e); }
+    req.onupgradeneeded=()=>{ const db=req.result; if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE,{keyPath:'id_visita'}); };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbAdd(item){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).put(item); tx.oncomplete=()=>{db.close();res();}; tx.onerror=()=>{db.close();rej(tx.error);}; }); }
+async function idbAll(){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readonly'); const r=tx.objectStore(IDB_STORE).getAll(); r.onsuccess=()=>{db.close();res(r.result||[]);}; r.onerror=()=>{db.close();rej(r.error);}; }); }
+async function idbDel(id){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).delete(id); tx.oncomplete=()=>{db.close();res();}; tx.onerror=()=>{db.close();rej(tx.error);}; }); }
+async function idbCount(){ try{ return (await idbAll()).length; }catch(e){ return 0; } }
+
+// Migración única de la cola vieja en localStorage -> IndexedDB
+async function migrarColaLocalStorage(){
+  try{
+    const old=JSON.parse(localStorage.getItem('ff_visitas_pendientes')||'[]');
+    if(Array.isArray(old) && old.length){
+      for(const it of old){ if(it && it.id_visita){ try{ await idbAdd(it); }catch(e){} } }
+    }
+    localStorage.removeItem('ff_visitas_pendientes');
+  }catch(e){}
+}
+
+// Indicador visible de estado offline / pendientes por sincronizar
+function actualizarIndicadorPendientes(){
+  const el=document.getElementById('offlineBar'); if(!el) return;
+  idbCount().then(n=>{
+    const off=!navigator.onLine;
+    if(!off && n===0){ el.style.display='none'; return; }
+    el.style.display='flex';
+    el.className = 'offline-bar' + (off ? ' is-off' : ' is-pend');
+    el.innerHTML = off
+      ? `<span>📴 Sin conexión${n?` · ${n} visita${n>1?'s':''} en cola`:''}</span>`
+      : `<span>⏳ ${n} visita${n>1?'s':''} por sincronizar</span><button onclick="syncPendientes()">Sincronizar</button>`;
+  });
+}
+
 async function syncPendientes() {
   if (SYNCING || !navigator.onLine) return;
   let cola = [];
-  try { cola = JSON.parse(localStorage.getItem('ff_visitas_pendientes') || '[]'); } catch { cola = []; }
-  if (!cola.length) return;
+  try { cola = await idbAll(); } catch(e) { cola = []; }
+  if (!cola.length) { actualizarIndicadorPendientes(); return; }
 
   SYNCING = true;
-  const restantes = [];
   let ok = 0;
 
   for (const item of cola) {
@@ -2404,28 +2452,38 @@ async function syncPendientes() {
         });
       } catch (ge) { /* el XP se reconcilia luego al recargar */ }
 
+      await idbDel(item.id_visita);
       ok++;
     } catch (e) {
-      restantes.push(item); // se reintenta después
+      /* se queda en la cola para reintentar después */
     }
   }
 
-  localStorage.setItem('ff_visitas_pendientes', JSON.stringify(restantes));
   SYNCING = false;
+  const restantes = await idbCount();
+  actualizarIndicadorPendientes();
 
   if (ok > 0) {
-    showToast('✅', `${ok} visita${ok>1?'s':''} sincronizada${ok>1?'s':''}`, restantes.length ? `${restantes.length} pendiente(s)` : 'Todo al día');
+    showToast('✅', `${ok} visita${ok>1?'s':''} sincronizada${ok>1?'s':''}`, restantes ? `${restantes} pendiente(s)` : 'Todo al día');
     if (typeof loadMisiones === 'function') loadMisiones().catch(() => {});
   }
 }
 
-// Reintenta automáticamente en cuanto vuelve la conexión
-window.addEventListener('online', syncPendientes);
+// Reintenta automáticamente en cuanto vuelve la conexión; actualiza indicador en ambos sentidos
+window.addEventListener('online',  ()=>{ actualizarIndicadorPendientes(); syncPendientes(); });
+window.addEventListener('offline', ()=>{ actualizarIndicadorPendientes(); });
+
+// Service Worker: permite que la app cargue sin conexión (app shell offline)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
 
 function startApp() {
   goTo('home');
   renderHome();
-  syncPendientes();   // intenta vaciar la cola al entrar
+  migrarColaLocalStorage()
+    .then(()=>{ actualizarIndicadorPendientes(); return syncPendientes(); })  // migra cola vieja, muestra estado y vacía cola
+    .catch(()=>{});
   setTimeout(() => showToast('🗺️', `¡Bienvenido, ${STATE.user.nombre || 'Agente'}!`, '+0 XP'), 600);
 }
 
@@ -3414,7 +3472,7 @@ async function registrarVisita() {
   const hora  = ahora.toTimeString().slice(0,5);
 
   const payload = {
-    id_visita:          `VIS-${Date.now()}`,
+    id_visita:          `VIS-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
     id_titular:         t.ID_TITULAR || '',
     nombre_titular:     t.NOMBRE     || '',
     id_gestor:          STATE.user?.idGestor  || '',
@@ -3511,12 +3569,16 @@ async function registrarVisita() {
     // Hubo conexión: aprovecha para vaciar cualquier visita pendiente en cola
     syncPendientes();
   } catch(e) {
-    // Guardar offline si N8N falla
-    const pendientes = JSON.parse(localStorage.getItem('ff_visitas_pendientes') || '[]');
-    pendientes.push({ ...payload, _pendiente: true, _ts: Date.now() });
-    localStorage.setItem('ff_visitas_pendientes', JSON.stringify(pendientes));
+    // Guardar offline en IndexedDB (aguanta fotos sin reventar la cuota)
+    try {
+      await idbAdd({ ...payload, _pendiente: true, _ts: Date.now() });
+      showToast('⚠️', 'Sin conexión', 'Visita guardada localmente');
+    } catch(e2) {
+      console.error('No se pudo guardar offline:', e2);
+      showToast('⚠️', 'Error al guardar', 'Revisa el almacenamiento del dispositivo');
+    }
+    actualizarIndicadorPendientes();
     console.warn('⚠️ Visita guardada offline:', e.message);
-    showToast('⚠️', 'Sin conexión', 'Visita guardada localmente');
   }
 
   // ── 4) RE-CARGAR LISTA MISIONES EN FONDO ──
