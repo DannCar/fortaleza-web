@@ -2421,52 +2421,64 @@ function actualizarIndicadorPendientes(){
 }
 
 async function syncPendientes() {
-  if (SYNCING || !navigator.onLine) return;
+  if (SYNCING) return;
+  if (!navigator.onLine) { showToast('📴', 'Sin conexión', 'Reintenta cuando tengas señal'); return; }
   let cola = [];
   try { cola = await idbAll(); } catch(e) { cola = []; }
   if (!cola.length) { actualizarIndicadorPendientes(); return; }
 
   SYNCING = true;
-  let ok = 0;
+  let ok = 0, fail = 0, lastErr = '';
 
-  for (const item of cola) {
-    try {
-      const res = await fetch(`${N8N_BASE}/webhook/field-registrar-visita`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item),
-      });
-      const data = await res.json();
-      if (!data || !data.success) throw new Error(data?.message || 'fallo servidor');
-
-      // Gamificación de la visita sincronizada (no bloquea la sync)
+  try {
+    for (const item of cola) {
       try {
-        await fetch(`${N8N_BASE}/webhook/field-gamificacion`, {
+        const res = await fetch(`${N8N_BASE}/webhook/field-registrar-visita`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id_gestor: item.id_gestor || STATE.user?.idGestor || '',
-            resultado: item.resultado || '',
-            fecha:     item.fecha_visita || '',
-          }),
+          body: JSON.stringify(item),
         });
-      } catch (ge) { /* el XP se reconcilia luego al recargar */ }
+        let data = null;
+        try { data = await res.json(); } catch(_) { data = null; }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!data || !data.success) throw new Error((data && data.message) || 'respuesta sin éxito');
 
-      await idbDel(item.id_visita);
-      ok++;
-    } catch (e) {
-      /* se queda en la cola para reintentar después */
+        // Gamificación de la visita sincronizada (no bloquea la sync)
+        try {
+          await fetch(`${N8N_BASE}/webhook/field-gamificacion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id_gestor: item.id_gestor || STATE.user?.idGestor || '',
+              resultado: item.resultado || '',
+              fecha:     item.fecha_visita || '',
+            }),
+          });
+        } catch (ge) { /* el XP se reconcilia luego al recargar */ }
+
+        await idbDel(item.id_visita);
+        ok++;
+      } catch (e) {
+        fail++; lastErr = (e && e.message) || 'error';
+      }
     }
+  } finally {
+    SYNCING = false;   // nunca se queda atorado
   }
 
-  SYNCING = false;
-  const restantes = await idbCount();
+  await idbCount();
   actualizarIndicadorPendientes();
 
-  if (ok > 0) {
-    showToast('✅', `${ok} visita${ok>1?'s':''} sincronizada${ok>1?'s':''}`, restantes ? `${restantes} pendiente(s)` : 'Todo al día');
-    if (typeof loadMisiones === 'function') loadMisiones().catch(() => {});
+  // Siempre dar feedback (incluso si falla, para saber por qué)
+  if (ok > 0 && fail === 0) {
+    showToast('✅', `${ok} visita${ok>1?'s':''} sincronizada${ok>1?'s':''}`, 'Todo al día');
+  } else if (ok > 0) {
+    showToast('⚠️', `${ok} ok · ${fail} con error`, lastErr);
+  } else {
+    showToast('⚠️', 'No se pudo sincronizar', lastErr || 'Revisa la conexión o el servidor');
   }
+
+  if (ok > 0 && typeof loadMisiones === 'function') loadMisiones().catch(() => {});
 }
 
 // Reintenta automáticamente en cuanto vuelve la conexión; actualiza indicador en ambos sentidos
