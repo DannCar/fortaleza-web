@@ -213,6 +213,8 @@ input{font-family:inherit}
 .tit-gsel{background:var(--navy-600);border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--text);font-size:12px;cursor:pointer;max-width:150px}
 .tit-gsel:focus{outline:none;border-color:var(--teal)}
 .tit-act{display:flex;gap:7px;justify-content:flex-end}
+.rev-btn{color:#7FB0D0}
+.rev-btn:hover{border-color:#7FB0D0;background:rgba(127,176,208,.12)}
 .tit-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--border);display:grid;place-items:center;font-size:15px;transition:.14s;color:var(--text-dim)}
 .tit-btn:hover{border-color:var(--border-strong);color:var(--text)}
 .tit-btn.urg-on{background:rgba(224,160,74,.16);border-color:rgba(224,160,74,.4);color:var(--amber)}
@@ -384,6 +386,17 @@ input{font-family:inherit}
 .res-otro{background:rgba(147,166,179,.15);color:var(--text-dim)}
 /* detalle */
 .vis-modal{width:min(880px,95vw);max-height:90vh;overflow:auto;position:relative;padding:30px 36px}
+/* gana a .geo-modal (misma clase, declarada después) y adapta a móvil/tablet/escritorio */
+.geo-modal.vis-modal{width:min(1040px,94vw);max-height:92vh;overflow:auto;padding:30px 36px}
+.vis-d-cols{display:grid;grid-template-columns:1fr;gap:0 30px;align-items:start}
+@media(min-width:900px){
+  .vis-d-cols{grid-template-columns:1.05fr .95fr}
+  .vis-dmap{height:300px}
+}
+@media(max-width:640px){
+  .geo-modal.vis-modal{width:96vw;padding:22px 16px;max-height:94vh}
+  .vis-d-grid{grid-template-columns:1fr 1fr}
+}
 .vis-x{position:absolute;top:16px;right:18px;font-size:18px;color:var(--text-dim);width:32px;height:32px;border-radius:8px;z-index:3}
 .vis-x:hover{background:var(--navy-700);color:var(--text)}
 .vis-d-head{margin-bottom:18px;padding-right:30px}
@@ -1864,6 +1877,7 @@ function renderTit(rows){
       <td><div class="tit-act">
         <button class="tit-btn ${t.URGENTE?'urg-on':''}" title="Urgente" onclick="toggleUrg('${t.ID_TITULAR}',${!t.URGENTE})">⚑</button>
         <button class="tit-btn ${t.ACTIVO?'act-on':'act-off'}" title="${t.ACTIVO?'Desactivar':'Activar'}" onclick="toggleAct('${t.ID_TITULAR}',${!t.ACTIVO})">${t.ACTIVO?'◉':'○'}</button>
+        ${t.VISITADO?`<button class="tit-btn rev-btn" title="Revisita: regresar a ASIGNADO" onclick="marcarRevisita('${t.ID_TITULAR}')">↻</button>`:''}
       </div></td></tr>`).join('')+'</tbody></table>'+
     (rows.length>400?`<div class="empty" style="padding:18px"><p>Mostrando 400 de ${rows.length}. Afina los filtros para ver más.</p></div>`:'');
   updateBulkBar();
@@ -1901,6 +1915,13 @@ async function toggleUrg(id,val){
   const t=_findTit(id); if(!t) return; t.URGENTE=val; applyTitFilters();
   const r=await apiCall('admin-titulares-v2','POST',{action:'toggle_urgente',id_titular:id,urgente:val});
   if(r&&r.success){ toast(val?'Marcado como urgente':'Urgencia quitada'); } else { t.URGENTE=!val; applyTitFilters(); toast('No se pudo actualizar'); }
+}
+async function marcarRevisita(id){
+  const t=(typeof TIT_ALL!=='undefined')?TIT_ALL.find(x=>x.ID_TITULAR===id):null;
+  if(!confirm(`¿Marcar REVISITA para ${t?t.NOMBRE:id}?\nEl titular regresará a estatus ASIGNADO y volverá a VISITADO cuando el gestor lo visite de nuevo.`)) return;
+  const r=await apiCall('admin-titulares-v2','POST',{action:'revisita',id_titular:id});
+  if(r&&r.success){ if(t){ t.VISITADO=false; } applyTitFilters(); toast('Revisita marcada · titular ASIGNADO'); }
+  else toast((r&&r.error)||'No se pudo marcar la revisita');
 }
 async function toggleAct(id,val){
   const t=_findTit(id); if(!t) return; t.ACTIVO=val; applyTitFilters();
@@ -2520,23 +2541,29 @@ function abrirVisita(i){
       <div class="vis-d-tit">${v.NOMBRE_TITULAR||'—'}</div>
       <div class="vis-d-meta">${v.ID_TITULAR} · ${v.FECHA||''} ${v.HORA||''}</div>
     </div>
-    <div class="vis-d-grid">
-      ${cell('Gestor', v.NOMBRE_GESTOR)}
-      ${cell('Resultado', `<span class="res-badge ${resClass(v.RESULTADO)}">${v.RESULTADO||'—'}</span>`)}
-      ${cell('Tipo de contacto', v.TIPO_CONTACTO)}
-      ${cell('Promesa', v.MONTO_PROMESA?('$'+v.MONTO_PROMESA+(v.FECHA_PROMESA?' · '+v.FECHA_PROMESA:'')):'—')}
-      ${cell('Municipio', v.MUNICIPIO)}
-      ${cell('Estado', v.ESTADO)}
+    <div class="vis-d-cols">
+      <div>
+        <div class="vis-d-grid">
+          ${cell('Gestor', v.NOMBRE_GESTOR)}
+          ${cell('Resultado', `<span class="res-badge ${resClass(v.RESULTADO)}">${v.RESULTADO||'—'}</span>`)}
+          ${cell('Tipo de contacto', v.TIPO_CONTACTO)}
+          ${cell('Promesa', v.MONTO_PROMESA?('$'+v.MONTO_PROMESA+(v.FECHA_PROMESA?' · '+v.FECHA_PROMESA:'')):'—')}
+          ${cell('Municipio', v.MUNICIPIO)}
+          ${cell('Estado', v.ESTADO)}
+        </div>
+        ${(v.RESPUESTAS&&v.RESPUESTAS.length)?`<div class="vis-d-sec">Cuestionario (${v.RESPUESTAS.length})</div>
+          <div class="vis-d-cuest">${v.RESPUESTAS.map(r=>{
+            let val=r.VALOR||'';
+            if(!val && r.VALOR_JSON){ try{ const j=typeof r.VALOR_JSON==='string'?JSON.parse(r.VALOR_JSON):r.VALOR_JSON; val=Array.isArray(j)?j.join(', '):String(j); }catch(e){ val=String(r.VALOR_JSON); } }
+            return `<div class="vis-q-row"><div class="vis-q-p">${esc(r.PREGUNTA||'')}</div><div class="vis-q-v">${esc(val)||'—'}</div></div>`;
+          }).join('')}</div>`:''}
+        ${v.OBSERVACIONES?`<div class="vis-d-sec">Observaciones</div><div class="vis-d-obs">${v.OBSERVACIONES}</div>`:''}
+      </div>
+      <div>
+        ${v.FOTOS&&v.FOTOS.length?`<div class="vis-d-sec">Fotos (${v.FOTOS.length})</div><div class="vis-gallery">${v.FOTOS.map(u=>`<div class="vis-photo" onclick="verFoto('${u}')"><img src="${u}" loading="lazy" referrerpolicy="no-referrer"></div>`).join('')}</div>`:''}
+        ${coord?`<div class="vis-d-sec">Ubicación del punto</div><div class="vis-dmap" id="visDmap"></div>`:''}
+      </div>
     </div>
-    ${(v.RESPUESTAS&&v.RESPUESTAS.length)?`<div class="vis-d-sec">Cuestionario (${v.RESPUESTAS.length})</div>
-      <div class="vis-d-cuest">${v.RESPUESTAS.map(r=>{
-        let val=r.VALOR||'';
-        if(!val && r.VALOR_JSON){ try{ const j=typeof r.VALOR_JSON==='string'?JSON.parse(r.VALOR_JSON):r.VALOR_JSON; val=Array.isArray(j)?j.join(', '):String(j); }catch(e){ val=String(r.VALOR_JSON); } }
-        return `<div class="vis-q-row"><div class="vis-q-p">${esc(r.PREGUNTA||'')}</div><div class="vis-q-v">${esc(val)||'—'}</div></div>`;
-      }).join('')}</div>`:''}
-    ${v.OBSERVACIONES?`<div class="vis-d-sec">Observaciones</div><div class="vis-d-obs">${v.OBSERVACIONES}</div>`:''}
-    ${v.FOTOS&&v.FOTOS.length?`<div class="vis-d-sec">Fotos (${v.FOTOS.length})</div><div class="vis-gallery">${v.FOTOS.map(u=>`<div class="vis-photo" onclick="verFoto('${u}')"><img src="${u}" loading="lazy" referrerpolicy="no-referrer"></div>`).join('')}</div>`:''}
-    ${coord?`<div class="vis-d-sec">Ubicación del punto</div><div class="vis-dmap" id="visDmap"></div>`:''}
     <div class="vis-d-actions">
       ${coord?`<a class="vis-act" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" rel="noopener">🧭 Cómo llegar</a>`:''}
       <button class="vis-act urg" onclick="marcarUrgenteVisita('${v.ID_TITULAR}')">⚑ Marcar titular urgente</button>
