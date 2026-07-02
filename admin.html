@@ -362,6 +362,12 @@ input{font-family:inherit}
 .vis-date input{background:var(--navy-700);border:1px solid var(--border);border-radius:9px;padding:8px 11px;color:var(--text);font-size:13px;color-scheme:dark}
 .vis-wrap{max-height:calc(100vh - 250px);overflow:auto}
 .vis-row{display:flex;align-items:center;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:.13s}
+.vis-head-row{display:flex;align-items:center;gap:16px;padding:9px 16px;border-bottom:1px solid var(--border);background:var(--navy-700);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint);position:sticky;top:0;z-index:2}
+.vis-d-cuest{background:var(--navy-700);border:1px solid var(--border);border-radius:12px;padding:4px 14px;margin-top:6px}
+.vis-q-row{display:flex;gap:14px;padding:9px 0;border-bottom:1px solid var(--border)}
+.vis-q-row:last-child{border-bottom:none}
+.vis-q-p{flex:1;font-size:12.5px;color:var(--text-dim)}
+.vis-q-v{flex:1;font-size:13px;color:var(--text);font-weight:500}
 .vis-row:hover{background:var(--navy-700)}
 .vis-when{font-family:var(--mono);font-size:11px;color:var(--text-faint);width:96px;flex-shrink:0;line-height:1.5}
 .vis-when b{color:var(--text-dim);font-size:12px}
@@ -997,6 +1003,8 @@ input{font-family:inherit}
           <label class="vis-date">Desde <input type="date" id="visDesde" onchange="loadVisitas(true)"></label>
           <label class="vis-date">Hasta <input type="date" id="visHasta" onchange="loadVisitas(true)"></label>
           <select class="tit-sel" id="visGestor" onchange="applyVisFilters()"><option value="">Gestor · todos</option></select>
+          <select class="tit-sel" id="visEstado" onchange="populateVisMunicipios();applyVisFilters()"><option value="">Estado · todos</option></select>
+          <select class="tit-sel" id="visMunicipio" onchange="applyVisFilters()"><option value="">Municipio · todos</option></select>
           <span class="tit-count" id="visCount">—</span>
           <button class="tit-export" onclick="exportarVisitas()">⬇ Excel</button>
         </div>
@@ -2447,17 +2455,34 @@ async function loadVisitas(force){
   const sel=document.getElementById('visGestor'); const cur=sel.value;
   sel.innerHTML='<option value="">Gestor · todos</option>'+VIS_GESTORES.map(g=>`<option value="${g.ID_GESTOR}">${g.NOMBRE}</option>`).join('');
   sel.value=cur;
+  populateVisGeoFilters();
   applyVisFilters();
 }
 function applyVisFilters(){
   if(!VIS_LOADED) return;
   const q=(_gv('visSearch')||'').toLowerCase().trim(), g=_gv('visGestor');
+  const est=_gv('visEstado'), mun=_gv('visMunicipio');
   const rows=VIS_ALL.filter(v=>{
     if(g && v.ID_GESTOR!==g) return false;
-    if(q && !((v.NOMBRE_TITULAR+' '+v.NOMBRE_GESTOR+' '+v.RESULTADO+' '+v.ID_TITULAR).toLowerCase().includes(q))) return false;
+    if(est && (v.ESTADO||'')!==est) return false;
+    if(mun && (v.MUNICIPIO||'')!==mun) return false;
+    if(q && !((v.NOMBRE_TITULAR+' '+v.NOMBRE_GESTOR+' '+v.RESULTADO+' '+v.ID_TITULAR+' '+(v.MUNICIPIO||'')+' '+(v.ESTADO||'')).toLowerCase().includes(q))) return false;
     return true;
   });
   renderVisitas(rows);
+}
+function populateVisGeoFilters(){
+  const ests=[...new Set(VIS_ALL.map(v=>(v.ESTADO||'').trim()).filter(Boolean))].sort();
+  const se=document.getElementById('visEstado');
+  if(se){ const cur=se.value; se.innerHTML='<option value="">Estado · todos</option>'+ests.map(e=>`<option ${e===cur?'selected':''}>${esc(e)}</option>`).join(''); }
+  populateVisMunicipios();
+}
+function populateVisMunicipios(){
+  const est=_gv('visEstado');
+  const src=est?VIS_ALL.filter(v=>(v.ESTADO||'')===est):VIS_ALL;
+  const muns=[...new Set(src.map(v=>(v.MUNICIPIO||'').trim()).filter(Boolean))].sort();
+  const sm=document.getElementById('visMunicipio');
+  if(sm){ const cur=sm.value; sm.innerHTML='<option value="">Municipio · todos</option>'+muns.map(m=>`<option ${m===cur&&muns.includes(cur)?'selected':''}>${esc(m)}</option>`).join(''); if(cur&&!muns.includes(cur)) sm.value=''; }
 }
 function resClass(r){ const s=(r||'').trim().toLowerCase(); if(s==='no pagó'||s==='no pago')return'res-nolocaliza'; if(s==='pagó'||s==='pago'||s==='realiza pago')return'res-pago'; if(s.includes('promesa'))return'res-promesa'; if(s.includes('no se localiza')||s.includes('no conoce')||s.includes('alto riesgo')||s.includes('lote bald'))return'res-nolocaliza'; if(s.includes('contacta titular')||s.includes('localiza')||s.includes('validaci')||s.includes('mensaje')||s.includes('contacto')||s.includes('tercero')||s.includes('vecino'))return'res-contacto'; return'res-otro'; }
 function renderVisitas(rows){
@@ -2466,12 +2491,19 @@ function renderVisitas(rows){
   const wrap=document.getElementById('visWrap');
   if(!rows.length){ wrap.innerHTML='<div class="empty"><div class="empty-ic">◆</div><p>Sin visitas para estos filtros.</p></div>'; return; }
   VIS_VISIBLE=rows.slice(0,400);
-  wrap.innerHTML=VIS_VISIBLE.map((v,i)=>`
+  const head=`<div class="vis-head-row">
+      <div class="vis-when">Fecha / Hora</div>
+      <div class="vis-main">Titular · Contacto · Municipio</div>
+      <span style="min-width:130px;text-align:center">Resultado</span>
+      <div class="vis-ges">Gestor</div>
+      <div class="vis-photos-ic">Fotos</div>
+    </div>`;
+  wrap.innerHTML=head+VIS_VISIBLE.map((v,i)=>`
     <div class="vis-row" onclick="abrirVisita(${i})">
       <div class="vis-when"><b>${v.FECHA||'—'}</b><br>${v.HORA||''}</div>
       <div class="vis-main">
         <div class="vis-tit">${v.NOMBRE_TITULAR||'—'}</div>
-        <div class="vis-sub">${v.ID_TITULAR}${v.TIPO_CONTACTO?' · '+v.TIPO_CONTACTO:''}</div>
+        <div class="vis-sub">${v.ID_TITULAR}${v.TIPO_CONTACTO?' · '+v.TIPO_CONTACTO:''}${v.MUNICIPIO?' · '+esc(v.MUNICIPIO):''}${v.ESTADO?', '+esc(v.ESTADO):''}</div>
       </div>
       <span class="res-badge ${resClass(v.RESULTADO)}">${v.RESULTADO||'—'}</span>
       <div class="vis-ges">${v.NOMBRE_GESTOR||''}</div>
@@ -2493,7 +2525,15 @@ function abrirVisita(i){
       ${cell('Resultado', `<span class="res-badge ${resClass(v.RESULTADO)}">${v.RESULTADO||'—'}</span>`)}
       ${cell('Tipo de contacto', v.TIPO_CONTACTO)}
       ${cell('Promesa', v.MONTO_PROMESA?('$'+v.MONTO_PROMESA+(v.FECHA_PROMESA?' · '+v.FECHA_PROMESA:'')):'—')}
+      ${cell('Municipio', v.MUNICIPIO)}
+      ${cell('Estado', v.ESTADO)}
     </div>
+    ${(v.RESPUESTAS&&v.RESPUESTAS.length)?`<div class="vis-d-sec">Cuestionario (${v.RESPUESTAS.length})</div>
+      <div class="vis-d-cuest">${v.RESPUESTAS.map(r=>{
+        let val=r.VALOR||'';
+        if(!val && r.VALOR_JSON){ try{ const j=typeof r.VALOR_JSON==='string'?JSON.parse(r.VALOR_JSON):r.VALOR_JSON; val=Array.isArray(j)?j.join(', '):String(j); }catch(e){ val=String(r.VALOR_JSON); } }
+        return `<div class="vis-q-row"><div class="vis-q-p">${esc(r.PREGUNTA||'')}</div><div class="vis-q-v">${esc(val)||'—'}</div></div>`;
+      }).join('')}</div>`:''}
     ${v.OBSERVACIONES?`<div class="vis-d-sec">Observaciones</div><div class="vis-d-obs">${v.OBSERVACIONES}</div>`:''}
     ${v.FOTOS&&v.FOTOS.length?`<div class="vis-d-sec">Fotos (${v.FOTOS.length})</div><div class="vis-gallery">${v.FOTOS.map(u=>`<div class="vis-photo" onclick="verFoto('${u}')"><img src="${u}" loading="lazy" referrerpolicy="no-referrer"></div>`).join('')}</div>`:''}
     ${coord?`<div class="vis-d-sec">Ubicación del punto</div><div class="vis-dmap" id="visDmap"></div>`:''}
@@ -2650,12 +2690,18 @@ function exportarTitulares(){
 function exportarVisitas(){
   const rows = (typeof VIS_FILTERED!=='undefined') ? VIS_FILTERED : (VIS_ALL||[]);
   if(!rows || !rows.length){ toast('No hay visitas para exportar'); return; }
-  const aoa=[['Fecha','Hora','ID Titular','Titular','ID Gestor','Gestor','Resultado','Categoría','Tipo de contacto','Monto promesa','Fecha promesa','Observaciones','Fotos','Latitud','Longitud']];
-  rows.forEach(v=>aoa.push([
-    v.FECHA||'', v.HORA||'', v.ID_TITULAR||'', v.NOMBRE_TITULAR||'', v.ID_GESTOR||'', v.NOMBRE_GESTOR||'',
-    v.RESULTADO||'', v.RESULTADO_CATEGORIA||'', v.TIPO_CONTACTO||'', (v.MONTO_PROMESA||''), v.FECHA_PROMESA||'', v.OBSERVACIONES||'',
-    (v.FOTOS&&v.FOTOS.length)?v.FOTOS.length:0, v.LATITUD||'', v.LONGITUD||''
-  ]));
+  // Columnas dinámicas con TODAS las preguntas de cuestionario presentes
+  const QCOLS=[]; rows.forEach(v=>(v.RESPUESTAS||[]).forEach(r=>{ const p=(r.PREGUNTA||'').trim(); if(p && !QCOLS.includes(p)) QCOLS.push(p); }));
+  const _vr=(r)=>(r.VALOR!=null && String(r.VALOR).trim()!=='')?String(r.VALOR):(Array.isArray(r.VALOR_JSON)?r.VALOR_JSON.join(', '):'');
+  const aoa=[['Fecha','Hora','ID Titular','Titular','Estado','Municipio','ID Gestor','Gestor','Resultado','Categoría','Tipo de contacto','Monto promesa','Fecha promesa','Observaciones','Fotos','Latitud','Longitud',...QCOLS]];
+  rows.forEach(v=>{
+    const m={}; (v.RESPUESTAS||[]).forEach(r=>{ const p=(r.PREGUNTA||'').trim(); if(p && m[p]==null) m[p]=_vr(r); });
+    aoa.push([
+      v.FECHA||'', v.HORA||'', v.ID_TITULAR||'', v.NOMBRE_TITULAR||'', v.ESTADO||'', v.MUNICIPIO||'', v.ID_GESTOR||'', v.NOMBRE_GESTOR||'',
+      v.RESULTADO||'', v.RESULTADO_CATEGORIA||'', v.TIPO_CONTACTO||'', (v.MONTO_PROMESA||''), v.FECHA_PROMESA||'', v.OBSERVACIONES||'',
+      (v.FOTOS&&v.FOTOS.length)?v.FOTOS.length:0, v.LATITUD||'', v.LONGITUD||'', ...QCOLS.map(p=>m[p]!=null?m[p]:'')
+    ]);
+  });
   if(_dlXLSX(`visitas_${_exToday()}.xlsx`,'Visitas',aoa)) toast(`Exportadas ${rows.length} visitas`);
 }
 function exportarGestores(){
@@ -2814,10 +2860,17 @@ function descargarExcel(){
   // tasa por gestor (col E) en %
   for(let i=0;i<m.porGestor.length;i++){ const c='E'+(22+i); if(wsR[c]) wsR[c].z='0%'; }
   XLSX.utils.book_append_sheet(wb, wsR, 'Resumen');
-  const det=[['Fecha','Hora','ID Titular','Titular','Gestor','Resultado','Categoría','Tipo contacto','Monto promesa','Fecha promesa','Observaciones','Latitud','Longitud']];
-  visitas.forEach(v=>det.push([v.FECHA,v.HORA,v.ID_TITULAR,v.NOMBRE_TITULAR,v.NOMBRE_GESTOR,v.RESULTADO,v.RESULTADO_CATEGORIA||'',v.TIPO_CONTACTO,_money(v.MONTO_PROMESA)||'',v.FECHA_PROMESA,v.OBSERVACIONES,v.LATITUD,v.LONGITUD]));
+  // Columnas dinámicas: TODAS las preguntas de los cuestionarios presentes (escalable por cartera)
+  const QCOLS=[];
+  visitas.forEach(v=>(v.RESPUESTAS||[]).forEach(r=>{ const p=(r.PREGUNTA||'').trim(); if(p && !QCOLS.includes(p)) QCOLS.push(p); }));
+  const _valResp=(r)=> (r.VALOR!=null && String(r.VALOR).trim()!=='')?String(r.VALOR):(Array.isArray(r.VALOR_JSON)?r.VALOR_JSON.join(', '):'');
+  const det=[['Fecha','Hora','ID Titular','Titular','Estado','Municipio','Gestor','Resultado','Categoría','Tipo contacto','Monto promesa','Fecha promesa','Observaciones','Latitud','Longitud',...QCOLS]];
+  visitas.forEach(v=>{
+    const m={}; (v.RESPUESTAS||[]).forEach(r=>{ const p=(r.PREGUNTA||'').trim(); if(p && m[p]==null) m[p]=_valResp(r); });
+    det.push([v.FECHA,v.HORA,v.ID_TITULAR,v.NOMBRE_TITULAR,v.ESTADO||'',v.MUNICIPIO||'',v.NOMBRE_GESTOR,v.RESULTADO,v.RESULTADO_CATEGORIA||'',v.TIPO_CONTACTO,_money(v.MONTO_PROMESA)||'',v.FECHA_PROMESA,v.OBSERVACIONES,v.LATITUD,v.LONGITUD,...QCOLS.map(p=>m[p]!=null?m[p]:'')]);
+  });
   const wsD=XLSX.utils.aoa_to_sheet(det);
-  wsD['!cols']=[{wch:11},{wch:7},{wch:13},{wch:26},{wch:18},{wch:22},{wch:18},{wch:14},{wch:13},{wch:13},{wch:50},{wch:12},{wch:12}];
+  wsD['!cols']=[{wch:11},{wch:7},{wch:13},{wch:26},{wch:14},{wch:18},{wch:18},{wch:22},{wch:18},{wch:14},{wch:13},{wch:13},{wch:50},{wch:12},{wch:12},...QCOLS.map(()=>({wch:26}))];
   XLSX.utils.book_append_sheet(wb, wsD, 'Detalle');
   // Hoja de respuestas del cuestionario (una fila por respuesta — escalable por cartera)
   const resp=[['ID Visita','Fecha','Titular','Gestor','Pregunta','Respuesta','Es resultado']];
