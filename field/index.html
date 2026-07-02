@@ -2169,7 +2169,7 @@ input[type="file"].foto-input { display: none; }
     <!-- PASO 5: OBSERVACIONES -->
     <div class="captura-step" id="paso-5">
       <div class="step-title">📝 Observaciones</div>
-      <div class="step-sub">Describe lo que ocurrió durante la visita. Mínimo 10 caracteres.</div>
+      <div class="step-sub">Describe lo que ocurrió durante la visita. Mínimo 15 caracteres.</div>
       <textarea class="obs-textarea" id="obsTextarea"
         placeholder="Ej: El titular comentó que no tiene dinero esta semana pero se comprometió a pagar el lunes próximo..."
         oninput="contarObs(this)" maxlength="500"></textarea>
@@ -3039,7 +3039,7 @@ function actualizarBotonPaso() {
   if(p === 2) habilitado = !!CAPTURA.fotos[0];
   if(p === 3) habilitado = validarPaso3();
   if(p === 4) habilitado = !!CAPTURA.resultado && (!necesitaMonto() || !!String(CAPTURA.monto_promesa||'').trim());
-  if(p === 5) habilitado = CAPTURA.observaciones.length >= 10;
+  if(p === 5) habilitado = CAPTURA.observaciones.length >= 15;
 
   btn.disabled = !habilitado;
 
@@ -3055,8 +3055,8 @@ function actualizarBotonPaso() {
 function siguientePaso() {
   const p = CAPTURA.paso;
   if(p === 'q'){ cuestSiguiente(); return; }
-  // Tras fotos: si la cartera tiene cuestionario, entra al grafo (enriquecimiento) antes de las preguntas fijas
-  if(p === 2 && CAPTURA.dinamico){ CAPTURA.paso = 'q'; iniciarCuestionario(); return; }
+  // Orden no negociable: 1 GPS · 2 Fotos · 3 Contacto · 4 Cuestionario · 5 Etiqueta · 6 Comentario
+  if(p === 3 && CAPTURA.dinamico){ CAPTURA.paso = 'q'; iniciarCuestionario(); return; }
   if(p < 5) {
     CAPTURA.paso++;
     document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
@@ -3325,7 +3325,8 @@ function setFechaPromesa(v){ CAPTURA.fecha_promesa = String(v||'').trim(); }
 // ── PASO 5: OBSERVACIONES ──
 function contarObs(textarea) {
   CAPTURA.observaciones = textarea.value;
-  document.getElementById('obsContador').textContent = `${textarea.value.length} / 500 caracteres`;
+  const n = textarea.value.length;
+  document.getElementById('obsContador').textContent = n < 15 ? `${n} / 500 · mínimo 15 caracteres` : `${n} / 500 caracteres`;
   actualizarBotonPaso();
 }
 
@@ -3456,10 +3457,10 @@ function qEsUltima(){
 function cuestSiguiente(){
   if(!qValido()) return;
   if(qEsUltima()){
-    // Fin del grafo → continuar a las preguntas FIJAS (contacto → resultado)
-    CAPTURA.paso = 3;
+    // Fin del grafo → sigue la Etiqueta de resultado (paso 4)
+    CAPTURA.paso = 4;
     document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
-    document.getElementById('paso-3').classList.add('active');
+    document.getElementById('paso-4').classList.add('active');
     document.getElementById('capturaScroll').scrollTop = 0;
     actualizarProgreso();
     actualizarBotonPaso();
@@ -3907,11 +3908,15 @@ function renderMapMarkers(){
     const vis = VISITAS_HOY_IDS.has(t.ID_TITULAR);
     const cls = t.URGENTE ? 'urg' : (vis ? 'vis' : 'pend');
     const el = document.createElement('div'); el.className = 'map-pin ' + cls;
+    const btnVisita = vis
+      ? '<div style="margin-top:6px;font-size:12px;color:#22c55e">✅ Visitado hoy</div>'
+      : '<button onclick="visitaDesdeMapa(\'' + escH(t.ID_TITULAR||'') + '\')" style="margin-top:8px;width:100%;background:linear-gradient(135deg,#178582,#1ab5b1);border:none;border-radius:9px;padding:9px 12px;font-size:12.5px;font-weight:700;color:#fff;cursor:pointer">▶ Iniciar visita</button>';
     const popup = new mapboxgl.Popup({offset:16,closeButton:false}).setHTML(
       '<div style="font-family:Outfit,sans-serif"><b>' + escH(t.NOMBRE||'') + '</b><br>' +
       '<span style="font-family:JetBrains Mono,monospace;font-size:11px;color:#93A6B3">' + escH(t.ID_TITULAR||'') + '</span><br>' +
       '<span style="font-size:12px;color:#cfd8de">' + escH(t.MUNICIPIO||'') + '</span><br>' +
-      '<a href="' + urlNavegacion(t) + '" target="_blank" rel="noopener" style="color:#1ab5b1;font-size:12px">Cómo llegar ›</a></div>');
+      '<a href="' + urlNavegacion(t) + '" target="_blank" rel="noopener" style="color:#1ab5b1;font-size:12px">Cómo llegar ›</a>' +
+      btnVisita + '</div>');
     const mk = new mapboxgl.Marker({element:el}).setLngLat([c.lng,c.lat]).setPopup(popup).addTo(MIS_MAP);
     MIS_MARKERS.push(mk); bounds.extend([c.lng,c.lat]); plotted++;
   });
@@ -4095,6 +4100,12 @@ function renderHistorial() {
 // ═══════════════════════════════════════════════
 // INICIAR VISITA
 // ═══════════════════════════════════════════════
+// Acceso directo desde el popup del mapa
+function visitaDesdeMapa(idTitular){
+  TITULAR_ACTIVO = TITULARES_DATA.find(t => t.ID_TITULAR === idTitular) || null;
+  if(!TITULAR_ACTIVO){ showToast('⚠️','Cuenta no encontrada','Recarga tus misiones'); return; }
+  iniciarVisita();
+}
 function iniciarVisita() {
   if (!TITULAR_ACTIVO) return;
 
