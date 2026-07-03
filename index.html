@@ -34,7 +34,7 @@
 
     /* ── RESET ──────────────────────────────────────────── */
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width:100%; height:100%; overflow:hidden; }
+    html, body { width:100%; scroll-behavior: smooth; overflow-x: hidden; }
     body { font-family: var(--sans); background: var(--bg); color: var(--white); }
 
     /* ── MAP ────────────────────────────────────────────── */
@@ -764,7 +764,77 @@
       .hero h1 { font-size: 32px; }
       .btn-primary, .btn-ghost { padding: 11px 14px; font-size: 8.5px; }
     }
-  </style>
+  
+    /* SERVICIOS & CONTACTO CSS */
+    .page-hero { padding: 90px 44px 70px; max-width: 760px; }
+    .page-hero h1 { font-family: var(--serif); font-size: 64px; font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 20px; }
+    .page-hero h1 span { color: var(--gold); }
+    .page-hero p { font-size: 15px; font-weight: 300; line-height: 1.8; color: var(--white-60); max-width: 560px; }
+    .divider { width: calc(100% - 88px); margin: 0 44px; height: 1px; background: linear-gradient(to right, var(--teal-glow), transparent); }
+    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; padding: 60px 44px 100px; background: var(--glass-border); }
+    .service-card { background: var(--bg); padding: 44px 38px; position: relative; cursor: pointer; transition: background .3s; overflow: hidden; }
+    .service-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(23,133,130,0.06) 0%, transparent 60%); opacity: 0; transition: opacity .35s; }
+    .service-card:hover { background: var(--bg-mid); }
+    .service-card:hover::before { opacity: 1; }
+    .service-number { font-family: var(--serif); font-size: 11px; font-weight: 600; color: var(--gold-dim); letter-spacing: 3px; opacity: 0.6; margin-bottom: 28px; }
+    .service-icon-wrap { width: 52px; height: 52px; border: 1px solid var(--white-12); display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
+    .service-icon { font-size: 22px; color: var(--gold-dim); line-height: 1; }
+    .service-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 16px; }
+    .service-desc { font-size: 13px; font-weight: 300; line-height: 1.8; color: var(--white-60); margin-bottom: 28px; }
+    .service-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 32px; }
+    .stag { background: rgba(23,133,130,0.1); color: var(--teal-light); border: 1px solid rgba(23,133,130,0.25); padding: 4px 10px; font-size: 9px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; }
+    .service-arrow { position: absolute; bottom: 36px; right: 36px; color: var(--gold); font-size: 22px; opacity: 0.4; }
+    .stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border); margin: 0 44px 80px; }
+    .stat-item { padding: 44px 32px; border-right: 1px solid var(--glass-border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-num { font-family: var(--serif); font-size: 52px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 8px; }
+    .stat-label { font-size: 11px; font-weight: 400; color: var(--white-60); letter-spacing: 1.5px; text-transform: uppercase; }
+    .cta-section { padding: 80px 44px 100px; display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
+    .cta-text h2 { font-family: var(--serif); font-size: 44px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 12px; }
+    .cta-text h2 span { color: var(--teal-light); }
+    .cta-text p { font-size: 14px; font-weight: 300; color: var(--white-60); max-width: 420px; line-height: 1.7; }
+    
+    .contact-layout { display: grid; grid-template-columns: 1fr 1fr; }
+    .contact-left { padding: 80px 60px 80px 44px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--glass-border); }
+    .contact-left h1 { font-family: var(--serif); font-size: 58px; font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 22px; }
+    .contact-left h1 span { color: var(--gold); }
+    .contact-left > p { font-size: 14px; font-weight: 300; line-height: 1.8; color: var(--white-60); max-width: 400px; margin-bottom: 52px; }
+    .info-blocks { display: flex; flex-direction: column; border-top: 1px solid var(--glass-border); }
+    .info-block { display: flex; align-items: flex-start; gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--glass-border); }
+    .info-icon { width: 38px; height: 38px; background: var(--white-06); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; color: var(--teal-light); }
+    .info-content { display: flex; flex-direction: column; gap: 3px; }
+    .info-label { font-size: 9px; font-weight: 500; color: var(--white-30); letter-spacing: 2.5px; text-transform: uppercase; }
+    .info-value { font-size: 13px; font-weight: 400; color: var(--white-60); }
+    .sedes-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 36px; }
+    .sede-pill { background: var(--white-06); border: 1px solid var(--glass-border); padding: 7px 14px; font-size: 10px; font-weight: 400; color: var(--white-60); letter-spacing: 1px; display: flex; align-items: center; gap: 7px; }
+    .sede-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
+    
+    .contact-right { padding: 80px 44px 80px 60px; display: flex; flex-direction: column; justify-content: center; }
+    .form-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
+    .form-subtitle { font-size: 13px; font-weight: 300; color: var(--white-60); margin-bottom: 40px; line-height: 1.6; }
+    .contact-form { display: flex; flex-direction: column; gap: 20px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-size: 9.5px; font-weight: 500; color: var(--white-60); letter-spacing: 2px; text-transform: uppercase; }
+    .field input, .field select, .field textarea { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--white-12); color: var(--white); font-family: var(--sans); font-size: 13px; font-weight: 300; padding: 13px 16px; outline: none; width: 100%; }
+    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23178582' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; appearance: none; }
+    .field textarea { resize: vertical; min-height: 120px; }
+    .services-check { display: flex; flex-direction: column; gap: 8px; }
+    .services-check-label { font-size: 9.5px; font-weight: 500; color: var(--white-60); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+    .check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .check-item { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .check-item input[type='checkbox'] { width: 16px; height: 16px; appearance: none; background: var(--glass-bg); border: 1px solid var(--white-12); display: flex; align-items: center; justify-content: center; }
+    .check-item input[type='checkbox']:checked { background: var(--teal); border-color: var(--teal); }
+    .check-item input[type='checkbox']:checked::after { content: '✓'; color: white; font-size: 10px; }
+    .check-item span { font-size: 11px; font-weight: 400; color: var(--white-60); }
+    .btn-submit { background: var(--gold); color: var(--bg-deep); border: none; padding: 16px 36px; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; align-self: flex-start; display: flex; align-items: center; gap: 10px; }
+    
+    @media (max-width: 768px) {
+      .services-grid { grid-template-columns: 1fr; }
+      .contact-layout { grid-template-columns: 1fr; }
+    }
+
+</style>
 </head>
 <body>
 
@@ -776,7 +846,7 @@
 
 <!-- NAV -->
 <nav>
-  <a href="index.html" class="logo" style="text-decoration:none">
+  <a href="#firma" class="logo" style="text-decoration:none">
     <div class="logo-badge"><img src="logo.png" alt="FC Logo" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" /></div>
     <div class="logo-info">
       <span class="logo-name">Fortaleza Contact Center</span>
@@ -785,10 +855,10 @@
   </a>
   <div class="nav-spacer"></div>
   <div class="nav-links">
-    <a href="index.html" class="active">Firma</a>
-    <a href="servicios.html">Servicios</a>
-    <a href="index.html">Proyectos</a>
-    <a href="contacto.html">Contacto</a>
+    <a href="#firma" class="active">Firma</a>
+    <a href="#servicios">Servicios</a>
+    <a href="#proyectos">Proyectos</a>
+    <a href="#contacto">Contacto</a>
   </div>
   <div class="hamburger" id="hamburger" onclick="toggleMenu()">
     <span></span><span></span><span></span>
@@ -797,28 +867,329 @@
 
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu">
-  <a href="index.html" class="active">Firma</a>
-  <a href="servicios.html">Servicios</a>
-  <a href="index.html">Proyectos</a>
-  <a href="contacto.html">Contacto</a>
+  <a href="#firma" class="active">Firma</a>
+  <a href="#servicios">Servicios</a>
+  <a href="#proyectos">Proyectos</a>
+  <a href="#contacto">Contacto</a>
 </div>
 
 <!-- DRAG HINT -->
 <div class="drag-hint">Arrastra el globo y abre proyectos</div>
 
 <!-- HERO -->
+<!-- HERO -->
 <section class="hero">
   <div class="eyebrow">Red Nacional de Operaciones</div>
   <h1>Explora nuestra <span>red de servicios</span> y presencia</h1>
   <p>Una plataforma visual para presentar nuestra firma, entender nuestro modelo de operación y ubicar nuestras sedes dentro de una lógica territorial y estratégica.</p>
   <div class="cta-group">
-    <button class="btn-primary">Ver Servicios</button>
-    <button class="btn-ghost">Explorar Sedes</button>
+    <a href="#servicios" class="btn-primary" style="text-decoration: none;">Ver Servicios</a>
+    <button class="btn-ghost" onclick="map.flyTo({zoom: 4.8})">Explorar Sedes</button>
   </div>
   <div class="map-hint">
     <span class="hint-dot"></span>
     Mapa interactivo &middot; Arrastra y haz clic en los puntos
   </div>
+</section>
+
+<!-- SPACER FOR FIRMA TO PUSH CONTENT DOWN -->
+<section id="firma" style="height: 100vh; width: 100%; pointer-events: none;"></section>
+
+<section id="servicios" style="background: var(--bg); position: relative; z-index: 10; padding-top: 20px;">
+
+
+  <!-- HERO -->
+  <section class="page-hero">
+    <div class="eyebrow">Lo que hacemos</div>
+    <h1>Soluciones que <span>impulsan</span> tu operación</h1>
+    <p>Ofrecemos servicios especializados de Contact Center diseñados para maximizar la eficiencia operativa, fortalecer la relación con tus clientes y garantizar el cumplimiento legal y financiero de tu empresa.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- GRID 6 SERVICIOS -->
+  <section class="services-grid">
+
+    <!-- 1 Cobranza -->
+    <div class="service-card fade-in" style="animation-delay:.05s">
+      <div class="service-number">01</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">◈</span>
+      </div>
+      <h3 class="service-title">Cobranza</h3>
+      <p class="service-desc">Gestionamos carteras de cobranza temprana, intermedia y tardía con estrategias personalizadas por segmento. Maximizamos la recuperación preservando la relación con el cliente mediante protocolos éticos y efectivos.</p>
+      <div class="service-tags">
+        <span class="stag">Temprana</span>
+        <span class="stag">Tardía</span>
+        <span class="stag">Extrajudicial</span>
+        <span class="stag">Preventiva</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 2 Ventas -->
+    <div class="service-card fade-in" style="animation-delay:.12s">
+      <div class="service-number">02</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">⬡</span>
+      </div>
+      <h3 class="service-title">Ventas</h3>
+      <p class="service-desc">Ejecutamos campañas de venta outbound e inbound con agentes altamente capacitados. Diseñamos scripts, scripts de objeción y flujos de conversión para sectores financiero, telecomunicaciones y retail.</p>
+      <div class="service-tags">
+        <span class="stag">Outbound</span>
+        <span class="stag">Inbound</span>
+        <span class="stag">Cross-Selling</span>
+        <span class="stag">Retención</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 3 Marketing -->
+    <div class="service-card fade-in" style="animation-delay:.19s">
+      <div class="service-number">03</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">◎</span>
+      </div>
+      <h3 class="service-title">Marketing</h3>
+      <p class="service-desc">Desarrollamos estrategias de marketing directo y digital integradas con operaciones de Contact Center. Desde la generación de leads hasta el seguimiento posventa, cubrimos todo el ciclo de conversión.</p>
+      <div class="service-tags">
+        <span class="stag">Lead Gen</span>
+        <span class="stag">Email Mkt</span>
+        <span class="stag">SMS / Push</span>
+        <span class="stag">Posventa</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 4 Backoffice -->
+    <div class="service-card fade-in" style="animation-delay:.26s">
+      <div class="service-number">04</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">▣</span>
+      </div>
+      <h3 class="service-title">Backoffice</h3>
+      <p class="service-desc">Procesamos operaciones administrativas de alto volumen: captura de datos, validación documental, gestión de expedientes y soporte a procesos críticos del negocio con precisión y confidencialidad.</p>
+      <div class="service-tags">
+        <span class="stag">Captura</span>
+        <span class="stag">Validación</span>
+        <span class="stag">Expedientes</span>
+        <span class="stag">Soporte Ops</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 5 Contaduría -->
+    <div class="service-card fade-in" style="animation-delay:.33s">
+      <div class="service-number">05</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">⊞</span>
+      </div>
+      <h3 class="service-title">Contaduría</h3>
+      <p class="service-desc">Brindamos servicios contables y fiscales integrales para empresas que buscan eficiencia y cumplimiento. Declaraciones, nómina, contabilidad fiscal y financiera con reportes ejecutivos en tiempo real.</p>
+      <div class="service-tags">
+        <span class="stag">Fiscal</span>
+        <span class="stag">Nómina</span>
+        <span class="stag">Financiero</span>
+        <span class="stag">SAT</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+    <!-- 6 Asesoría Legal -->
+    <div class="service-card fade-in" style="animation-delay:.40s">
+      <div class="service-number">06</div>
+      <div class="service-icon-wrap">
+        <span class="service-icon">⊕</span>
+      </div>
+      <h3 class="service-title">Asesoría Legal</h3>
+      <p class="service-desc">Ofrecemos acompañamiento legal especializado en derecho corporativo, laboral y de protección al consumidor. Gestionamos procesos jurídicos de cobranza, contratos y defensa ante autoridades regulatorias.</p>
+      <div class="service-tags">
+        <span class="stag">Corporativo</span>
+        <span class="stag">Laboral</span>
+        <span class="stag">Contratos</span>
+        <span class="stag">Regulatorio</span>
+      </div>
+      <span class="service-arrow">↗</span>
+    </div>
+
+  </section>
+
+  <!-- STATS -->
+  <section class="stats-strip">
+    <div class="stat-item fade-in" style="animation-delay:.1s">
+      <div class="stat-num">+12</div>
+      <div class="stat-label">Años de experiencia</div>
+    </div>
+    <div class="stat-item fade-in" style="animation-delay:.2s">
+      <div class="stat-num">6</div>
+      <div class="stat-label">Líneas de servicio</div>
+    </div>
+    <div class="stat-item fade-in" style="animation-delay:.3s">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Estados con presencia</div>
+    </div>
+    <div class="stat-item fade-in" style="animation-delay:.4s">
+      <div class="stat-num">98%</div>
+      <div class="stat-label">Tasa de satisfacción</div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-text">
+      <h2>¿Listo para <span>optimizar</span> tu operación?</h2>
+      <p>Contáctanos y un especialista diseñará una propuesta a la medida de las necesidades de tu empresa.</p>
+    </div>
+    <a href="contacto.html" class="btn-primary">Solicitar Propuesta</a>
+  </section>
+
+  <!-- FOOTER -->
+  
+
+
+</section>
+<section id="contacto" style="background: var(--bg); position: relative; z-index: 10;">
+
+  <div class="contact-layout">
+
+    <!-- IZQUIERDA -->
+    <div class="contact-left">
+      <div class="eyebrow">Hablemos</div>
+      <h1>Iniciemos una <span>conversación</span></h1>
+      <p>Cuéntanos los retos operativos de tu empresa. Nuestro equipo analizará tu caso y te presentará una propuesta personalizada sin compromiso.</p>
+
+      <div class="info-blocks">
+        <div class="info-block">
+          <div class="info-icon">✉</div>
+          <div class="info-content">
+            <span class="info-label">Correo</span>
+            <span class="info-value">contacto@fortalezacc.mx</span>
+          </div>
+        </div>
+        <div class="info-block">
+          <div class="info-icon">◉</div>
+          <div class="info-content">
+            <span class="info-label">Horario de atención</span>
+            <span class="info-value">Lunes a Viernes · 9:00 – 18:00 hrs</span>
+          </div>
+        </div>
+        <div class="info-block">
+          <div class="info-icon">⊙</div>
+          <div class="info-content">
+            <span class="info-label">Tiempo de respuesta</span>
+            <span class="info-value">Menos de 24 horas hábiles</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sedes-pills">
+        <div class="sede-pill">CDMX</div>
+        <div class="sede-pill">Jalisco</div>
+        <div class="sede-pill">Morelos</div>
+        <div class="sede-pill">Estado de México</div>
+      </div>
+    </div>
+
+    <!-- DERECHA — FORMULARIO -->
+    <div class="contact-right">
+      <div class="form-title">Solicitar propuesta</div>
+      <div class="form-subtitle">Completa el formulario y un especialista se pondrá en contacto contigo para diseñar la solución ideal.</div>
+
+      <form class="contact-form" id="contactForm" onsubmit="handleSubmit(event)">
+
+        <div class="form-row">
+          <div class="field">
+            <label>Nombre completo *</label>
+            <input type="text" name="nombre" placeholder="Tu nombre" required />
+          </div>
+          <div class="field">
+            <label>Empresa *</label>
+            <input type="text" name="empresa" placeholder="Nombre de la empresa" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>Correo electrónico *</label>
+            <input type="email" name="email" placeholder="tu@empresa.com" required />
+          </div>
+          <div class="field">
+            <label>Teléfono</label>
+            <input type="tel" name="telefono" placeholder="+52 55 0000 0000" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Sede de interés</label>
+          <select name="sede">
+            <option value="">Selecciona una sede</option>
+            <option>Ciudad de México</option>
+            <option>Jalisco</option>
+            <option>Morelos</option>
+            <option>Estado de México</option>
+            <option>Nacional (todas las sedes)</option>
+          </select>
+        </div>
+
+        <div class="services-check">
+          <div class="services-check-label">Servicios de interés</div>
+          <div class="check-grid">
+            <label class="check-item">
+              <input type="checkbox" name="servicios" value="Cobranza" />
+              <span>Cobranza</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" name="servicios" value="Ventas" />
+              <span>Ventas</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" name="servicios" value="Marketing" />
+              <span>Marketing</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" name="servicios" value="Backoffice" />
+              <span>Backoffice</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" name="servicios" value="Contaduría" />
+              <span>Contaduría</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" name="servicios" value="Asesoría Legal" />
+              <span>Asesoría Legal</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Mensaje</label>
+          <textarea name="mensaje" placeholder="Cuéntanos brevemente qué necesitas..."></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnSubmit">
+          <span id="btnText">Enviar Solicitud</span>
+          <span class="arrow" id="btnArrow">↗</span>
+        </button>
+
+      </form>
+
+      <!-- Estado éxito -->
+      <div class="form-success" id="formSuccess">
+        <div class="success-icon">✓</div>
+        <h3>¡Mensaje enviado!</h3>
+        <p>Hemos recibido tu solicitud. Un especialista de Fortaleza Contact Center se pondrá en contacto contigo en menos de 24 horas hábiles.</p>
+      </div>
+
+      <!-- Estado error -->
+      <div id="formError" style="display:none; margin-top:12px; padding:12px 16px; border:1px solid rgba(255,80,80,0.3); background:rgba(255,80,80,0.08); color:rgba(255,120,120,0.9); font-size:12px; font-weight:400; letter-spacing:1px;">
+        Ocurrió un error al enviar. Intenta de nuevo o escríbenos directamente.
+      </div>
+
+    </div>
+  </div>
+
+  
+
 </section>
 
 <!-- PROJECT CARD -->
@@ -939,7 +1310,8 @@
     pitch:       INITIAL_VIEW.pitch,
     bearing:     INITIAL_VIEW.bearing,
     interactive: true,
-    projection:  'mercator'        // Mercator evita que los marcadores HTML se desfasen
+    projection:  'mercator',
+    renderWorldCopies: false
   });
 
   /* Niebla atmosférica (opcional en mercator) */
@@ -1191,6 +1563,112 @@
     from { opacity: 0; transform: translateY(-8px) scale(0.8); }
     to   { opacity: 1; transform: translateY(0)    scale(1);   }
   }
+
+    /* SERVICIOS & CONTACTO CSS */
+    .page-hero { padding: 90px 44px 70px; max-width: 760px; }
+    .page-hero h1 { font-family: var(--serif); font-size: 64px; font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 20px; }
+    .page-hero h1 span { color: var(--gold); }
+    .page-hero p { font-size: 15px; font-weight: 300; line-height: 1.8; color: var(--white-60); max-width: 560px; }
+    .divider { width: calc(100% - 88px); margin: 0 44px; height: 1px; background: linear-gradient(to right, var(--teal-glow), transparent); }
+    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; padding: 60px 44px 100px; background: var(--glass-border); }
+    .service-card { background: var(--bg); padding: 44px 38px; position: relative; cursor: pointer; transition: background .3s; overflow: hidden; }
+    .service-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(23,133,130,0.06) 0%, transparent 60%); opacity: 0; transition: opacity .35s; }
+    .service-card:hover { background: var(--bg-mid); }
+    .service-card:hover::before { opacity: 1; }
+    .service-number { font-family: var(--serif); font-size: 11px; font-weight: 600; color: var(--gold-dim); letter-spacing: 3px; opacity: 0.6; margin-bottom: 28px; }
+    .service-icon-wrap { width: 52px; height: 52px; border: 1px solid var(--white-12); display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
+    .service-icon { font-size: 22px; color: var(--gold-dim); line-height: 1; }
+    .service-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 16px; }
+    .service-desc { font-size: 13px; font-weight: 300; line-height: 1.8; color: var(--white-60); margin-bottom: 28px; }
+    .service-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 32px; }
+    .stag { background: rgba(23,133,130,0.1); color: var(--teal-light); border: 1px solid rgba(23,133,130,0.25); padding: 4px 10px; font-size: 9px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; }
+    .service-arrow { position: absolute; bottom: 36px; right: 36px; color: var(--gold); font-size: 22px; opacity: 0.4; }
+    .stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border); margin: 0 44px 80px; }
+    .stat-item { padding: 44px 32px; border-right: 1px solid var(--glass-border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-num { font-family: var(--serif); font-size: 52px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 8px; }
+    .stat-label { font-size: 11px; font-weight: 400; color: var(--white-60); letter-spacing: 1.5px; text-transform: uppercase; }
+    .cta-section { padding: 80px 44px 100px; display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
+    .cta-text h2 { font-family: var(--serif); font-size: 44px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 12px; }
+    .cta-text h2 span { color: var(--teal-light); }
+    .cta-text p { font-size: 14px; font-weight: 300; color: var(--white-60); max-width: 420px; line-height: 1.7; }
+    
+    .contact-layout { display: grid; grid-template-columns: 1fr 1fr; }
+    .contact-left { padding: 80px 60px 80px 44px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--glass-border); }
+    .contact-left h1 { font-family: var(--serif); font-size: 58px; font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 22px; }
+    .contact-left h1 span { color: var(--gold); }
+    .contact-left > p { font-size: 14px; font-weight: 300; line-height: 1.8; color: var(--white-60); max-width: 400px; margin-bottom: 52px; }
+    .info-blocks { display: flex; flex-direction: column; border-top: 1px solid var(--glass-border); }
+    .info-block { display: flex; align-items: flex-start; gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--glass-border); }
+    .info-icon { width: 38px; height: 38px; background: var(--white-06); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; color: var(--teal-light); }
+    .info-content { display: flex; flex-direction: column; gap: 3px; }
+    .info-label { font-size: 9px; font-weight: 500; color: var(--white-30); letter-spacing: 2.5px; text-transform: uppercase; }
+    .info-value { font-size: 13px; font-weight: 400; color: var(--white-60); }
+    .sedes-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 36px; }
+    .sede-pill { background: var(--white-06); border: 1px solid var(--glass-border); padding: 7px 14px; font-size: 10px; font-weight: 400; color: var(--white-60); letter-spacing: 1px; display: flex; align-items: center; gap: 7px; }
+    .sede-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
+    
+    .contact-right { padding: 80px 44px 80px 60px; display: flex; flex-direction: column; justify-content: center; }
+    .form-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
+    .form-subtitle { font-size: 13px; font-weight: 300; color: var(--white-60); margin-bottom: 40px; line-height: 1.6; }
+    .contact-form { display: flex; flex-direction: column; gap: 20px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-size: 9.5px; font-weight: 500; color: var(--white-60); letter-spacing: 2px; text-transform: uppercase; }
+    .field input, .field select, .field textarea { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--white-12); color: var(--white); font-family: var(--sans); font-size: 13px; font-weight: 300; padding: 13px 16px; outline: none; width: 100%; }
+    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23178582' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; appearance: none; }
+    .field textarea { resize: vertical; min-height: 120px; }
+    .services-check { display: flex; flex-direction: column; gap: 8px; }
+    .services-check-label { font-size: 9.5px; font-weight: 500; color: var(--white-60); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+    .check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .check-item { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .check-item input[type='checkbox'] { width: 16px; height: 16px; appearance: none; background: var(--glass-bg); border: 1px solid var(--white-12); display: flex; align-items: center; justify-content: center; }
+    .check-item input[type='checkbox']:checked { background: var(--teal); border-color: var(--teal); }
+    .check-item input[type='checkbox']:checked::after { content: '✓'; color: white; font-size: 10px; }
+    .check-item span { font-size: 11px; font-weight: 400; color: var(--white-60); }
+    .btn-submit { background: var(--gold); color: var(--bg-deep); border: none; padding: 16px 36px; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; align-self: flex-start; display: flex; align-items: center; gap: 10px; }
+    
+    @media (max-width: 768px) {
+      .services-grid { grid-template-columns: 1fr; }
+      .contact-layout { grid-template-columns: 1fr; }
+    }
+
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a');
+    const mobileLinks = document.querySelectorAll('.mobile-menu a');
+    
+    window.addEventListener('scroll', () => {
+      let current = '';
+      const scrollY = window.pageYOffset;
+      
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (scrollY >= (sectionTop - 150)) {
+          current = section.getAttribute('id');
+        }
+      });
+      
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+      
+      mobileLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    });
+  });
+</script>
+
 </body>
 </html>
