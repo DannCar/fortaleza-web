@@ -1632,6 +1632,48 @@
       .contact-layout { grid-template-columns: 1fr; }
     }
 
+    /* Estado enviado */
+    .form-success {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 40px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      gap: 16px;
+    }
+
+    .success-icon {
+      width: 56px; height: 56px;
+      border: 1.5px solid var(--teal);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: var(--teal-light);
+      margin-bottom: 8px;
+    }
+
+    .form-success h3 {
+      font-family: var(--serif);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .form-success p {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--white-60);
+      line-height: 1.7;
+      max-width: 320px;
+    }
+
 </style>
 
 <script>
