@@ -1606,7 +1606,7 @@ async function createAdmin(){
   if(!nombre||!email||password.length<6){ toast('Completa nombre, correo y contraseña (mín. 6).'); return; }
   try{
     const r=await apiCall('admin-administradores','POST',{action:'create',nombre,email,password,telegram_chat_id,rol});
-    if(r&&r.success){ toast('Administrador creado'); loadAdmins(); }
+    if(r&&r.success){ toast('Administrador creado'); logBitacora('admin_nuevo', `Nuevo administrador: ${nombre} · rol ${rol}`); loadAdmins(); }
     else { toast((r&&r.error)||'No se pudo crear'); }
   }catch(e){ toast('Error al crear'); }
 }
@@ -1625,6 +1625,13 @@ function startRefresh(){
 function resetCountdown(){ STATE.countdown=CFG.REFRESH_MS/1000; document.getElementById('liveCount').textContent=STATE.countdown+'s'; }
 
 /* ════════ API ════════ */
+// Bitácora: avisa al canal de Telegram de eventos administrativos (no bloquea nunca)
+function logBitacora(tipo, mensaje){
+  try{
+    const actor=(STATE.user&&(STATE.user.nombre||STATE.user.email))||'Admin';
+    apiCall('admin-bitacora','POST',{tipo,mensaje,actor}).catch(()=>{});
+  }catch(e){}
+}
 async function apiCall(endpoint,method='GET',body=null){
   const opts={method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${STATE.token}`}};
   if(body) opts.body=JSON.stringify(body);
@@ -2077,6 +2084,7 @@ async function confirmarImport(){
   document.getElementById('geoBarFill').style.width='100%';
   document.getElementById('geoStatDone').textContent=`${saved} importados`;
   document.getElementById('geoStatFail').textContent=`${fail} sin geo`;
+  logBitacora('import', `Importación: ${saved} cuenta(s)` + (fail?` · ${fail} sin geo`:''));
   document.getElementById('geoClose').style.display='block';
   await loadTitulares(true);
 }
@@ -2452,13 +2460,13 @@ async function guardarGestor(){
     r=await apiCall('admin-gestores-v2','POST',{action:'create',id_gestor:id,nombre,usuario_telegram:user,telegram_id:tg});
   }
   btn.disabled=false;
-  if(r&&r.success){ toast(GES_EDIT_ID?'Gestor actualizado':'Gestor creado'); cerrarGestorModal(); loadGestores(true); }
+  if(r&&r.success){ toast(GES_EDIT_ID?'Gestor actualizado':'Gestor creado'); if(!GES_EDIT_ID) logBitacora('gestor_alta', `Nuevo gestor: ${nombre} (${id})`); cerrarGestorModal(); loadGestores(true); }
   else { toast('No se pudo guardar el gestor'); }
 }
 async function toggleGestor(id,val){
   const g=GES_ALL.find(x=>x.ID_GESTOR===id); if(!g) return; g.ACTIVO=val; renderGestores();
   const r=await apiCall('admin-gestores-v2','POST',{action:'toggle_activo',id_gestor:id,activo:val});
-  if(r&&r.success){ toast(val?'Gestor activado':'Gestor desactivado'); } else { g.ACTIVO=!val; renderGestores(); toast('No se pudo actualizar'); }
+  if(r&&r.success){ toast(val?'Gestor activado':'Gestor desactivado'); if(!val) logBitacora('gestor_baja', `Gestor desactivado: ${g.NOMBRE||id}`); } else { g.ACTIVO=!val; renderGestores(); toast('No se pudo actualizar'); }
 }
 
 /* ════════ VISITAS (Fase 3) ════════ */
