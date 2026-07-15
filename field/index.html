@@ -4085,7 +4085,7 @@ function renderHistorial() {
   };
 
   el.innerHTML = HISTORIAL_DATA.slice(0, 5).map(v => {
-    const color = colores[v.RESULTADO] || '#888';
+    const color = (typeof ETQ_CAT_COLOR_F!=='undefined' && ETQ_CAT_COLOR_F[v.RESULTADO_CATEGORIA]) || colores[v.RESULTADO] || '#888';
     return `<div class="historial-item">
       <div class="historial-dot" style="background:${color}"></div>
       <div class="historial-info">
