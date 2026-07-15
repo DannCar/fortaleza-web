@@ -1,48 +1,96 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fortaleza Contact Center</title>
-  <link rel="icon" type="image/png" href="/logo.png" />
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/logo.png?v=4" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Work+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     /* ── TOKENS ─────────────────────────────────────────── */
     :root {
-      --bg:        #0f172a;
-      --bg-mid:    #1e293b;
-      --bg-deep:   #020617;
-      --teal:      #10b981;
-      --teal-light:#34d399;
-      --teal-glow: rgba(16,185,129,0.35);
-      --gold:      #94a3b8;
-      --gold-light:#cbd5e1;
-      --gold-dim:  rgba(148,163,184,0.55);
-      --white:     #ffffff;
-      --white-60:  rgba(255,255,255,0.6);
-      --white-30:  rgba(255,255,255,0.3);
-      --white-12:  rgba(255,255,255,0.12);
-      --white-06:  rgba(255,255,255,0.06);
-      --glass-bg:  rgba(15,23,42,0.75);
-      --glass-border: rgba(16,185,129,0.25);
+      /* Brandbook Colors */
+      --brand-green: #22BF78;
+      --brand-grey: #0c1524;
+      --brand-white: #FFFFFF;
+
+      --bg: var(--brand-grey);
+      --bg-mid: #162135;
+      --bg-deep: #080f1b;
+      --teal: var(--brand-green);
+      --teal-light: #46d494;
+      --teal-glow: rgba(34, 191, 120, 0.35);
+      --gold: var(--brand-white);
+      --gold-light: #f0f0f0;
+      --gold-dim: rgba(255, 255, 255, 0.7);
+      --white: var(--brand-white);
+      --white-60: rgba(255, 255, 255, 0.6);
+      --white-30: rgba(255, 255, 255, 0.3);
+      --white-12: rgba(255, 255, 255, 0.12);
+      --white-06: rgba(255, 255, 255, 0.06);
+      --glass-bg: rgba(78, 77, 77, 0.85);
+      --glass-border: rgba(34, 191, 120, 0.4);
       --glass-blur: blur(18px);
-      --serif:     'Cormorant Garamond', Georgia, serif;
-      --sans:      'Outfit', sans-serif;
-      --radius:    4px;
+
+      /* Typography */
+      --font-logo: 'Playfair Display', serif;
+      --font-title: 'Work Sans', sans-serif;
+      --sans: 'Open Sans', sans-serif;
+      --radius: 4px;
     }
 
     /* ── RESET ──────────────────────────────────────────── */
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width:100%; scroll-behavior: smooth; overflow-x: hidden; }
-    body { font-family: var(--sans); background: var(--bg); color: var(--white); }
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    /* ── MAP ────────────────────────────────────────────── */
-    #map {
+    html,
+    body {
+      width: 100%;
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--white);
+    }
+
+    h1, h2, h3, h4, h5, h6, .title {
+      font-family: var(--font-title);
+    }
+
+
+    /* ── CINEMATIC BACKGROUND ───────────────────────────── */
+    .hero-bg {
       position: fixed;
       inset: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('https://images.unsplash.com/photo-1572021335469-31706a17aaef?q=80&w=2070&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      pointer-events: none;
+      animation: slowPan 25s ease-in-out infinite alternate;
+    }
+
+    @keyframes slowPan {
+      0% {
+        transform: scale(1.02) translate(0, 0);
+      }
+
+      100% {
+        transform: scale(1.1) translate(-1%, 1%);
+      }
     }
 
     /* ── ATMOSPHERIC OVERLAY ────────────────────────────── */
@@ -53,92 +101,70 @@
       z-index: 1;
       background:
         linear-gradient(to right,
-          rgba(6,15,26,0.96) 0%,
-          rgba(6,15,26,0.82) 32%,
-          rgba(6,15,26,0.35) 58%,
-          rgba(6,15,26,0.05) 100%),
+          rgba(6, 15, 26, 0.96) 0%,
+          rgba(6, 15, 26, 0.82) 32%,
+          rgba(6, 15, 26, 0.35) 58%,
+          rgba(6, 15, 26, 0.05) 100%),
         linear-gradient(to bottom,
-          rgba(6,15,26,0.75) 0%,
+          rgba(6, 15, 26, 0.75) 0%,
           transparent 18%,
           transparent 80%,
-          rgba(6,15,26,0.6) 100%);
+          rgba(6, 15, 26, 0.6) 100%);
     }
 
     /* ── NAV ────────────────────────────────────────────── */
     nav {
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      border-radius: 0;
       z-index: 20;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 32px;
       padding: 0 44px;
-      height: 70px;
-      background: rgba(6,15,26,0.72);
+      height: 76px;
+      background: rgba(6, 15, 26, 0.72);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
       border-bottom: 1px solid var(--glass-border);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    nav.nav-hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-20px);
     }
 
     .logo {
       display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-
-    .logo-badge {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      flex-shrink: 0;
-      mix-blend-mode: lighten; /* Ensures the dark background of the image blends perfectly with the nav bar */
-    }
-    .logo-badge img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .logo-badge::before {
-      content: '';
-      position: absolute;
-      inset: 3px;
-      border: 1px solid var(--teal-glow);
-    }
-
-    .logo-info {
-      display: flex;
       flex-direction: column;
-      gap: 3px;
-      white-space: nowrap;
+      align-items: flex-start;
+      gap: 2px;
+      flex-shrink: 0;
     }
 
-    .logo-name {
-      font-family: var(--serif);
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 0.5px;
-      line-height: 1;
-      white-space: nowrap;
+    .logo-img {
+      height: 48px;
+      width: auto;
+      display: block;
     }
 
     .logo-sub {
       font-size: 9px;
-      font-weight: 400;
-      color: var(--white-60);
-      letter-spacing: 1.5px;
+      font-weight: 600;
+      color: var(--brand-green);
+      letter-spacing: 2px;
       text-transform: uppercase;
       white-space: nowrap;
     }
 
     /* centro vacío para empujar links a la derecha */
-    .nav-spacer { flex: 1; }
+    .nav-spacer {
+      flex: 1;
+    }
 
     .nav-links {
       display: flex;
@@ -163,21 +189,32 @@
     .nav-links a::after {
       content: '';
       position: absolute;
-      bottom: -4px; left: 0; right: 0;
+      bottom: -4px;
+      left: 0;
+      right: 0;
       height: 1px;
       background: var(--teal);
       transform: scaleX(0);
       transition: transform .25s;
     }
 
-    .nav-links a:hover { color: var(--white); }
-    .nav-links a:hover::after { transform: scaleX(1); }
+    .hamburger {
+      display: none;
+    }
+
+    .nav-links a:hover {
+      color: var(--white);
+    }
+
+    .nav-links a:hover::after {
+      transform: scaleX(1);
+    }
 
     /* ── HERO ───────────────────────────────────────────── */
     .hero {
-      position: fixed;
+      position: absolute;
       left: 44px;
-      top: calc(50% + 35px);
+      top: 50vh;
       transform: translateY(-50%);
       z-index: 10;
       max-width: 500px;
@@ -204,16 +241,18 @@
     }
 
     .hero h1 {
-      font-family: var(--serif);
+      font-family: var(--font-title);
       font-size: 62px;
       font-weight: 900;
       line-height: 1.04;
       color: var(--white);
       margin-bottom: 22px;
-      text-shadow: 0 2px 40px rgba(0,0,0,0.4);
+      text-shadow: 0 2px 40px rgba(0, 0, 0, 0.4);
     }
 
-    .hero h1 span { color: var(--gold); }
+    .hero h1 span {
+      color: var(--gold);
+    }
 
     .hero p {
       font-size: 14px;
@@ -224,7 +263,11 @@
       margin-bottom: 36px;
     }
 
-    .cta-group { display: flex; gap: 14px; align-items: center; }
+    .cta-group {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
 
     .btn-primary {
       background: var(--gold);
@@ -240,7 +283,10 @@
       transition: background .2s, transform .15s;
     }
 
-    .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .btn-primary:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
 
     .btn-ghost {
       background: var(--glass-bg);
@@ -258,7 +304,10 @@
       transition: border-color .2s, transform .15s;
     }
 
-    .btn-ghost:hover { border-color: var(--teal-light); transform: translateY(-1px); }
+    .btn-ghost:hover {
+      border-color: var(--teal-light);
+      transform: translateY(-1px);
+    }
 
     .map-hint {
       margin-top: 22px;
@@ -278,7 +327,8 @@
     }
 
     .hint-dot {
-      width: 6px; height: 6px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--teal);
       animation: blink 2s ease-in-out infinite;
@@ -302,1334 +352,1533 @@
       text-transform: uppercase;
     }
 
-    /* ── PROJECT CARD ───────────────────────────────────── */
-    .project-card {
-      position: fixed;
-      right: 44px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 20;
-      width: 320px;
-      background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--glass-border);
-      box-shadow: 0 0 60px rgba(23,133,130,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
-      padding: 28px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .3s, transform .3s;
-      transform: translateY(-50%) translateX(20px);
+    /* SERVICIOS & CONTACTO CSS */
+    .page-hero {
+      padding: 90px 44px 70px;
+      max-width: 760px;
     }
 
-    .project-card.active {
-      opacity: 1;
-      pointer-events: all;
-      transform: translateY(-50%) translateX(0);
+    .page-hero h1 {
+      font-family: var(--font-title);
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 20px;
     }
 
-    .card-close {
-      position: absolute;
-      top: 14px; right: 14px;
-      width: 28px; height: 28px;
-      background: var(--white-06);
-      border: 1px solid var(--white-12);
+    .page-hero h1 span {
+      color: var(--gold);
+    }
+
+    .page-hero p {
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.8;
       color: var(--white-60);
-      font-size: 16px;
+      max-width: 560px;
+    }
+
+    .divider {
+      width: calc(100% - 88px);
+      margin: 0 44px;
+      height: 1px;
+      background: linear-gradient(to right, var(--teal-glow), transparent);
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      padding: 60px 44px 100px;
+      background: var(--glass-border);
+    }
+
+    .service-card {
+      background: var(--bg);
+      padding: 44px 38px;
+      position: relative;
       cursor: pointer;
+      transition: background .3s;
+      overflow: hidden;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(34, 191, 120, 0.06) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity .35s;
+    }
+
+    .service-card:hover {
+      background: var(--bg-mid);
+    }
+
+    .service-card:hover::before {
+      opacity: 1;
+    }
+
+    .service-number {
+      font-family: var(--font-title);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold-dim);
+      letter-spacing: 3px;
+      opacity: 0.6;
+      margin-bottom: 28px;
+    }
+
+    .service-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border: 1px solid var(--white-12);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background .2s;
+      margin-bottom: 28px;
+    }
+
+    .service-icon {
+      font-size: 22px;
+      color: var(--gold-dim);
       line-height: 1;
     }
 
-    .card-close:hover { background: var(--white-12); color: var(--white); }
-
-    .card-label {
-      color: var(--teal-light);
-      font-size: 9.5px;
-      font-weight: 500;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-
-    .card-title {
-      font-family: var(--serif);
-      font-size: 26px;
+    .service-title {
+      font-family: var(--font-title);
+      font-size: 28px;
       font-weight: 700;
-      color: var(--gold);
+      color: var(--white);
       line-height: 1.1;
-      margin-bottom: 4px;
-    }
-
-    .card-location {
-      color: var(--white-60);
-      font-size: 12px;
-      font-weight: 300;
-      margin-bottom: 18px;
-    }
-
-    .card-tags {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
       margin-bottom: 16px;
     }
 
-    .tag {
-      background: rgba(23,133,130,0.15);
+    .service-desc {
+      font-size: 13px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white-60);
+      margin-bottom: 28px;
+    }
+
+    .service-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+
+    .stag {
+      background: rgba(34, 191, 120, 0.1);
       color: var(--teal-light);
-      border: 1px solid rgba(23,133,130,0.35);
-      padding: 5px 10px;
+      border: 1px solid rgba(34, 191, 120, 0.25);
+      padding: 4px 10px;
       font-size: 9px;
       font-weight: 500;
       letter-spacing: 1.5px;
       text-transform: uppercase;
     }
 
-    .card-divider {
-      height: 1px;
-      background: linear-gradient(to right, var(--teal-glow), transparent);
-      margin-bottom: 16px;
+    .service-arrow {
+      position: absolute;
+      bottom: 36px;
+      right: 36px;
+      color: var(--gold);
+      font-size: 22px;
+      opacity: 0.4;
     }
 
-    .card-desc {
-      color: var(--white-60);
-      font-size: 12.5px;
-      font-weight: 300;
-      line-height: 1.75;
-      margin-bottom: 22px;
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      margin: 0 44px 80px;
     }
 
-    /* Sub-sedes */
-    .subsedes-label {
-      color: var(--gold-dim);
-      font-size: 9px;
-      font-weight: 500;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      margin-bottom: 10px;
+    .stat-item {
+      padding: 44px 32px;
+      border-right: 1px solid var(--glass-border);
     }
 
-    .subsedes-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 22px;
+    .stat-item:last-child {
+      border-right: none;
     }
 
-    .subsede-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--white-06);
-      border: 1px solid var(--white-12);
-      padding: 9px 12px;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
+    .stat-num {
+      font-family: var(--font-title);
+      font-size: 52px;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 8px;
     }
 
-    .subsede-item:hover {
-      border-color: var(--teal);
-      background: rgba(23,133,130,0.1);
-    }
-
-    .subsede-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--teal);
-      flex-shrink: 0;
-    }
-
-    .subsede-name {
+    .stat-label {
       font-size: 11px;
       font-weight: 400;
       color: var(--white-60);
-      flex: 1;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
     }
 
-    .subsede-arrow {
-      color: var(--teal);
-      font-size: 11px;
+    .cta-section {
+      padding: 80px 44px 100px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      flex-wrap: wrap;
     }
 
-    .btn-card {
+    .cta-text h2 {
+      font-family: var(--font-title);
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .cta-text h2 span {
+      color: var(--teal-light);
+    }
+
+    .cta-text p {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--white-60);
+      max-width: 420px;
+      line-height: 1.7;
+    }
+
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .contact-left {
+      padding: 80px 60px 80px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-right: 1px solid var(--glass-border);
+    }
+
+    .contact-left h1 {
+      font-family: var(--font-title);
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 22px;
+    }
+
+    .contact-left h1 span {
+      color: var(--gold);
+    }
+
+    .contact-left>p {
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white-60);
+      max-width: 400px;
+      margin-bottom: 52px;
+    }
+
+    .info-blocks {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .info-block {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .info-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--white-06);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      color: var(--teal-light);
+    }
+
+    .info-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .info-label {
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--white-30);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    .info-value {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--white-60);
+    }
+
+    .sedes-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 36px;
+    }
+
+    .sede-pill {
+      background: var(--white-06);
+      border: 1px solid var(--glass-border);
+      padding: 7px 14px;
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--white-60);
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sede-pill::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+
+    .contact-right {
+      padding: 80px 44px 80px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-title {
+      font-family: var(--font-title);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .form-subtitle {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--white-60);
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 9.5px;
+      font-weight: 500;
+      color: var(--white-60);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--white-12);
+      color: var(--white);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 300;
+      padding: 13px 16px;
+      outline: none;
       width: 100%;
+    }
+
+    .field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2322BF78' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      appearance: none;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .services-check {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .services-check-label {
+      font-size: 9.5px;
+      font-weight: 500;
+      color: var(--white-60);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .check-item input[type='checkbox'] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      background: var(--glass-bg);
+      border: 1px solid var(--white-12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .check-item input[type='checkbox']:checked {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    .check-item input[type='checkbox']:checked::after {
+      content: '✓';
+      color: white;
+      font-size: 10px;
+    }
+
+    .check-item span {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--white-60);
+    }
+
+    .btn-submit {
       background: var(--gold);
       color: var(--bg-deep);
       border: none;
-      padding: 13px;
+      padding: 16px 36px;
       font-family: var(--sans);
       font-size: 10px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 2.5px;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background .2s;
-    }
-
-    .btn-card:hover { background: var(--gold-light); }
-
-    /* ── PLUS ───────────────────────────────────────────── */
-    .plus-btn {
-      position: fixed;
-      bottom: 24px; right: 24px;
-      z-index: 20;
-      width: 34px; height: 34px;
-      background: var(--glass-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--glass-border);
-      color: var(--white-60);
-      font-size: 20px;
+      align-self: flex-start;
       display: flex;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: border-color .2s;
+      gap: 10px;
     }
 
-    .plus-btn:hover { border-color: var(--teal); color: var(--teal); }
-
-    /* ── MARKER ─────────────────────────────────────────── */
-    .marker-wrap {
-      width: 40px; height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      cursor: pointer;
-    }
-
-    .marker-core {
-      width: 13px; height: 13px;
-      background: var(--gold);
-      border-radius: 50%;
-      border: 2px solid var(--white);
-      position: absolute;
-      z-index: 2;
-      transition: transform .2s;
-    }
-
-    .marker-ring {
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      border: 1px solid rgba(191,161,129,0.5);
-      position: absolute;
-      animation: pulse-ring 2.2s ease-in-out infinite;
-    }
-
-    .marker-ring2 {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      border: 1px solid rgba(23,133,130,0.45);
-      position: absolute;
-      animation: pulse-ring 2.2s ease-in-out infinite .6s;
-    }
-
-    .marker-wrap:hover .marker-core { transform: scale(1.3); }
-
-    /* ── MAPBOX OVERRIDES ───────────────────────────────── */
-    .mapboxgl-ctrl-bottom-left,
-    .mapboxgl-ctrl-bottom-right { display: none !important; }
-    .mapboxgl-popup-content {
-      padding: 0 !important;
-      background: transparent !important;
-      box-shadow: none !important;
-    }
-    .mapboxgl-popup-tip { display: none !important; }
-
-    /* ── ANIMATIONS ─────────────────────────────────────── */
-    @keyframes pulse-ring {
-      0%   { transform: scale(0.8); opacity: 0.7; }
-      50%  { transform: scale(1.3); opacity: 0.2; }
-      100% { transform: scale(0.8); opacity: 0.7; }
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero .eyebrow { animation: fadeInUp .7s ease both; }
-    .hero h1       { animation: fadeInUp .7s ease .15s both; }
-    .hero p        { animation: fadeInUp .7s ease .3s both; }
-    .cta-group     { animation: fadeInUp .7s ease .45s both; }
-    .map-hint      { animation: fadeInUp .7s ease .6s both; }
-
-    /* ── SCROLLABLE CARD ─────────────────────────────────── */
-    .card-scroll {
-      max-height: calc(100vh - 180px);
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--teal) transparent;
-    }
-
-    .card-scroll::-webkit-scrollbar { width: 3px; }
-    .card-scroll::-webkit-scrollbar-track { background: transparent; }
-    .card-scroll::-webkit-scrollbar-thumb { background: var(--teal); }
-
-    /* ── HAMBURGER ──────────────────────────────────────── */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      gap: 5px;
-      cursor: pointer;
-      padding: 4px;
-      z-index: 30;
-    }
-
-    .hamburger span {
-      display: block;
-      width: 22px;
-      height: 2px;
-      background: var(--white-60);
-      transition: all .25s;
-    }
-
-    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
-    .hamburger.open span:nth-child(2) { opacity: 0; }
-    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
-
-    /* ── MOBILE MENU ────────────────────────────────────── */
-    .mobile-menu {
-      display: none;
-      position: fixed;
-      top: 70px; left: 0; right: 0;
-      background: rgba(6,15,26,0.97);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border-bottom: 1px solid var(--glass-border);
-      z-index: 25;
-      flex-direction: column;
-      padding: 16px 0;
-    }
-
-    .mobile-menu.open { display: flex; }
-
-    .mobile-menu a {
-      padding: 14px 24px;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--white-60);
-      text-decoration: none;
-      border-bottom: 1px solid var(--glass-border);
-      transition: color .2s, background .2s;
-    }
-
-    .mobile-menu a:last-child { border-bottom: none; }
-    .mobile-menu a:hover,
-    .mobile-menu a.active { color: var(--gold); background: rgba(23,133,130,0.06); }
-
-    /* ── RESPONSIVE ─────────────────────────────────────── */
     @media (max-width: 768px) {
-
-      /* NAV */
-      nav {
-        padding: 0 20px;
-        height: 64px;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
+      .services-grid {
+        grid-template-columns: 1fr;
       }
 
-      .nav-spacer { display: none; }
-      .nav-links  { display: none; }
-      .hamburger  { display: flex; }
-
-      .logo-sub   { display: none; }
-      .logo-name  { font-size: 14px; }
-      .logo-badge { width: 34px; height: 34px; font-size: 12px; }
-
-      /* MAPA — forzar dimensiones explícitas en móvil */
-      #map {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
+      .contact-layout {
+        grid-template-columns: 1fr;
       }
 
-      /* DRAG HINT */
-      .drag-hint { display: none; }
-
-      /* HERO */
-      .hero {
-        left: 20px;
-        right: 20px;
-        top: auto;
-        bottom: 100px;
-        transform: none;
-        max-width: 100%;
+      .logo-sub {
+        display: none;
       }
 
-      .hero h1 {
-        font-size: 38px;
-        line-height: 1.08;
-        margin-bottom: 14px;
-      }
-
-      .hero p {
-        font-size: 13px;
-        max-width: 100%;
-        margin-bottom: 22px;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-
-      .eyebrow {
-        font-size: 9px;
-        letter-spacing: 3px;
-        margin-bottom: 12px;
-      }
-
-      .cta-group {
-        gap: 10px;
-      }
-
-      .btn-primary,
-      .btn-ghost {
-        padding: 12px 18px;
-        font-size: 9px;
-        letter-spacing: 1.5px;
-        white-space: nowrap;
-      }
-
-      .map-hint {
-        font-size: 8.5px;
-        letter-spacing: 1.5px;
-        padding: 7px 12px;
-        margin-top: 14px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-      }
-
-      /* CARD — ocupa pantalla completa en móvil */
-      .project-card {
-        right: 0;
-        left: 0;
-        top: auto;
-        bottom: 0;
-        width: 100%;
-        transform: translateY(100%);
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
-        border-bottom: none;
-        border-top: 1px solid var(--glass-border);
-        max-height: 75vh;
-        transition: transform .35s cubic-bezier(.4,0,.2,1), opacity .3s;
-      }
-
-      .project-card.active {
-        transform: translateY(0);
-        opacity: 1;
-      }
-
-      .card-scroll {
-        max-height: calc(75vh - 60px);
-      }
-
-      /* PLUS BTN */
-      .plus-btn {
-        bottom: 16px;
-        right: 16px;
-      }
-
-      /* ATMOS — más oscuro en móvil para leer el texto */
-      .atmos {
-        background:
-          linear-gradient(to bottom,
-            rgba(6,15,26,0.85) 0%,
-            rgba(6,15,26,0.55) 35%,
-            rgba(6,15,26,0.75) 70%,
-            rgba(6,15,26,0.95) 100%);
+      .logo-img {
+        height: 36px;
       }
     }
-
-    @media (max-width: 400px) {
-      .hero h1 { font-size: 32px; }
-      .btn-primary, .btn-ghost { padding: 11px 14px; font-size: 8.5px; }
-    }
-  
-    /* SERVICIOS & CONTACTO CSS */
-    .page-hero { padding: 90px 44px 70px; max-width: 760px; }
-    .page-hero h1 { font-family: var(--serif); font-size: 64px; font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 20px; }
-    .page-hero h1 span { color: var(--gold); }
-    .page-hero p { font-size: 15px; font-weight: 300; line-height: 1.8; color: var(--white-60); max-width: 560px; }
-    .divider { width: calc(100% - 88px); margin: 0 44px; height: 1px; background: linear-gradient(to right, var(--teal-glow), transparent); }
-    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; padding: 60px 44px 100px; background: var(--glass-border); }
-    .service-card { background: var(--bg); padding: 44px 38px; position: relative; cursor: pointer; transition: background .3s; overflow: hidden; }
-    .service-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(23,133,130,0.06) 0%, transparent 60%); opacity: 0; transition: opacity .35s; }
-    .service-card:hover { background: var(--bg-mid); }
-    .service-card:hover::before { opacity: 1; }
-    .service-number { font-family: var(--serif); font-size: 11px; font-weight: 600; color: var(--gold-dim); letter-spacing: 3px; opacity: 0.6; margin-bottom: 28px; }
-    .service-icon-wrap { width: 52px; height: 52px; border: 1px solid var(--white-12); display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
-    .service-icon { font-size: 22px; color: var(--gold-dim); line-height: 1; }
-    .service-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 16px; }
-    .service-desc { font-size: 13px; font-weight: 300; line-height: 1.8; color: var(--white-60); margin-bottom: 28px; }
-    .service-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 32px; }
-    .stag { background: rgba(23,133,130,0.1); color: var(--teal-light); border: 1px solid rgba(23,133,130,0.25); padding: 4px 10px; font-size: 9px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; }
-    .service-arrow { position: absolute; bottom: 36px; right: 36px; color: var(--gold); font-size: 22px; opacity: 0.4; }
-    .stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border); margin: 0 44px 80px; }
-    .stat-item { padding: 44px 32px; border-right: 1px solid var(--glass-border); }
-    .stat-item:last-child { border-right: none; }
-    .stat-num { font-family: var(--serif); font-size: 52px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 8px; }
-    .stat-label { font-size: 11px; font-weight: 400; color: var(--white-60); letter-spacing: 1.5px; text-transform: uppercase; }
-    .cta-section { padding: 80px 44px 100px; display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
-    .cta-text h2 { font-family: var(--serif); font-size: 44px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 12px; }
-    .cta-text h2 span { color: var(--teal-light); }
-    .cta-text p { font-size: 14px; font-weight: 300; color: var(--white-60); max-width: 420px; line-height: 1.7; }
-    
-    .contact-layout { display: grid; grid-template-columns: 1fr 1fr; }
-    .contact-left { padding: 80px 60px 80px 44px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--glass-border); }
-    .contact-left h1 { font-family: var(--serif); font-size: 58px; font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 22px; }
-    .contact-left h1 span { color: var(--gold); }
-    .contact-left > p { font-size: 14px; font-weight: 300; line-height: 1.8; color: var(--white-60); max-width: 400px; margin-bottom: 52px; }
-    .info-blocks { display: flex; flex-direction: column; border-top: 1px solid var(--glass-border); }
-    .info-block { display: flex; align-items: flex-start; gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--glass-border); }
-    .info-icon { width: 38px; height: 38px; background: var(--white-06); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; color: var(--teal-light); }
-    .info-content { display: flex; flex-direction: column; gap: 3px; }
-    .info-label { font-size: 9px; font-weight: 500; color: var(--white-30); letter-spacing: 2.5px; text-transform: uppercase; }
-    .info-value { font-size: 13px; font-weight: 400; color: var(--white-60); }
-    .sedes-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 36px; }
-    .sede-pill { background: var(--white-06); border: 1px solid var(--glass-border); padding: 7px 14px; font-size: 10px; font-weight: 400; color: var(--white-60); letter-spacing: 1px; display: flex; align-items: center; gap: 7px; }
-    .sede-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
-    
-    .contact-right { padding: 80px 44px 80px 60px; display: flex; flex-direction: column; justify-content: center; }
-    .form-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
-    .form-subtitle { font-size: 13px; font-weight: 300; color: var(--white-60); margin-bottom: 40px; line-height: 1.6; }
-    .contact-form { display: flex; flex-direction: column; gap: 20px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .field { display: flex; flex-direction: column; gap: 8px; }
-    .field label { font-size: 9.5px; font-weight: 500; color: var(--white-60); letter-spacing: 2px; text-transform: uppercase; }
-    .field input, .field select, .field textarea { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--white-12); color: var(--white); font-family: var(--sans); font-size: 13px; font-weight: 300; padding: 13px 16px; outline: none; width: 100%; }
-    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23178582' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; appearance: none; }
-    .field textarea { resize: vertical; min-height: 120px; }
-    .services-check { display: flex; flex-direction: column; gap: 8px; }
-    .services-check-label { font-size: 9.5px; font-weight: 500; color: var(--white-60); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-    .check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .check-item { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .check-item input[type='checkbox'] { width: 16px; height: 16px; appearance: none; background: var(--glass-bg); border: 1px solid var(--white-12); display: flex; align-items: center; justify-content: center; }
-    .check-item input[type='checkbox']:checked { background: var(--teal); border-color: var(--teal); }
-    .check-item input[type='checkbox']:checked::after { content: '✓'; color: white; font-size: 10px; }
-    .check-item span { font-size: 11px; font-weight: 400; color: var(--white-60); }
-    .btn-submit { background: var(--gold); color: var(--bg-deep); border: none; padding: 16px 36px; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; align-self: flex-start; display: flex; align-items: center; gap: 10px; }
-    
-    @media (max-width: 768px) {
-      .services-grid { grid-template-columns: 1fr; }
-      .contact-layout { grid-template-columns: 1fr; }
-    }
-
-</style>
+  </style>
 </head>
+
 <body>
 
-<!-- MAP -->
-<div id="map"></div>
+  <!-- MAP -->
+  <div id="map"></div>
 
-<!-- OVERLAY -->
-<div class="atmos"></div>
+  <!-- OVERLAY -->
+  <div class="atmos"></div>
 
-<!-- NAV -->
-<nav>
-  <a href="#firma" class="logo" style="text-decoration:none">
-    <div class="logo-badge"><img src="logo.png" alt="FC Logo" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" /></div>
-    <div class="logo-info">
-      <span class="logo-name">Fortaleza Contact Center</span>
-      <span class="logo-sub">Soluciones integrales de Contact Center</span>
+  <!-- NAV -->
+  <nav>
+    <a href="#firma" class="logo" style="text-decoration:none">
+      <img src="main.png" alt="Fortaleza Contact Center" class="logo-img" />
+    </a>
+    <div class="nav-spacer"></div>
+    <div class="nav-links">
+      <a href="#firma" class="active">Firma</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#proyectos">Proyectos</a>
+      <a href="#contacto">Contacto</a>
     </div>
-  </a>
-  <div class="nav-spacer"></div>
-  <div class="nav-links">
+    <div class="hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
     <a href="#firma" class="active">Firma</a>
     <a href="#servicios">Servicios</a>
     <a href="#proyectos">Proyectos</a>
     <a href="#contacto">Contacto</a>
   </div>
-  <div class="hamburger" id="hamburger" onclick="toggleMenu()">
-    <span></span><span></span><span></span>
-  </div>
-</nav>
 
-<!-- MOBILE MENU -->
-<div class="mobile-menu" id="mobileMenu">
-  <a href="#firma" class="active">Firma</a>
-  <a href="#servicios">Servicios</a>
-  <a href="#proyectos">Proyectos</a>
-  <a href="#contacto">Contacto</a>
-</div>
+  <!-- HERO (Slide 1) -->
+  <section id="firma"
+    style="display: flex; flex-direction: column; min-height: calc(100vh - 76px); position: relative; z-index: 10; margin-top: 76px; padding-top: 0;">
 
-<!-- DRAG HINT -->
-<div class="drag-hint">Arrastra el globo y abre proyectos</div>
-
-<!-- HERO -->
-<!-- HERO -->
-<section class="hero">
-  <div class="eyebrow">Red Nacional de Operaciones</div>
-  <h1>Explora nuestra <span>red de servicios</span> y presencia</h1>
-  <p>Una plataforma visual para presentar nuestra firma, entender nuestro modelo de operación y ubicar nuestras sedes dentro de una lógica territorial y estratégica.</p>
-  <div class="cta-group">
-    <a href="#servicios" class="btn-primary" style="text-decoration: none;">Ver Servicios</a>
-    <button class="btn-ghost" onclick="map.flyTo({zoom: 4.8})">Explorar Sedes</button>
-  </div>
-  <div class="map-hint">
-    <span class="hint-dot"></span>
-    Mapa interactivo &middot; Arrastra y haz clic en los puntos
-  </div>
-</section>
-
-<!-- SPACER FOR FIRMA TO PUSH CONTENT DOWN -->
-<section id="firma" style="height: 100vh; width: 100%; pointer-events: none;"></section>
-
-<section id="servicios" style="background: var(--bg); position: relative; z-index: 10; padding-top: 20px;">
-
-
-  <!-- HERO -->
-  <section class="page-hero">
-    <div class="eyebrow">Lo que hacemos</div>
-    <h1>Soluciones que <span>impulsan</span> tu operación</h1>
-    <p>Ofrecemos servicios especializados de Contact Center diseñados para maximizar la eficiencia operativa, fortalecer la relación con tus clientes y garantizar el cumplimiento legal y financiero de tu empresa.</p>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- GRID 6 SERVICIOS -->
-  <section class="services-grid">
-
-    <!-- 1 Cobranza -->
-    <div class="service-card fade-in" style="animation-delay:.05s">
-      <div class="service-number">01</div>
-      <div class="service-icon-wrap">
-        <span class="service-icon">◈</span>
+    <!-- Green Top Area -->
+    <div
+      style="flex: 1 1 70%; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; background-color: var(--brand-green);">
+      <!-- Background Image -->
+      <img src="panel1.avif" alt="Hero Background"
+        style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" />
+      
+      <!-- Green Multiply Overlay -->
+      <div
+        style="position: absolute; inset: 0; background: var(--brand-green); mix-blend-mode: multiply; opacity: 0.85;">
       </div>
-      <h3 class="service-title">Cobranza</h3>
-      <p class="service-desc">Gestionamos carteras de cobranza temprana, intermedia y tardía con estrategias personalizadas por segmento. Maximizamos la recuperación preservando la relación con el cliente mediante protocolos éticos y efectivos.</p>
-      <div class="service-tags">
-        <span class="stag">Temprana</span>
-        <span class="stag">Tardía</span>
-        <span class="stag">Extrajudicial</span>
-        <span class="stag">Preventiva</span>
+
+      <!-- Tech Background subtle overlay -->
+      <div
+        style="position: absolute; inset: 0; background-image: url('circuit_board.png'); background-size: cover; background-position: center; opacity: 0.15; mix-blend-mode: overlay; pointer-events: none;">
       </div>
-      <span class="service-arrow">↗</span>
+
+      <!-- Logo Image (Principal.png) -->
+      <div style="position: relative; z-index: 2; margin-top: 40px; display: flex; flex-direction: column; align-items: center; text-align: center;">
+        <img src="Principal.png" alt="Fortaleza Contact Center" 
+             style="width: clamp(220px, 35vw, 440px); height: auto; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3));" />
+      </div>
     </div>
 
-    <!-- 2 Ventas -->
-    <div class="service-card fade-in" style="animation-delay:.12s">
-      <div class="service-number">02</div>
-      <div class="service-icon-wrap">
-        <span class="service-icon">⬡</span>
-      </div>
-      <h3 class="service-title">Ventas</h3>
-      <p class="service-desc">Ejecutamos campañas de venta outbound e inbound con agentes altamente capacitados. Diseñamos scripts, scripts de objeción y flujos de conversión para sectores financiero, telecomunicaciones y retail.</p>
-      <div class="service-tags">
-        <span class="stag">Outbound</span>
-        <span class="stag">Inbound</span>
-        <span class="stag">Cross-Selling</span>
-        <span class="stag">Retención</span>
-      </div>
-      <span class="service-arrow">↗</span>
-    </div>
-
-    <!-- 3 Marketing -->
-    <div class="service-card fade-in" style="animation-delay:.19s">
-      <div class="service-number">03</div>
-      <div class="service-icon-wrap">
-        <span class="service-icon">◎</span>
-      </div>
-      <h3 class="service-title">Marketing</h3>
-      <p class="service-desc">Desarrollamos estrategias de marketing directo y digital integradas con operaciones de Contact Center. Desde la generación de leads hasta el seguimiento posventa, cubrimos todo el ciclo de conversión.</p>
-      <div class="service-tags">
-        <span class="stag">Lead Gen</span>
-        <span class="stag">Email Mkt</span>
-        <span class="stag">SMS / Push</span>
-        <span class="stag">Posventa</span>
-      </div>
-      <span class="service-arrow">↗</span>
-    </div>
-
-    <!-- 4 Backoffice -->
-    <div class="service-card fade-in" style="animation-delay:.26s">
-      <div class="service-number">04</div>
-      <div class="service-icon-wrap">
-        <span class="service-icon">▣</span>
-      </div>
-      <h3 class="service-title">Backoffice</h3>
-      <p class="service-desc">Procesamos operaciones administrativas de alto volumen: captura de datos, validación documental, gestión de expedientes y soporte a procesos críticos del negocio con precisión y confidencialidad.</p>
-      <div class="service-tags">
-        <span class="stag">Captura</span>
-        <span class="stag">Validación</span>
-        <span class="stag">Expedientes</span>
-        <span class="stag">Soporte Ops</span>
-      </div>
-      <span class="service-arrow">↗</span>
-    </div>
-
-    <!-- 5 Contaduría -->
-    <div class="service-card fade-in" style="animation-delay:.33s">
-      <div class="service-number">05</div>
-      <div class="service-icon-wrap">
-        <span class="service-icon">⊞</span>
-      </div>
-      <h3 class="service-title">Contaduría</h3>
-      <p class="service-desc">Brindamos servicios contables y fiscales integrales para empresas que buscan eficiencia y cumplimiento. Declaraciones, nómina, contabilidad fiscal y financiera con reportes ejecutivos en tiempo real.</p>
-      <div class="service-tags">
-        <span class="stag">Fiscal</span>
-        <span class="stag">Nómina</span>
-        <span class="stag">Financiero</span>
-        <span class="stag">SAT</span>
-      </div>
-      <span class="service-arrow">↗</span>
-    </div>
-
-    <!-- 6 Asesoría Legal -->
-    <div class="service-card fade-in" style="animation-delay:.40s">
-      <div class="service-number">06</div>
-      <div class="service-icon-wrap">
-        <span class="service-icon">⊕</span>
-      </div>
-      <h3 class="service-title">Asesoría Legal</h3>
-      <p class="service-desc">Ofrecemos acompañamiento legal especializado en derecho corporativo, laboral y de protección al consumidor. Gestionamos procesos jurídicos de cobranza, contratos y defensa ante autoridades regulatorias.</p>
-      <div class="service-tags">
-        <span class="stag">Corporativo</span>
-        <span class="stag">Laboral</span>
-        <span class="stag">Contratos</span>
-        <span class="stag">Regulatorio</span>
-      </div>
-      <span class="service-arrow">↗</span>
-    </div>
-
-  </section>
-
-  <!-- STATS -->
-  <section class="stats-strip">
-    <div class="stat-item fade-in" style="animation-delay:.1s">
-      <div class="stat-num">+12</div>
-      <div class="stat-label">Años de experiencia</div>
-    </div>
-    <div class="stat-item fade-in" style="animation-delay:.2s">
-      <div class="stat-num">6</div>
-      <div class="stat-label">Líneas de servicio</div>
-    </div>
-    <div class="stat-item fade-in" style="animation-delay:.3s">
-      <div class="stat-num">4</div>
-      <div class="stat-label">Estados con presencia</div>
-    </div>
-    <div class="stat-item fade-in" style="animation-delay:.4s">
-      <div class="stat-num">98%</div>
-      <div class="stat-label">Tasa de satisfacción</div>
+    <!-- Navy Bottom Area -->
+    <div
+      style="flex: 0 0 auto; min-height: 30vh; background-color: var(--bg-deep); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px;">
+      <h1
+        style="color: var(--white); font-size: clamp(32px, 5vw, 48px); font-weight: 700; margin-bottom: 12px; font-family: var(--font-title);">
+        Tu partner estratégico en experiencia del cliente</h1>
+      <p
+        style="color: var(--white-60); font-size: clamp(16px, 2.2vw, 20px); font-weight: 400; max-width: 900px; margin: 0 auto;">
+        Potenciamos tu negocio con la perfecta sinergia entre talento humano e inteligencia artificial.</p>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="cta-section">
-    <div class="cta-text">
-      <h2>¿Listo para <span>optimizar</span> tu operación?</h2>
-      <p>Contáctanos y un especialista diseñará una propuesta a la medida de las necesidades de tu empresa.</p>
+  <section id="main-content"
+    style="background: var(--bg); position: relative; z-index: 10; padding-top: 20px; overflow: hidden;">
+
+
+    <!-- NOSOTROS (Slide 2) -->
+    <section id="nosotros"
+      style="display: flex; flex-wrap: wrap; align-items: stretch; background: var(--bg); margin: 40px 0; min-height: 500px;">
+      <!-- Left text side -->
+      <div
+        style="flex: 0 0 60%; width: 60%; padding: 80px 5% 80px 5%; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; position: relative; box-sizing: border-box;">
+        <div style="max-width: 680px; text-align: right; width: 100%; position: relative; z-index: 2;">
+          <h1
+            style="font-size:clamp(40px, 4.5vw, 56px); font-weight: 700; line-height: 1.1; margin-bottom: 30px; margin-top: 0; color: #ffffff;">
+            Construimos Conexiones que<br><span style="color: var(--brand-green);">Fortalecen tu Negocio</span></h1>
+          <p style="margin-bottom: 24px; font-size: clamp(18px, 2.2vw, 24px); line-height: 1.4; color: #f0f0f0; font-weight: 400;">
+            En Fortaleza Contact Center, somos expertos en <strong style="color: #ffffff; font-weight: 700;">conectar empresas con sus clientes a través de soluciones integrales de cobranza, ventas, atención al cliente y gestión de campo.</strong></p>
+          <p style="font-size: clamp(18px, 2.2vw, 24px); line-height: 1.4; color: #f0f0f0; font-weight: 400;"><strong
+              style="color: #ffffff; font-weight: 700;">Nuestra misión</strong> es entregar resultados excepcionales
+            apalancados en nuestra gente y tecnología de punta, creando valor sostenible para su organización.</p>
+        </div>
+
+        <!-- Small logo bottom left -->
+        <div
+          style="position: absolute; bottom: 30px; left: 30px; display: flex; align-items: center; gap: 10px; opacity: 0.9;">
+          <img src="logo.png?v=4" alt="Fortaleza" style="height: 30px; width: auto;" />
+          <div style="font-family: var(--font-logo); color: #fff; font-size: 20px; font-weight: 700; line-height: 1; text-align: left;">
+            Fortaleza<br><span
+              style="font-size: 8px; font-weight: 300; letter-spacing: 2px; color: var(--brand-green);">CONTACT
+              CENTER</span></div>
+        </div>
+      </div>
+
+      <!-- Right image side -->
+      <div style="flex: 0 0 40%; width: 40%; position: relative; min-height: 350px; box-sizing: border-box;">
+        <img src="nosotros_bg.png" alt="Nosotros Fortaleza"
+          style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+        <div
+          style="position: absolute; inset: 0; background: var(--brand-green); mix-blend-mode: multiply; opacity: 0.85;">
+        </div>
+        <div
+          style="position: absolute; inset: 0; background: linear-gradient(to right, var(--bg) 0%, transparent 20%);">
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- SERVICIOS (Slide 3) -->
+    <div style="min-height: 100vh; display: flex; flex-direction: column; position: relative;">
+      <section id="servicios" style="background: var(--brand-green); padding: 30px 5%; text-align: center; flex: 0 0 auto;">
+        <h1 style="color: #116940; font-size: clamp(32px, 4.5vw, 48px); margin: 0; font-weight: 500;">Nuestros <span
+            style="color: #ffffff; font-weight: 700;">Servicios Especializados</span></h1>
+      </section>
+
+      <section id="servicios-content" style="background: var(--bg); flex: 1; padding: 60px 5%; position: relative; display: flex; flex-direction: column; justify-content: center;">
+        <!-- Top Row: 3 items -->
+        <div
+          style="max-width: 1400px; width: 100%; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 80px 40px; text-align: center;">
+          <!-- 1 Cobranza -->
+          <div>
+            <div style="display: flex; justify-content: center; margin-bottom: 20px; color: #ffffff;"><i
+                data-lucide="handshake" style="width: 56px; height: 56px;"></i></div>
+            <h3 style="color: var(--brand-green); font-size: 24px; margin-bottom: 12px;">Cobranza Persuasiva y Ética</h3>
+            <p style="color: #ffffff; font-size: 18px; line-height: 1.5; padding: 0 15px;">Recuperación de cartera con enfoque humano que
+              preserva la relación cliente-empresa.</p>
+          </div>
+          <!-- 2 Ventas -->
+          <div>
+            <div style="display: flex; justify-content: center; margin-bottom: 20px; color: #ffffff;"><i
+                data-lucide="trending-up" style="width: 56px; height: 56px;"></i></div>
+            <h3 style="color: var(--brand-green); font-size: 24px; margin-bottom: 12px;">Ventas y Telemarketing</h3>
+            <p style="color: #ffffff; font-size: 18px; line-height: 1.5; padding: 0 15px;">Estrategias personalizadas que convierten
+              prospectos en clientes leales y rentables.</p>
+          </div>
+          <!-- 3 Customer Service -->
+          <div>
+            <div
+              style="display: flex; justify-content: center; margin-bottom: 20px; color: #ffffff; font-size: 56px; font-weight: 900; line-height: 1;">
+              $</div>
+            <h3 style="color: var(--brand-green); font-size: 24px; margin-bottom: 12px;">Customer Service 24/7</h3>
+            <p style="color: #ffffff; font-size: 18px; line-height: 1.5; padding: 0 15px;">Atención continua que garantiza satisfacción y
+              fidelización de sus clientes más valiosos.</p>
+          </div>
+        </div>
+
+        <!-- Bottom Row: 2 items -->
+        <div
+          style="max-width: 900px; width: 100%; margin: 80px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 80px 40px; text-align: center;">
+          <!-- 4 Agendamiento -->
+          <div>
+            <div style="display: flex; justify-content: center; margin-bottom: 20px; color: #ffffff;"><i
+                data-lucide="calendar" style="width: 56px; height: 56px;"></i></div>
+            <h3 style="color: var(--brand-green); font-size: 24px; margin-bottom: 12px;">Agendamiento Efectivo</h3>
+            <p style="color: #ffffff; font-size: 18px; line-height: 1.5; padding: 0 15px;">Citas de alta efectividad con tasas de
+              confirmación superiores al promedio del mercado.</p>
+          </div>
+          <!-- 5 Gestiones de Campo -->
+          <div>
+            <div style="display: flex; justify-content: center; margin-bottom: 20px; color: #ffffff;"><i
+                data-lucide="target" style="width: 56px; height: 56px;"></i></div>
+            <h3 style="color: var(--brand-green); font-size: 24px; margin-bottom: 12px;">Gestiones de Campo</h3>
+            <p style="color: #ffffff; font-size: 18px; line-height: 1.5; padding: 0 15px;">Visitas domiciliarias estratégicas que cierran
+              el ciclo de atención presencial.</p>
+          </div>
+        </div>
+
+        <!-- Small logo bottom right -->
+        <div style="position: absolute; bottom: 30px; right: 30px; opacity: 0.9;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="logo.png?v=4" alt="Fortaleza" style="height: 30px; width: auto;" />
+            <div style="font-family: var(--font-logo); color: #fff; font-size: 20px; font-weight: 700; line-height: 1; text-align: left;">Fortaleza<br><span
+                style="font-size: 8px; font-weight: 300; letter-spacing: 2px; color: var(--brand-green);">CONTACT
+                CENTER</span></div>
+          </div>
+        </div>
+      </section>
     </div>
-    <a href="contacto.html" class="btn-primary">Solicitar Propuesta</a>
+
+    <div class="divider"></div>
+
+    <!-- PROPUESTA DE VALOR / CIERRE (Slide 4) -->
+    <section id="cierre"
+      style="display: flex; flex-wrap: wrap; align-items: stretch; background: var(--bg); min-height: calc(100vh - 140px); position: relative; overflow: hidden;">
+
+      <!-- Left text side -->
+      <div
+        style="flex: 0 0 70%; width: 70%; padding: 60px 250px 60px 5%; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; text-align: right; position: relative; z-index: 2; box-sizing: border-box;">
+        <h1
+          style="font-size: clamp(48px, 6vw, 75px); line-height: 1.1; margin-bottom: 40px; margin-top: 0; color: #ffffff; font-weight: 300;">
+          Tecnología Robusta<br>
+          <span style="font-weight: 700;">Corazón Humano</span><br>
+          <span style="color: var(--brand-green); font-weight: 700;">Resultados Sólidos</span>
+        </h1>
+        <p style="font-size: clamp(18px, 2.5vw, 26px); line-height: 1.5; color: #ffffff; max-width: 650px; margin-right: 0; margin-left: auto; font-weight: 400;">
+          De la data a la acción, <strong style="font-weight: 700;">con la precisión de la IA y la calidez de nuestra
+            gente</strong>
+        </p>
+
+        <!-- Small logo bottom left -->
+        <div
+          style="position: absolute; bottom: 30px; left: 30px; display: flex; align-items: center; gap: 10px; opacity: 0.9;">
+          <img src="logo.png?v=4" alt="Fortaleza" style="height: 30px; width: auto;" />
+          <div style="font-family: var(--font-logo); color: #fff; font-size: 20px; font-weight: 700; line-height: 1; text-align: left;">
+            Fortaleza<br><span
+              style="font-size: 8px; font-weight: 300; letter-spacing: 2px; color: var(--brand-green);">CONTACT
+              CENTER</span></div>
+        </div>
+      </div>
+
+      <!-- Right image side -->
+      <div
+        style="flex: 0 0 30%; width: 30%; position: relative; min-height: 400px; overflow: hidden; box-sizing: border-box;">
+        <!-- Tech background -->
+        <img src="tech_bg.png" alt="Tech background"
+          style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" />
+      </div>
+
+      <!-- Big Shield Logo exactly on the boundary -->
+      <img src="Panel_4_transparent.png?v=3" alt="Escudo Grande"
+        style="position: absolute; z-index: 10; left: 70%; top: 50%; transform: translate(-50%, -50%); width: clamp(250px, 28vw, 380px); height: auto; object-fit: contain; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.6));" />
+
+    </section>
+
+    <!-- STATS -->
+    <section class="stats-strip">
+      <div class="stat-item fade-in" style="animation-delay:.1s">
+        <div class="stat-num">+2</div>
+        <div class="stat-label">Años de experiencia</div>
+      </div>
+      <div class="stat-item fade-in" style="animation-delay:.2s">
+        <div class="stat-num">6</div>
+        <div class="stat-label">Líneas de servicio</div>
+      </div>
+      <div class="stat-item fade-in" style="animation-delay:.3s">
+        <div class="stat-num">4</div>
+        <div class="stat-label">Estados con presencia</div>
+      </div>
+      <div class="stat-item fade-in" style="animation-delay:.4s">
+        <div class="stat-num">98%</div>
+        <div class="stat-label">Tasa de satisfacción</div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALES -->
+    <section id="testimoniales" style="background: var(--bg); position: relative; z-index: 10; padding-bottom: 60px;">
+      <div class="testimonials-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 1000px;">
+        
+        <!-- Moteroseguro -->
+        <div class="test-card">
+          <div class="test-stars">★★★★★</div>
+          <div class="test-quote">"Buscábamos un Contact Center que tratara a los usuarios con paciencia y claridad en temas de seguros. Encontramos un socio estratégico invaluable que cuida cada detalle de la experiencia humana."</div>
+          <div class="test-client">
+            <div class="test-logo">MOTEROSEGURO</div>
+            <div class="test-author">CEO & FUNDADOR</div>
+          </div>
+        </div>
+
+        <!-- AT&T -->
+        <div class="test-card">
+          <div class="test-stars">★★★★★</div>
+          <div class="test-quote">"Manejar nuestro volumen de interacciones requiere infraestructura sólida y, sobre todo, calidad humana. Fortaleza superó nuestras expectativas en métricas de satisfacción (CSAT)."</div>
+          <div class="test-client">
+            <div class="test-logo">AT&T</div>
+            <div class="test-author">VENDOR MANAGEMENT</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+
+
+    <!-- FOOTER -->
+
+
+
+  </section>
+  <section id="contacto" style="background: var(--bg); position: relative; z-index: 10; padding-top: 80px;">
+
+    <div class="contact-layout">
+
+      <!-- IZQUIERDA -->
+      <div class="contact-left">
+        <div class="eyebrow">Hablemos</div>
+        <h1>Iniciemos una <span>conversación</span></h1>
+        <p>Cuéntanos los retos operativos de tu empresa. Nuestro equipo analizará tu caso y te presentará una propuesta
+          personalizada sin compromiso.</p>
+
+        <div class="info-blocks">
+          <div class="info-block">
+            <div class="info-icon">✉</div>
+            <div class="info-content">
+              <span class="info-label">Correo</span>
+              <span class="info-value">contacto@fortalezacc.mx</span>
+            </div>
+          </div>
+          <div class="info-block">
+            <div class="info-icon">◉</div>
+            <div class="info-content">
+              <span class="info-label">Horario de atención</span>
+              <span class="info-value">Lunes a Viernes · 9:00 – 18:00 hrs</span>
+            </div>
+          </div>
+          <div class="info-block">
+            <div class="info-icon">⊙</div>
+            <div class="info-content">
+              <span class="info-label">Tiempo de respuesta</span>
+              <span class="info-value">Menos de 24 horas hábiles</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sedes-pills">
+          <div class="sede-pill">CDMX</div>
+          <div class="sede-pill">Jalisco</div>
+          <div class="sede-pill">Morelos</div>
+          <div class="sede-pill">Estado de México</div>
+        </div>
+      </div>
+
+      <!-- DERECHA — FORMULARIO -->
+      <div class="contact-right">
+        <div class="form-title">Solicitar propuesta</div>
+        <div class="form-subtitle">Completa el formulario y un especialista se pondrá en contacto contigo para diseñar
+          la solución ideal.</div>
+
+        <form class="contact-form" id="contactForm" onsubmit="handleSubmit(event)">
+
+          <div class="form-row">
+            <div class="field">
+              <label>Nombre completo *</label>
+              <input type="text" name="nombre" placeholder="Tu nombre" required />
+            </div>
+            <div class="field">
+              <label>Empresa *</label>
+              <input type="text" name="empresa" placeholder="Nombre de la empresa" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label>Correo electrónico *</label>
+              <input type="email" name="email" placeholder="tu@empresa.com" required />
+            </div>
+            <div class="field">
+              <label>Teléfono</label>
+              <input type="tel" name="telefono" placeholder="+52 55 0000 0000" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Sede de interés</label>
+            <select name="sede">
+              <option value="">Selecciona una sede</option>
+              <option>Ciudad de México</option>
+              <option>Jalisco</option>
+              <option>Morelos</option>
+              <option>Estado de México</option>
+              <option>Nacional (todas las sedes)</option>
+            </select>
+          </div>
+
+          <div class="services-check">
+            <div class="services-check-label">Servicios de interés</div>
+            <div class="check-grid">
+              <label class="check-item">
+                <input type="checkbox" name="servicios" value="Cobranza" />
+                <span>Cobranza</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" name="servicios" value="Ventas" />
+                <span>Ventas</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" name="servicios" value="Marketing" />
+                <span>Marketing</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" name="servicios" value="Backoffice" />
+                <span>Backoffice</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" name="servicios" value="Contaduría" />
+                <span>Contaduría</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" name="servicios" value="Asesoría Legal" />
+                <span>Asesoría Legal</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Mensaje</label>
+            <textarea name="mensaje" placeholder="Cuéntanos brevemente qué necesitas..."></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit" id="btnSubmit">
+            <span id="btnText">Enviar Solicitud</span>
+            <span class="arrow" id="btnArrow">↗</span>
+          </button>
+
+        </form>
+
+        <!-- Estado éxito -->
+        <div class="form-success" id="formSuccess">
+          <div class="success-icon">✓</div>
+          <h3>¡Mensaje enviado!</h3>
+          <p>Hemos recibido tu solicitud. Un especialista de Fortaleza Contact Center se pondrá en contacto contigo en
+            menos de 24 horas hábiles.</p>
+        </div>
+
+        <!-- Estado error -->
+        <div id="formError"
+          style="display:none; margin-top:12px; padding:12px 16px; border:1px solid rgba(255,80,80,0.3); background:rgba(255,80,80,0.08); color:rgba(255,120,120,0.9); font-size:12px; font-weight:400; letter-spacing:1px;">
+          Ocurrió un error al enviar. Intenta de nuevo o escríbenos directamente.
+        </div>
+
+      </div>
+    </div>
+
+
+
   </section>
 
-  <!-- FOOTER -->
-  
 
+  <script>
+    /* ════════════════════════════════════════════════════
+       ⚠️  REEMPLAZA ESTE TOKEN CON EL TUYO DE MAPBOX
+       Obténlo en: https://account.mapbox.com/access-tokens/
+    ════════════════════════════════════════════════════ */
+  </script>
 
-</section>
-<section id="contacto" style="background: var(--bg); position: relative; z-index: 10;">
-
-  <div class="contact-layout">
-
-    <!-- IZQUIERDA -->
-    <div class="contact-left">
-      <div class="eyebrow">Hablemos</div>
-      <h1>Iniciemos una <span>conversación</span></h1>
-      <p>Cuéntanos los retos operativos de tu empresa. Nuestro equipo analizará tu caso y te presentará una propuesta personalizada sin compromiso.</p>
-
-      <div class="info-blocks">
-        <div class="info-block">
-          <div class="info-icon">✉</div>
-          <div class="info-content">
-            <span class="info-label">Correo</span>
-            <span class="info-value">contacto@fortalezacc.mx</span>
-          </div>
-        </div>
-        <div class="info-block">
-          <div class="info-icon">◉</div>
-          <div class="info-content">
-            <span class="info-label">Horario de atención</span>
-            <span class="info-value">Lunes a Viernes · 9:00 – 18:00 hrs</span>
-          </div>
-        </div>
-        <div class="info-block">
-          <div class="info-icon">⊙</div>
-          <div class="info-content">
-            <span class="info-label">Tiempo de respuesta</span>
-            <span class="info-value">Menos de 24 horas hábiles</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="sedes-pills">
-        <div class="sede-pill">CDMX</div>
-        <div class="sede-pill">Jalisco</div>
-        <div class="sede-pill">Morelos</div>
-        <div class="sede-pill">Estado de México</div>
-      </div>
-    </div>
-
-    <!-- DERECHA — FORMULARIO -->
-    <div class="contact-right">
-      <div class="form-title">Solicitar propuesta</div>
-      <div class="form-subtitle">Completa el formulario y un especialista se pondrá en contacto contigo para diseñar la solución ideal.</div>
-
-      <form class="contact-form" id="contactForm" onsubmit="handleSubmit(event)">
-
-        <div class="form-row">
-          <div class="field">
-            <label>Nombre completo *</label>
-            <input type="text" name="nombre" placeholder="Tu nombre" required />
-          </div>
-          <div class="field">
-            <label>Empresa *</label>
-            <input type="text" name="empresa" placeholder="Nombre de la empresa" required />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="field">
-            <label>Correo electrónico *</label>
-            <input type="email" name="email" placeholder="tu@empresa.com" required />
-          </div>
-          <div class="field">
-            <label>Teléfono</label>
-            <input type="tel" name="telefono" placeholder="+52 55 0000 0000" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Sede de interés</label>
-          <select name="sede">
-            <option value="">Selecciona una sede</option>
-            <option>Ciudad de México</option>
-            <option>Jalisco</option>
-            <option>Morelos</option>
-            <option>Estado de México</option>
-            <option>Nacional (todas las sedes)</option>
-          </select>
-        </div>
-
-        <div class="services-check">
-          <div class="services-check-label">Servicios de interés</div>
-          <div class="check-grid">
-            <label class="check-item">
-              <input type="checkbox" name="servicios" value="Cobranza" />
-              <span>Cobranza</span>
-            </label>
-            <label class="check-item">
-              <input type="checkbox" name="servicios" value="Ventas" />
-              <span>Ventas</span>
-            </label>
-            <label class="check-item">
-              <input type="checkbox" name="servicios" value="Marketing" />
-              <span>Marketing</span>
-            </label>
-            <label class="check-item">
-              <input type="checkbox" name="servicios" value="Backoffice" />
-              <span>Backoffice</span>
-            </label>
-            <label class="check-item">
-              <input type="checkbox" name="servicios" value="Contaduría" />
-              <span>Contaduría</span>
-            </label>
-            <label class="check-item">
-              <input type="checkbox" name="servicios" value="Asesoría Legal" />
-              <span>Asesoría Legal</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Mensaje</label>
-          <textarea name="mensaje" placeholder="Cuéntanos brevemente qué necesitas..."></textarea>
-        </div>
-
-        <button type="submit" class="btn-submit" id="btnSubmit">
-          <span id="btnText">Enviar Solicitud</span>
-          <span class="arrow" id="btnArrow">↗</span>
-        </button>
-
-      </form>
-
-      <!-- Estado éxito -->
-      <div class="form-success" id="formSuccess">
-        <div class="success-icon">✓</div>
-        <h3>¡Mensaje enviado!</h3>
-        <p>Hemos recibido tu solicitud. Un especialista de Fortaleza Contact Center se pondrá en contacto contigo en menos de 24 horas hábiles.</p>
-      </div>
-
-      <!-- Estado error -->
-      <div id="formError" style="display:none; margin-top:12px; padding:12px 16px; border:1px solid rgba(255,80,80,0.3); background:rgba(255,80,80,0.08); color:rgba(255,120,120,0.9); font-size:12px; font-weight:400; letter-spacing:1px;">
-        Ocurrió un error al enviar. Intenta de nuevo o escríbenos directamente.
-      </div>
-
-    </div>
-  </div>
-
-  
-
-</section>
-
-<!-- PROJECT CARD -->
-<div class="project-card" id="project-card">
-  <button class="card-close" id="card-close">&times;</button>
-  <div class="card-scroll">
-    <div class="card-label">Sede Activa</div>
-    <div class="card-title" id="card-title">—</div>
-    <div class="card-location" id="card-location">—</div>
-    <div class="card-tags" id="card-tags"></div>
-    <div class="card-divider"></div>
-    <div class="card-desc" id="card-desc">—</div>
-    <div class="subsedes-label">Puntos de Visita</div>
-    <div class="subsedes-list" id="subsedes-list"></div>
-    <button class="btn-card">Ver Ficha Completa</button>
-  </div>
-</div>
-
-<!-- PLUS -->
-<div class="plus-btn">+</div>
-
-<!-- MAPBOX -->
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
-<script>
-  /* ════════════════════════════════════════════════════
-     ⚠️  REEMPLAZA ESTE TOKEN CON EL TUYO DE MAPBOX
-     Obténlo en: https://account.mapbox.com/access-tokens/
-  ════════════════════════════════════════════════════ */
-  const MAPBOX_TOKEN = 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w';
-
-  /* ── VISTA INICIAL ────────────────────────────────── */
-  const INITIAL_VIEW = {
-    center:  [-102.5, 23.5],   // México centrado
-    zoom:    4.8,
-    pitch:   28,
-    bearing: -6
-  };
-
-  /* ── ZOOM POR SEDE (personalizado por ciudad) ─────── */
-  const ZOOM_CONFIG = {
-    cdmx:    { zoom: 10.5, pitch: 50, bearing:  10, offset: [-120, 0] },
-    jalisco: { zoom: 10.5, pitch: 50, bearing: -10, offset: [-120, 0] },
-    morelos: { zoom: 11,   pitch: 48, bearing:   5, offset: [-120, 0] },
-    edomex:  { zoom: 10,   pitch: 48, bearing:  -5, offset: [-120, 0] }
-  };
-
-  /* ── DATA ─────────────────────────────────────────── */
-  const sedes = [
-    {
-      id: 'cdmx',
-      nombre: 'Oficina Central CDMX',
-      ciudad: 'Ciudad de México, México',
-      coords: [-99.1332, 19.4326],
-      tags: ['Cobranza', 'Ventas', 'Backoffice', 'Marketing'],
-      desc: 'Sede principal y corporativo. Operaciones de cobranza temprana y tardía, ventas outbound, marketing directo y backoffice para clientes del sector financiero, telecomunicaciones y retail.',
-      subsedes: [
-        { nombre: 'Polanco',   zona: 'Miguel Hidalgo, CDMX', coords: [-99.1900, 19.4320] },
-        { nombre: 'Santa Fe',  zona: 'Cuajimalpa, CDMX',     coords: [-99.2600, 19.3600] },
-        { nombre: 'Tlalpan',   zona: 'Sur, CDMX',            coords: [-99.1630, 19.2900] }
-      ]
-    },
-    {
-      id: 'jalisco',
-      nombre: 'Sede Jalisco',
-      ciudad: 'Guadalajara, Jalisco, México',
-      coords: [-103.3496, 20.6597],
-      tags: ['Marketing', 'Servicio al Cliente', 'Ventas'],
-      desc: 'Centro de atención al cliente, campañas de marketing digital y ventas. Especialización en sectores retail, servicios y tecnología en el Bajío.',
-      subsedes: [
-        { nombre: 'Zapopan',        zona: 'Zona Metro GDL',  coords: [-103.4000, 20.7200] },
-        { nombre: 'Puerto Vallarta', zona: 'Costa Jalisco',  coords: [-105.2350, 20.6534] }
-      ]
-    },
-    {
-      id: 'morelos',
-      nombre: 'Sede Morelos',
-      ciudad: 'Cuernavaca, Morelos, México',
-      coords: [-99.2216, 18.9242],
-      tags: ['Asesoría Legal', 'Contaduría', 'Backoffice'],
-      desc: 'Unidad especializada en servicios de asesoría legal y contaduría. Atendemos empresas medianas y grandes del corredor industrial Morelos-CDMX.',
-      subsedes: [
-        { nombre: 'Jiutepec', zona: 'Corredor Industrial', coords: [-99.1750, 18.8850] },
-        { nombre: 'Temixco',  zona: 'Morelos Sur',         coords: [-99.2350, 18.8500] }
-      ]
-    },
-    {
-      id: 'edomex',
-      nombre: 'Sede Estado de México',
-      ciudad: 'Toluca, Estado de México, México',
-      coords: [-99.6557, 19.2826],
-      tags: ['Cobranza', 'Ventas', 'Servicio al Cliente'],
-      desc: 'Centro de operaciones para cobranza temprana y tardía, ventas de productos financieros y atención al cliente. Conexión estratégica con la zona metropolitana.',
-      subsedes: [
-        { nombre: 'Metepec',   zona: 'Toluca Metropolitana', coords: [-99.6050, 19.2500] },
-        { nombre: 'Naucalpan', zona: 'Edo. Méx. Norte',      coords: [-99.2390, 19.4800] },
-        { nombre: 'Ecatepec',  zona: 'Edo. Méx. Oriente',    coords: [-98.9500, 19.6010] }
-      ]
-    }
-  ];
-
-  /* ── STATE ────────────────────────────────────────── */
-  let activeSedeId      = null;
-  let subsedeMarkers    = [];
-  let markerElements    = {};   // id → DOM element
-
-  /* ── MAP INIT ─────────────────────────────────────── */
-  mapboxgl.accessToken = MAPBOX_TOKEN;
-
-  function initMap() {
-    const container = document.getElementById('map');
-    if (!container) return;
-
-    const map = new mapboxgl.Map({
-    container:   'map',
-    style:       'mapbox://styles/mapbox/satellite-v9',
-    center:      INITIAL_VIEW.center,
-    zoom:        INITIAL_VIEW.zoom,
-    pitch:       INITIAL_VIEW.pitch,
-    bearing:     INITIAL_VIEW.bearing,
-    interactive: true,
-    projection:  'mercator'
-  });
-
-  /* Niebla atmosférica (opcional en mercator) */
-  map.on('style.load', () => {
-    map.setFog({
-      color:            'rgb(8, 18, 36)',
-      'high-color':     'rgb(15, 40, 70)',
-      'horizon-blend':  0.04,
-      'space-color':    'rgb(4, 10, 20)',
-      'star-intensity': 0.6
-    });
-  });
-
-  /* ── MARKERS PRINCIPALES ──────────────────────────── */
-  map.on('load', () => {
-    /* Forzar resize en móvil */
-    setTimeout(() => map.resize(), 100);
-
-    sedes.forEach(sede => {
-      const el = document.createElement('div');
-      el.className    = 'marker-wrap';
-      el.dataset.id   = sede.id;
-      el.style.cursor = 'pointer';
-      el.innerHTML    = `
-        <div class="marker-ring"></div>
-        <div class="marker-ring2"></div>
-        <div class="marker-core"></div>
-      `;
-
-      markerElements[sede.id] = el;
-
-      /* Tooltip hover */
-      const popup = new mapboxgl.Popup({
-        offset:       24,
-        closeButton:  false,
-        closeOnClick: false,
-        anchor:       'bottom'
-      }).setHTML(`
-        <div style="
-          background: rgba(6,15,26,0.95);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          border: 1px solid rgba(23,133,130,0.45);
-          padding: 8px 16px;
-          font-family: 'Outfit', sans-serif;
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 2px;
-          text-transform: uppercase;
-          color: #BFA181;
-          white-space: nowrap;
-          box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-        ">${sede.nombre}</div>
-      `);
-
-      el.addEventListener('mouseenter', () => {
-        if (activeSedeId !== sede.id) popup.addTo(map).setLngLat(sede.coords);
-      });
-      el.addEventListener('mouseleave', () => popup.remove());
-      el.addEventListener('click',      () => {
-        popup.remove();
-        activateSede(sede);
-      });
-
-      new mapboxgl.Marker({ element: el, anchor: 'center' })
-        .setLngLat(sede.coords)
-        .addTo(map);
-    });
-  });
-
-  /* ── ACTIVAR SEDE ─────────────────────────────────── */
-  function activateSede(sede) {
-    /* Desactivar marker anterior */
-    if (activeSedeId && markerElements[activeSedeId]) {
-      markerElements[activeSedeId].classList.remove('marker-active');
+  <style>
+    /* TESTIMONIALES CSS */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      padding: 20px 44px 100px;
+      max-width: 1400px;
+      margin: 0 auto;
     }
 
-    /* Limpiar sub-sedes anteriores */
-    clearSubsedeMarkers();
-
-    activeSedeId = sede.id;
-
-    /* Highlight marker activo */
-    markerElements[sede.id].classList.add('marker-active');
-
-    /* FlyTo con offset para que el marker no quede debajo de la card */
-    const cfg = ZOOM_CONFIG[sede.id];
-    map.flyTo({
-      center:   sede.coords,
-      zoom:     cfg.zoom,
-      pitch:    cfg.pitch,
-      bearing:  cfg.bearing,
-      duration: 1800,
-      essential: true,
-      easing:   t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t   // ease in-out quad
-    });
-
-    /* Pintar sub-sedes tras el vuelo */
-    map.once('moveend', () => {
-      if (activeSedeId === sede.id) addSubsedeMarkers(sede);
-    });
-
-    /* Rellenar card */
-    fillCard(sede);
-    document.getElementById('project-card').classList.add('active');
-  }
-
-  /* ── MARKERS DE SUB-SEDES ─────────────────────────── */
-  function addSubsedeMarkers(sede) {
-    sede.subsedes.forEach((sub, i) => {
-      const el = document.createElement('div');
-      el.className = 'subsede-marker';
-      el.innerHTML = `
-        <div class="sm-dot"></div>
-        <div class="sm-label">${sub.nombre}</div>
-      `;
-      el.style.animationDelay = `${i * 120}ms`;
-
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-        .setLngLat(sub.coords)
-        .addTo(map);
-
-      subsedeMarkers.push(marker);
-    });
-  }
-
-  function clearSubsedeMarkers() {
-    subsedeMarkers.forEach(m => m.remove());
-    subsedeMarkers = [];
-  }
-
-  /* ── RELLENAR CARD ────────────────────────────────── */
-  function fillCard(sede) {
-    document.getElementById('card-title').textContent    = sede.nombre;
-    document.getElementById('card-location').textContent = sede.ciudad;
-    document.getElementById('card-desc').textContent     = sede.desc;
-
-    document.getElementById('card-tags').innerHTML =
-      sede.tags.map(t => `<span class="tag">${t}</span>`).join('');
-
-    document.getElementById('subsedes-list').innerHTML =
-      sede.subsedes.map(s => `
-        <div class="subsede-item">
-          <span class="subsede-dot"></span>
-          <span class="subsede-name">
-            ${s.nombre}
-            <span style="color:rgba(255,255,255,0.3);font-size:10px"> — ${s.zona}</span>
-          </span>
-          <span class="subsede-arrow">›</span>
-        </div>
-      `).join('');
-  }
-
-  /* ── CERRAR CARD ──────────────────────────────────── */
-  document.getElementById('card-close').addEventListener('click', closeCard);
-
-  function closeCard() {
-    document.getElementById('project-card').classList.remove('active');
-
-    /* Desactivar marker */
-    if (activeSedeId && markerElements[activeSedeId]) {
-      markerElements[activeSedeId].classList.remove('marker-active');
+    .test-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      padding: 40px 32px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s, border-color 0.3s;
     }
-    activeSedeId = null;
 
-    /* Limpiar sub-sedes */
-    clearSubsedeMarkers();
+    .test-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--teal-light);
+    }
 
-    /* Volver a vista México */
-    map.flyTo({
-      center:   INITIAL_VIEW.center,
-      zoom:     INITIAL_VIEW.zoom,
-      pitch:    INITIAL_VIEW.pitch,
-      bearing:  INITIAL_VIEW.bearing,
-      duration: 1600,
-      essential: true,
-      easing:   t => 1 - Math.pow(1 - t, 3)   // ease out cubic
-    });
-  }
+    .test-stars {
+      color: var(--gold);
+      font-size: 16px;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+    }
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && activeSedeId) closeCard();
-  });
+    .test-quote {
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white);
+      font-style: italic;
+      margin-bottom: 32px;
+      flex-grow: 1;
+    }
 
-  } // fin initMap
+    .test-client {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-top: 1px solid var(--white-12);
+      padding-top: 24px;
+    }
 
-  /* ── TOGGLE MENU — global para onclick del HTML ─── */
-  function toggleMenu() {
-    const h = document.getElementById('hamburger');
-    const m = document.getElementById('mobileMenu');
-    if (!h || !m) return;
-    h.classList.toggle('open');
-    m.classList.toggle('open');
-  }
+    .test-logo {
+      font-family: var(--font-title);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--teal-light);
+      letter-spacing: 1px;
+    }
 
-  /* Llamar initMap cuando el DOM esté listo */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMap);
-  } else {
-    initMap();
-  }
-</script>
+    .test-author {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--white-60);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
 
-<style>
-  /* ── MARKER ACTIVO ──────────────────────────────────── */
-  .marker-active .marker-core {
-    background: #178582 !important;
-    transform: scale(1.4);
-    box-shadow: 0 0 0 3px rgba(23,133,130,0.4);
-  }
-  .marker-active .marker-ring  { border-color: rgba(23,133,130,0.6); }
-  .marker-active .marker-ring2 { border-color: rgba(23,133,130,0.4); }
+    @media (max-width: 900px) {
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
-  /* ── MARKERS DE SUB-SEDES ───────────────────────────── */
-  .subsede-marker {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    cursor: default;
-    animation: subsedeIn 0.4s ease both;
-  }
+    /* SERVICIOS HERO CON IMAGEN */
+    .servicios-hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      padding: 60px 44px 60px;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
 
-  .sm-dot {
-    width: 8px;
-    height: 8px;
-    background: #178582;
-    border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.7);
-    box-shadow: 0 0 8px rgba(23,133,130,0.8);
-  }
+    .sh-image {
+      position: relative;
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+    }
 
-  .sm-label {
-    background: rgba(6,15,26,0.88);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(23,133,130,0.3);
-    padding: 3px 8px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: rgba(191,161,129,0.9);
-    white-space: nowrap;
-  }
+    .sh-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: 1px solid var(--white-12);
+      border-radius: 16px;
+    }
 
-  @keyframes subsedeIn {
-    from { opacity: 0; transform: translateY(-8px) scale(0.8); }
-    to   { opacity: 1; transform: translateY(0)    scale(1);   }
-  }
+    .sh-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(6, 15, 26, 0.1), rgba(6, 15, 26, 0.6));
+      pointer-events: none;
+    }
 
-    /* SERVICIOS & CONTACTO CSS */
-    .page-hero { padding: 90px 44px 70px; max-width: 760px; }
-    .page-hero h1 { font-family: var(--serif); font-size: 64px; font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 20px; }
-    .page-hero h1 span { color: var(--gold); }
-    .page-hero p { font-size: 15px; font-weight: 300; line-height: 1.8; color: var(--white-60); max-width: 560px; }
-    .divider { width: calc(100% - 88px); margin: 0 44px; height: 1px; background: linear-gradient(to right, var(--teal-glow), transparent); }
-    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; padding: 60px 44px 100px; background: var(--glass-border); }
-    .service-card { background: var(--bg); padding: 44px 38px; position: relative; cursor: pointer; transition: background .3s; overflow: hidden; }
-    .service-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(23,133,130,0.06) 0%, transparent 60%); opacity: 0; transition: opacity .35s; }
-    .service-card:hover { background: var(--bg-mid); }
-    .service-card:hover::before { opacity: 1; }
-    .service-number { font-family: var(--serif); font-size: 11px; font-weight: 600; color: var(--gold-dim); letter-spacing: 3px; opacity: 0.6; margin-bottom: 28px; }
-    .service-icon-wrap { width: 52px; height: 52px; border: 1px solid var(--white-12); display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
-    .service-icon { font-size: 22px; color: var(--gold-dim); line-height: 1; }
-    .service-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 16px; }
-    .service-desc { font-size: 13px; font-weight: 300; line-height: 1.8; color: var(--white-60); margin-bottom: 28px; }
-    .service-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 32px; }
-    .stag { background: rgba(23,133,130,0.1); color: var(--teal-light); border: 1px solid rgba(23,133,130,0.25); padding: 4px 10px; font-size: 9px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; }
-    .service-arrow { position: absolute; bottom: 36px; right: 36px; color: var(--gold); font-size: 22px; opacity: 0.4; }
-    .stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border); margin: 0 44px 80px; }
-    .stat-item { padding: 44px 32px; border-right: 1px solid var(--glass-border); }
-    .stat-item:last-child { border-right: none; }
-    .stat-num { font-family: var(--serif); font-size: 52px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 8px; }
-    .stat-label { font-size: 11px; font-weight: 400; color: var(--white-60); letter-spacing: 1.5px; text-transform: uppercase; }
-    .cta-section { padding: 80px 44px 100px; display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
-    .cta-text h2 { font-family: var(--serif); font-size: 44px; font-weight: 700; color: var(--white); line-height: 1.1; margin-bottom: 12px; }
-    .cta-text h2 span { color: var(--teal-light); }
-    .cta-text p { font-size: 14px; font-weight: 300; color: var(--white-60); max-width: 420px; line-height: 1.7; }
-    
-    .contact-layout { display: grid; grid-template-columns: 1fr 1fr; }
-    .contact-left { padding: 80px 60px 80px 44px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--glass-border); }
-    .contact-left h1 { font-family: var(--serif); font-size: 58px; font-weight: 900; line-height: 1.05; color: var(--white); margin-bottom: 22px; }
-    .contact-left h1 span { color: var(--gold); }
-    .contact-left > p { font-size: 14px; font-weight: 300; line-height: 1.8; color: var(--white-60); max-width: 400px; margin-bottom: 52px; }
-    .info-blocks { display: flex; flex-direction: column; border-top: 1px solid var(--glass-border); }
-    .info-block { display: flex; align-items: flex-start; gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--glass-border); }
-    .info-icon { width: 38px; height: 38px; background: var(--white-06); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; color: var(--teal-light); }
-    .info-content { display: flex; flex-direction: column; gap: 3px; }
-    .info-label { font-size: 9px; font-weight: 500; color: var(--white-30); letter-spacing: 2.5px; text-transform: uppercase; }
-    .info-value { font-size: 13px; font-weight: 400; color: var(--white-60); }
-    .sedes-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 36px; }
-    .sede-pill { background: var(--white-06); border: 1px solid var(--glass-border); padding: 7px 14px; font-size: 10px; font-weight: 400; color: var(--white-60); letter-spacing: 1px; display: flex; align-items: center; gap: 7px; }
-    .sede-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
-    
-    .contact-right { padding: 80px 44px 80px 60px; display: flex; flex-direction: column; justify-content: center; }
-    .form-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
-    .form-subtitle { font-size: 13px; font-weight: 300; color: var(--white-60); margin-bottom: 40px; line-height: 1.6; }
-    .contact-form { display: flex; flex-direction: column; gap: 20px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .field { display: flex; flex-direction: column; gap: 8px; }
-    .field label { font-size: 9.5px; font-weight: 500; color: var(--white-60); letter-spacing: 2px; text-transform: uppercase; }
-    .field input, .field select, .field textarea { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--white-12); color: var(--white); font-family: var(--sans); font-size: 13px; font-weight: 300; padding: 13px 16px; outline: none; width: 100%; }
-    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23178582' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; appearance: none; }
-    .field textarea { resize: vertical; min-height: 120px; }
-    .services-check { display: flex; flex-direction: column; gap: 8px; }
-    .services-check-label { font-size: 9.5px; font-weight: 500; color: var(--white-60); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-    .check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .check-item { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-    .check-item input[type='checkbox'] { width: 16px; height: 16px; appearance: none; background: var(--glass-bg); border: 1px solid var(--white-12); display: flex; align-items: center; justify-content: center; }
-    .check-item input[type='checkbox']:checked { background: var(--teal); border-color: var(--teal); }
-    .check-item input[type='checkbox']:checked::after { content: '✓'; color: white; font-size: 10px; }
-    .check-item span { font-size: 11px; font-weight: 400; color: var(--white-60); }
-    .btn-submit { background: var(--gold); color: var(--bg-deep); border: none; padding: 16px 36px; font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; align-self: flex-start; display: flex; align-items: center; gap: 10px; }
-    
+    .sh-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sh-text .eyebrow {
+      margin-bottom: 16px;
+    }
+
+    .sh-text h1 {
+      font-family: var(--font-title);
+      font-size: 56px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 24px;
+    }
+
+    .sh-text h1 span {
+      color: var(--gold);
+    }
+
+    .sh-text p {
+      font-size: 15px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white-60);
+      max-width: 500px;
+    }
+
+    @media (max-width: 900px) {
+      .servicios-hero {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding-top: 20px;
+        text-align: center;
+      }
+
+      .sh-text p {
+        margin: 0 auto;
+      }
+
+      .sh-text .eyebrow {
+        align-self: center;
+      }
+    }
+
+    .divider {
+      width: calc(100% - 88px);
+      margin: 0 44px;
+      height: 1px;
+      background: linear-gradient(to right, var(--teal-glow), transparent);
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      padding: 60px 44px 100px;
+      background: var(--glass-border);
+    }
+
+    .service-card {
+      background: var(--bg);
+      padding: 44px 38px;
+      position: relative;
+      cursor: pointer;
+      transition: background .3s;
+      overflow: hidden;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(23, 133, 130, 0.06) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity .35s;
+    }
+
+    .service-card:hover {
+      background: var(--bg-mid);
+    }
+
+    .service-card:hover::before {
+      opacity: 1;
+    }
+
+    .service-number {
+      font-family: var(--font-title);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gold-dim);
+      letter-spacing: 3px;
+      opacity: 0.6;
+      margin-bottom: 28px;
+    }
+
+    .service-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border: 1px solid var(--white-12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+
+    .service-icon {
+      font-size: 22px;
+      color: var(--gold-dim);
+      line-height: 1;
+    }
+
+    .service-title {
+      font-family: var(--font-title);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .service-desc {
+      font-size: 13px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white-60);
+      margin-bottom: 28px;
+    }
+
+    .service-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+
+    .stag {
+      background: rgba(23, 133, 130, 0.1);
+      color: var(--teal-light);
+      border: 1px solid rgba(23, 133, 130, 0.25);
+      padding: 4px 10px;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .service-arrow {
+      position: absolute;
+      bottom: 36px;
+      right: 36px;
+      color: var(--gold);
+      font-size: 22px;
+      opacity: 0.4;
+    }
+
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      margin: 0 44px 80px;
+    }
+
+    .stat-item {
+      padding: 44px 32px;
+      border-right: 1px solid var(--glass-border);
+    }
+
+    .stat-item:last-child {
+      border-right: none;
+    }
+
+    .stat-num {
+      font-family: var(--font-title);
+      font-size: 52px;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--white-60);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .cta-section {
+      padding: 80px 44px 100px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .cta-text h2 {
+      font-family: var(--font-title);
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .cta-text h2 span {
+      color: var(--teal-light);
+    }
+
+    .cta-text p {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--white-60);
+      max-width: 420px;
+      line-height: 1.7;
+    }
+
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .contact-left {
+      padding: 80px 60px 80px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-right: 1px solid var(--glass-border);
+    }
+
+    .contact-left h1 {
+      font-family: var(--font-title);
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 22px;
+    }
+
+    .contact-left h1 span {
+      color: var(--gold);
+    }
+
+    .contact-left>p {
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: var(--white-60);
+      max-width: 400px;
+      margin-bottom: 52px;
+    }
+
+    .info-blocks {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .info-block {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .info-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--white-06);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      color: var(--teal-light);
+    }
+
+    .info-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .info-label {
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--white-30);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    .info-value {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--white-60);
+    }
+
+    .sedes-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 36px;
+    }
+
+    .sede-pill {
+      background: var(--white-06);
+      border: 1px solid var(--glass-border);
+      padding: 7px 14px;
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--white-60);
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sede-pill::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+
+    .contact-right {
+      padding: 80px 44px 80px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-title {
+      font-family: var(--font-title);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .form-subtitle {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--white-60);
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 9.5px;
+      font-weight: 500;
+      color: var(--white-60);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--white-12);
+      color: var(--white);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 300;
+      padding: 13px 16px;
+      outline: none;
+      width: 100%;
+    }
+
+    .field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23178582' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      appearance: none;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .services-check {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .services-check-label {
+      font-size: 9.5px;
+      font-weight: 500;
+      color: var(--white-60);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .check-item input[type='checkbox'] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      background: var(--glass-bg);
+      border: 1px solid var(--white-12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .check-item input[type='checkbox']:checked {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    .check-item input[type='checkbox']:checked::after {
+      content: '✓';
+      color: white;
+      font-size: 10px;
+    }
+
+    .check-item span {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--white-60);
+    }
+
+    .btn-submit {
+      background: var(--gold);
+      color: var(--bg-deep);
+      border: none;
+      padding: 16px 36px;
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     @media (max-width: 768px) {
-      .services-grid { grid-template-columns: 1fr; }
-      .contact-layout { grid-template-columns: 1fr; }
+      .services-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .contact-layout {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* Estado enviado */
@@ -1648,7 +1897,8 @@
     }
 
     .success-icon {
-      width: 56px; height: 56px;
+      width: 56px;
+      height: 56px;
       border: 1.5px solid var(--teal);
       border-radius: 50%;
       display: flex;
@@ -1660,7 +1910,7 @@
     }
 
     .form-success h3 {
-      font-family: var(--serif);
+      font-family: var(--font-title);
       font-size: 26px;
       font-weight: 700;
       color: var(--gold);
@@ -1673,43 +1923,57 @@
       line-height: 1.7;
       max-width: 320px;
     }
+  </style>
 
-</style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sections = document.querySelectorAll('section[id]');
+      const navLinks = document.querySelectorAll('.nav-links a');
+      const mobileLinks = document.querySelectorAll('.mobile-menu a');
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const sections = document.querySelectorAll('section[id]');
-    const navLinks = document.querySelectorAll('.nav-links a');
-    const mobileLinks = document.querySelectorAll('.mobile-menu a');
-    
-    window.addEventListener('scroll', () => {
-      let current = '';
-      const scrollY = window.pageYOffset;
-      
-      sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.clientHeight;
-        if (scrollY >= (sectionTop - 150)) {
-          current = section.getAttribute('id');
+      let lastScrollY = window.scrollY;
+      const navbar = document.querySelector('nav');
+
+      window.addEventListener('scroll', () => {
+        let current = '';
+        const scrollY = window.pageYOffset;
+
+        // Navbar hide on scroll down
+        if (scrollY > lastScrollY && scrollY > 100) {
+          navbar.classList.add('nav-hidden');
+        } else {
+          navbar.classList.remove('nav-hidden');
         }
-      });
-      
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === '#' + current) {
-          link.classList.add('active');
-        }
-      });
-      
-      mobileLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === '#' + current) {
-          link.classList.add('active');
-        }
+        lastScrollY = scrollY;
+
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.clientHeight;
+          if (scrollY >= (sectionTop - 150)) {
+            current = section.getAttribute('id');
+          }
+        });
+
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+          }
+        });
+
+        mobileLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + current) {
+            link.classList.add('active');
+          }
+        });
       });
     });
-  });
-</script>
+  </script>
 
+  <script>
+    lucide.createIcons();
+  </script>
 </body>
+
 </html>

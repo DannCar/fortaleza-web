@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contacto — Fortaleza Contact Center</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Work+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg:           #0A1828;
@@ -24,8 +24,9 @@
       --glass-bg:     rgba(10,24,40,0.72);
       --glass-border: rgba(23,133,130,0.25);
       --glass-blur:   blur(18px);
-      --serif:        'Cormorant Garamond', Georgia, serif;
-      --sans:         'Outfit', sans-serif;
+      --font-logo:    'Playfair Display', serif;
+      --font-title:   'Work Sans', sans-serif;
+      --sans:         'Open Sans', sans-serif;
     }
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -70,42 +71,17 @@
 
     .logo {
       display: flex;
-      align-items: center;
-      gap: 12px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
       text-decoration: none;
-    }
-
-    .logo-badge {
-      width: 40px; height: 40px;
-      border: 1.5px solid var(--teal);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--serif);
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--teal-light);
-      position: relative;
       flex-shrink: 0;
     }
 
-    .logo-badge::before {
-      content: '';
-      position: absolute;
-      inset: 3px;
-      border: 1px solid var(--teal-glow);
-    }
-
-    .logo-info { display: flex; flex-direction: column; gap: 3px; }
-
-    .logo-name {
-      font-family: var(--serif);
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: 0.5px;
-      line-height: 1;
-      white-space: nowrap;
+    .logo-img {
+      height: 48px;
+      width: auto;
+      display: block;
     }
 
     .logo-sub {
@@ -200,7 +176,7 @@
     }
 
     .contact-left h1 {
-      font-family: var(--serif);
+      font-family: var(--font-title);
       font-size: 58px;
       font-weight: 900;
       line-height: 1.05;
@@ -300,7 +276,7 @@
     }
 
     .form-title {
-      font-family: var(--serif);
+      font-family: var(--font-title);
       font-size: 28px;
       font-weight: 700;
       color: var(--gold);
@@ -510,7 +486,7 @@
     }
 
     .form-success h3 {
-      font-family: var(--serif);
+      font-family: var(--font-title);
       font-size: 26px;
       font-weight: 700;
       color: var(--gold);
@@ -611,8 +587,7 @@
       .nav-links  { display: none; }
       .hamburger  { display: flex; }
       .logo-sub   { display: none; }
-      .logo-name  { font-size: 14px; }
-      .logo-badge { width: 34px; height: 34px; font-size: 12px; }
+      .logo-img   { height: 36px; }
 
       main { padding-top: 64px; }
 
@@ -668,11 +643,7 @@
 <!-- NAV -->
 <nav>
   <a href="index.html" class="logo">
-    <div class="logo-badge">FC</div>
-    <div class="logo-info">
-      <span class="logo-name">Fortaleza Contact Center</span>
-      <span class="logo-sub">Soluciones integrales de Contact Center</span>
-    </div>
+    <img src="main.png" alt="Fortaleza Contact Center" class="logo-img" />
   </a>
   <div class="nav-spacer"></div>
   <div class="nav-links">

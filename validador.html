@@ -7,7 +7,7 @@
 <title>Validador de Expedientes · Fortaleza</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Work+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --navy:#0A1828; --navy2:#0d1f33; --navy3:#112440;
@@ -17,7 +17,9 @@
     --border:rgba(255,255,255,0.09); --border2:rgba(23,133,130,0.4);
     --surface:rgba(255,255,255,0.045); --surface2:rgba(255,255,255,0.08);
     --red:#e84444; --green:#22c55e;
-    --serif:'Cormorant Garamond',serif; --sans:'Outfit',sans-serif; --mono:'JetBrains Mono',monospace;
+    --font-logo: 'Playfair Display', serif;
+    --font-title: 'Work Sans', sans-serif;
+    --sans: 'Open Sans', sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--sans);background:
@@ -28,9 +30,9 @@
   /* Header */
   .head{display:flex;align-items:center;gap:14px;margin-bottom:8px}
   .mark{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--teal),var(--navy3));
-    border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--serif);
+    border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--font-title);
     font-weight:700;font-size:24px;color:var(--gold2);flex-shrink:0}
-  .h-tt{font-family:var(--serif);font-size:27px;font-weight:600;letter-spacing:.3px;line-height:1.1}
+  .h-tt{font-family:var(--font-title);font-size:27px;font-weight:600;letter-spacing:.3px;line-height:1.1}
   .h-sub{font-size:12px;color:var(--text3);letter-spacing:2.5px;text-transform:uppercase}
   .lead{color:var(--text2);font-size:14px;margin:14px 0 22px;max-width:680px}
   /* Tabs */
@@ -44,7 +46,7 @@
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   /* Cards */
   .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:18px}
-  .card-tt{font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:4px}
+  .card-tt{font-family:var(--font-title);font-size:20px;font-weight:600;margin-bottom:4px}
   .card-sub{font-size:13px;color:var(--text2);margin-bottom:18px}
   .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
     background:rgba(23,133,130,0.18);color:var(--teal3);font-family:var(--mono);font-size:12px;font-weight:600;margin-right:9px}
