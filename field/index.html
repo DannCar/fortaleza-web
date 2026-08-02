@@ -1729,6 +1729,8 @@ input[type="file"].foto-input { display: none; }
 
   <!-- Área scrolleable -->
   <div class="home-scroll-area">
+    <!-- Banner: visita sin terminar (borrador automático) -->
+    <div id="borradorBanner" style="display:none"></div>
     <!-- XP Bar -->
     <div class="xp-section">
       <div class="xp-top">
@@ -2284,7 +2286,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════
 // ROUTER
 // ═══════════════════════════════════════════════
-function goTo(screen) {
+function goTo(screen, borrador) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(`screen-${screen}`);
   if (el) {
@@ -2292,9 +2294,9 @@ function goTo(screen) {
     STATE.currentScreen = screen;
   }
   if (screen === 'perfil')   renderPerfil();
-  if (screen === 'home')     renderHome();
+  if (screen === 'home')     { renderHome(); revisarBorradorPendiente(); }
   if (screen === 'misiones') { if (typeof switchMis === 'function') switchMis('misiones'); loadMisiones(); }
-  if (screen === 'captura')  initCaptura();
+  if (screen === 'captura')  initCaptura(borrador);
   if (screen === 'mapa')     initMapaScreen();
   if (typeof updateFloatNav === 'function') updateFloatNav(screen);
 }
@@ -2380,12 +2382,16 @@ function doLogout() {
 let SYNCING = false;
 
 // ── Cola offline en IndexedDB (robusta: aguanta fotos sin reventar la cuota) ──
-const IDB_NAME='fortaleza_field', IDB_STORE='pendientes', IDB_VER=1;
+const IDB_NAME='fortaleza_field', IDB_STORE='pendientes', IDB_STORE_BORRADOR='borrador', IDB_VER=2;
 function idbOpen(){
   return new Promise((resolve,reject)=>{
     let req;
     try{ req=indexedDB.open(IDB_NAME,IDB_VER); }catch(e){ return reject(e); }
-    req.onupgradeneeded=()=>{ const db=req.result; if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE,{keyPath:'id_visita'}); };
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE,{keyPath:'id_visita'});
+      if(!db.objectStoreNames.contains(IDB_STORE_BORRADOR)) db.createObjectStore(IDB_STORE_BORRADOR,{keyPath:'id'});
+    };
     req.onsuccess=()=>resolve(req.result);
     req.onerror=()=>reject(req.error);
   });
@@ -2394,6 +2400,12 @@ async function idbAdd(item){ const db=await idbOpen(); return new Promise((res,r
 async function idbAll(){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readonly'); const r=tx.objectStore(IDB_STORE).getAll(); r.onsuccess=()=>{db.close();res(r.result||[]);}; r.onerror=()=>{db.close();rej(r.error);}; }); }
 async function idbDel(id){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).delete(id); tx.oncomplete=()=>{db.close();res();}; tx.onerror=()=>{db.close();rej(tx.error);}; }); }
 async function idbCount(){ try{ return (await idbAll()).length; }catch(e){ return 0; } }
+
+// ── Borrador de la visita en curso (sobrevive recargas / pérdida de señal) ──
+// Clave fija 'actual': un gestor no debe tener 2 capturas en curso a la vez.
+async function idbSetBorrador(obj){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE_BORRADOR,'readwrite'); tx.objectStore(IDB_STORE_BORRADOR).put(obj); tx.oncomplete=()=>{db.close();res();}; tx.onerror=()=>{db.close();rej(tx.error);}; }); }
+async function idbGetBorrador(){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE_BORRADOR,'readonly'); const r=tx.objectStore(IDB_STORE_BORRADOR).get('actual'); r.onsuccess=()=>{db.close();res(r.result||null);}; r.onerror=()=>{db.close();rej(r.error);}; }); }
+async function idbDelBorrador(){ const db=await idbOpen(); return new Promise((res,rej)=>{ const tx=db.transaction(IDB_STORE_BORRADOR,'readwrite'); tx.objectStore(IDB_STORE_BORRADOR).delete('actual'); tx.oncomplete=()=>{db.close();res();}; tx.onerror=()=>{db.close();rej(tx.error);}; }); }
 
 // Migración única de la cola vieja en localStorage -> IndexedDB
 async function migrarColaLocalStorage(){
@@ -2497,6 +2509,66 @@ function startApp() {
     .then(()=>{ actualizarIndicadorPendientes(); return syncPendientes(); })  // migra cola vieja, muestra estado y vacía cola
     .catch(()=>{});
   setTimeout(() => showToast('🗺️', `¡Bienvenido, ${STATE.user.nombre || 'Agente'}!`, '+0 XP'), 600);
+}
+
+// ═══════════════════════════════════════════════
+// BORRADOR PENDIENTE — banner "Continuar visita / Descartar" en home
+// ═══════════════════════════════════════════════
+let _borradorEnMemoria = null; // cache del último borrador leído, evita releerlo al presionar "Continuar"
+
+async function revisarBorradorPendiente() {
+  try {
+    const b = await idbGetBorrador();
+    _borradorEnMemoria = b;
+    if (b && b.titular && b.captura) pintarBorradorBanner(b);
+    else ocultarBorradorBanner();
+  } catch(e) {
+    console.warn('No se pudo leer el borrador pendiente:', e.message);
+  }
+}
+
+function pintarBorradorBanner(b) {
+  const cont = document.getElementById('borradorBanner');
+  if (!cont) return;
+  const nombre = (b.titular && b.titular.NOMBRE) || 'un titular';
+  cont.style.display = 'block';
+  cont.innerHTML = `
+    <div style="background:rgba(191,161,129,0.1);border:1px solid var(--border2);border-radius:16px;padding:16px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:22px">📝</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">Visita sin terminar</div>
+          <div style="font-size:12px;color:var(--text2)">${escH(nombre)} · quedó a medias</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="continuarBorrador()" style="flex:1;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer">Continuar visita</button>
+        <button onclick="descartarBorrador()" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text2);cursor:pointer">Descartar</button>
+      </div>
+    </div>`;
+}
+
+function ocultarBorradorBanner() {
+  const cont = document.getElementById('borradorBanner');
+  if (cont) { cont.style.display = 'none'; cont.innerHTML = ''; }
+}
+
+async function continuarBorrador() {
+  try {
+    const b = _borradorEnMemoria || await idbGetBorrador();
+    if (!b || !b.titular) { ocultarBorradorBanner(); return; }
+    STATE.titularEnVisita = b.titular;
+    ocultarBorradorBanner();
+    goTo('captura', b);
+  } catch(e) {
+    showToast('⚠️', 'No se pudo continuar', 'Intenta de nuevo');
+  }
+}
+
+async function descartarBorrador() {
+  try { await idbDelBorrador(); } catch(e) {}
+  _borradorEnMemoria = null;
+  ocultarBorradorBanner();
 }
 
 // ═══════════════════════════════════════════════
@@ -2861,14 +2933,44 @@ let CAPTURA = {
   observaciones:'',
 };
 
+// ── Guardado automático del borrador (protege contra pérdida de señal / recarga a medias) ──
+let _borradorTimer = null;
+function guardarBorrador(inmediato) {
+  if (_borradorTimer) { clearTimeout(_borradorTimer); _borradorTimer = null; }
+  const ejecutar = () => {
+    const t = STATE.titularEnVisita;
+    // Solo mientras hay una visita realmente en curso en la pantalla de captura
+    if (!t || !t.ID_TITULAR || STATE.currentScreen !== 'captura') return;
+    idbSetBorrador({
+      id: 'actual',
+      ts: Date.now(),
+      titular: { ID_TITULAR: t.ID_TITULAR, NOMBRE: t.NOMBRE, MUNICIPIO: t.MUNICIPIO, DIRECCION: t.DIRECCION },
+      captura: { ...CAPTURA }
+    }).catch(e => console.warn('No se pudo guardar el borrador:', e.message));
+  };
+  if (inmediato) ejecutar();
+  else _borradorTimer = setTimeout(ejecutar, 800);
+}
+// Red de seguridad: si la app se oculta o se cierra abruptamente (pérdida de señal, cambio de app), guarda de inmediato sin esperar el debounce
+window.addEventListener('pagehide', () => guardarBorrador(true));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') guardarBorrador(true); });
+
 // ── Inicializar captura al entrar a la pantalla ──
-function initCaptura() {
-  // Reset estado
-  CAPTURA = { paso:1, lat:null, lon:null, fotos:[null,null,null], fotoFiles:[null,null,null], contacto:null, subDatos:{}, resultado:null, resultado_categoria:null, observaciones:'', etiquetas:[], cartera_tipo:'', monto_promesa:'', fecha_promesa:'' };
-  // Cuestionario dinámico (se reemplaza el reset por defecto y se carga async)
-  CAPTURA.dinamico = false; CAPTURA.cuest = null;
-  CAPTURA.qNodo = null; CAPTURA.qStack = []; CAPTURA.respuestas = {}; CAPTURA._qOpts = [];
-  cargarCuestionario();
+// Sin argumento: visita nueva (reset limpio). Con `borrador`: continuar una visita interrumpida.
+function initCaptura(borrador) {
+  if (borrador && borrador.captura) {
+    // ── Restaurar borrador (continuar visita en curso) ──
+    CAPTURA = { ...borrador.captura };
+  } else {
+    // Reset estado (visita nueva)
+    CAPTURA = { paso:1, lat:null, lon:null, fotos:[null,null,null], fotoFiles:[null,null,null], contacto:null, subDatos:{}, resultado:null, resultado_categoria:null, observaciones:'', etiquetas:[], cartera_tipo:'', monto_promesa:'', fecha_promesa:'' };
+    // Cuestionario dinámico (se reemplaza el reset por defecto y se carga async)
+    CAPTURA.dinamico = false; CAPTURA.cuest = null;
+    CAPTURA.qNodo = null; CAPTURA.qStack = []; CAPTURA.respuestas = {}; CAPTURA._qOpts = [];
+    cargarCuestionario();
+    // Visita nueva: cualquier borrador huérfano de otra visita ya no aplica
+    idbDelBorrador().catch(()=>{});
+  }
 
   // Rellenar card del titular
   const t = STATE.titularEnVisita;
@@ -2881,9 +2983,9 @@ function initCaptura() {
     const hn = document.getElementById('capturaHeaderName');
     if(hn) hn.textContent = t.NOMBRE;
 
-    // ── BLOQUEO DE DUPLICADOS ──
+    // ── BLOQUEO DE DUPLICADOS ── (no aplica al restaurar: la visita ya estaba autorizada)
     // Bloqueo duro: si ya tiene visita hoy, no permitir capturar
-    if(VISITAS_HOY_IDS.has(t.ID_TITULAR)) {
+    if(!borrador && VISITAS_HOY_IDS.has(t.ID_TITULAR)) {
       showToast('🔒', 'Titular ya visitado', 'Ya tiene una visita registrada');
       goTo('misiones');
       return;
@@ -2919,6 +3021,99 @@ function initCaptura() {
   document.getElementById('subPreguntas').innerHTML = '';
   if(document.getElementById('obsTextarea')) document.getElementById('obsTextarea').value = '';
   if(document.getElementById('obsContador')) document.getElementById('obsContador').textContent = '0 / 500 caracteres';
+
+  if (borrador && borrador.captura) {
+    hidratarDesdeBorrador();
+  } else {
+    actualizarProgreso();
+    actualizarBotonPaso();
+  }
+}
+
+// ── Repintar la UI de captura a partir de un borrador restaurado ──
+function hidratarDesdeBorrador() {
+  // GPS
+  if (CAPTURA.lat && CAPTURA.lon) {
+    document.getElementById('gpsIcon').textContent       = '✅';
+    document.getElementById('gpsCoordsText').textContent = `${CAPTURA.lat}, ${CAPTURA.lon}`;
+    document.getElementById('gpsStatus').textContent     = 'Ubicación recuperada del borrador';
+    document.getElementById('gpsStatus').className       = 'gps-status ok';
+    document.getElementById('btnGps').className          = 'btn-gps captured';
+    document.getElementById('btnGps').innerHTML          = '<span>✅</span> Ubicación capturada';
+  }
+
+  // Fotos
+  for (let i = 1; i <= 3; i++) {
+    const b64 = CAPTURA.fotos[i - 1];
+    if (!b64) continue;
+    const slot = document.getElementById(`fotoSlot${i}`);
+    slot.className = 'foto-slot filled';
+    slot.innerHTML = `
+      <img src="${b64}" alt="Foto ${i}">
+      <div class="foto-delete" onclick="eliminarFoto(${i}, event)">✕</div>
+      <input type="file" class="foto-input" id="fotoInput${i}" accept="image/*" capture="environment" onchange="procesarFoto(${i},this)">
+    `;
+  }
+
+  // Contacto + sub-preguntas
+  if (CAPTURA.contacto) {
+    const cbtn = document.getElementById(`cbtn-${CAPTURA.contacto}`);
+    if (cbtn) cbtn.classList.add('selected');
+    if (!CAPTURA.dinamico) {
+      const sp = document.getElementById('subPreguntas');
+      const html = subPreguntasHTML(CAPTURA.contacto);
+      if (html) {
+        sp.innerHTML = html;
+        sp.style.display = 'flex';
+        sp.querySelectorAll('input').forEach(inp => inp.addEventListener('input', actualizarBotonPaso));
+        // Repoblar valores guardados
+        const sd = CAPTURA.subDatos || {};
+        const camposTexto = { horario:'sp-horario', telefono:'sp-telefono', nombreTercero:'sp-nombre-tercero', sena:'sp-sena' };
+        Object.keys(camposTexto).forEach(k => {
+          const el = document.getElementById(camposTexto[k]);
+          if (el && sd[k] != null) el.value = sd[k];
+        });
+        sp.querySelectorAll('.btn-sino').forEach(b => {
+          const m = (b.getAttribute('onclick') || '').match(/setSiNo\('([^']+)','([^']+)'/);
+          if (!m) return;
+          const [, campo, valor] = m;
+          if (sd[campo] === valor) b.className = `btn-sino active-${valor}`;
+        });
+        if (sd.telefono != null) {
+          const tg = document.getElementById('sp-tel-group');
+          if (tg) tg.style.display = sd.telefono === 'si' ? 'block' : 'none';
+        }
+      }
+    }
+  }
+
+  // Resultado (usa CAPTURA.etiquetas ya restauradas)
+  renderEtiquetasResultado();
+  const box = document.getElementById('promesaBox');
+  if (box) {
+    const show = necesitaMonto();
+    box.style.display = show ? 'block' : 'none';
+    if (show) {
+      const mi = document.getElementById('montoPromesa'); if (mi) mi.value = CAPTURA.monto_promesa || '';
+      const fi = document.getElementById('fechaPromesa'); if (fi) fi.value = CAPTURA.fecha_promesa || '';
+    }
+  }
+
+  // Observaciones
+  const ta = document.getElementById('obsTextarea');
+  if (ta) ta.value = CAPTURA.observaciones || '';
+  const n = (CAPTURA.observaciones || '').length;
+  const oc = document.getElementById('obsContador');
+  if (oc) oc.textContent = n < 15 ? `${n} / 500 · mínimo 15 caracteres` : `${n} / 500 caracteres`;
+
+  // Paso / cuestionario
+  document.querySelectorAll('.captura-step').forEach(s => s.classList.remove('active'));
+  if (CAPTURA.paso === 'q') {
+    const pq = document.getElementById('paso-q'); if (pq) pq.classList.add('active');
+    renderPregunta(); // usa qNodo/respuestas/_qOpts ya restaurados — no reinicia el cuestionario
+  } else {
+    const pe = document.getElementById(`paso-${CAPTURA.paso || 1}`); if (pe) pe.classList.add('active');
+  }
 
   actualizarProgreso();
   actualizarBotonPaso();
@@ -3026,6 +3221,7 @@ function actualizarBotonPaso() {
   const btn = document.getElementById('btnPaso');
   if(!btn) return;
   const p = CAPTURA.paso;
+  guardarBorrador(); // autosave debounced del borrador en cada cambio de estado de la captura
 
   if(p === 'q'){
     btn.disabled = !qValido();
@@ -3180,6 +3376,21 @@ function seleccionarContacto(tipo) {
   // En modo cuestionario, la pregunta fija de contacto es SOLO la categoría (el grafo capturó el detalle)
   if (CAPTURA.dinamico){ actualizarBotonPaso(); return; }
 
+  const html = subPreguntasHTML(tipo);
+
+  if(html) {
+    sp.innerHTML = html;
+    sp.style.display = 'flex';
+    // Revalidar el botón Continuar conforme se escriben los sub-datos
+    sp.querySelectorAll('input').forEach(inp => inp.addEventListener('input', actualizarBotonPaso));
+  }
+
+  actualizarBotonPaso();
+}
+
+// Genera el HTML de sub-preguntas según el tipo de contacto (función pura, sin efectos secundarios).
+// Se usa tanto en la selección normal como al rehidratar un borrador restaurado.
+function subPreguntasHTML(tipo) {
   let html = '';
 
   if(tipo === 'titular') {
@@ -3248,14 +3459,7 @@ function seleccionarContacto(tipo) {
       </div>`;
   }
 
-  if(html) {
-    sp.innerHTML = html;
-    sp.style.display = 'flex';
-    // Revalidar el botón Continuar conforme se escriben los sub-datos
-    sp.querySelectorAll('input').forEach(inp => inp.addEventListener('input', actualizarBotonPaso));
-  }
-
-  actualizarBotonPaso();
+  return html;
 }
 
 function setSiNo(campo, valor, btn) {
@@ -3553,6 +3757,7 @@ async function registrarVisita() {
     const data = await res.json();
     if(!data.success) throw new Error(data.message || 'Error en servidor');
     console.log('✅ Visita registrada en Sheets');
+    idbDelBorrador().catch(()=>{}); // la visita ya quedó registrada, el borrador ya no aplica
 
     // ── Actualizar GAMIFICACION real y reconciliar XP local ──
     try {
@@ -3585,6 +3790,7 @@ async function registrarVisita() {
     // Guardar offline en IndexedDB (aguanta fotos sin reventar la cuota)
     try {
       await idbAdd({ ...payload, _pendiente: true, _ts: Date.now() });
+      idbDelBorrador().catch(()=>{}); // ya quedó encolada en 'pendientes', el borrador ya no aplica
       showToast('⚠️', 'Sin conexión', 'Visita guardada localmente');
     } catch(e2) {
       console.error('No se pudo guardar offline:', e2);
