@@ -953,11 +953,19 @@ input{font-family:inherit}
             <option value="todos">Todos</option>
           </select>
           <label class="tit-chk"><input type="checkbox" id="titUrg" onchange="applyTitFilters()"> Solo urgentes</label>
+          <select class="tit-sel" id="titClasif" onchange="applyTitFilters()">
+            <option value="">Geo · todas</option>
+            <option value="exacta">🟢 Exacta</option>
+            <option value="aproximada">🟡 Aproximada</option>
+            <option value="nula">🔴 Nula</option>
+            <option value="__sin__">Sin procesar</option>
+          </select>
         </div>
         <div class="tit-tools">
           <button class="tit-tool" id="btnImport" onclick="document.getElementById('impFile').click()">⬆ Importar Excel</button>
           <input type="file" id="impFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="onImportFile(this)">
           <button class="tit-tool" id="btnGeo" onclick="geocodificarExistentes()">◎ Geocodificar sin coords <span id="geoPend" class="tit-tool-n">0</span></button>
+          <button class="tit-tool" id="btnGeoNulas" onclick="geocodificarExistentes(true)">🔴 Reintentar Nulas con Google <span id="geoNulasPend" class="tit-tool-n">0</span></button>
           <div class="tit-view">
             <button class="tv-btn active" id="tvTabla" onclick="setTitView('tabla')">▤ Tabla</button>
             <button class="tv-btn" id="tvMapa" onclick="setTitView('mapa')">◉ Mapa</button>
@@ -1315,6 +1323,7 @@ input{font-family:inherit}
 const CFG = {
   N8N_BASE: 'https://n8n-staging.fortalezacontactcenter.com',
   MAPBOX_TOKEN: 'pk.eyJ1IjoiZHVjYTM4IiwiYSI6ImNtcG9tMmV1aTA1aWsycG9rb3FoYXF2YXMifQ.-mB0clfB9ivOnK4FidmS3w',
+  GOOGLE_GEOCODING_KEY: '', // pendiente: crear en Google Cloud. Mientras esté vacía, la clasificación solo usa Mapbox.
   REFRESH_MS: 60000,
   SHEET_ID: '14Sx8FwkbniXZ_PIGwiIbf4cobAYfTvAKQaLgbPHLxVc',
 };
@@ -2132,6 +2141,7 @@ function applyTitFilters(){
   const est=document.getElementById('titEstado').value, mun=document.getElementById('titMuni').value;
   const ges=document.getElementById('titGestorF').value, soloUrg=document.getElementById('titUrg').checked;
   const estatus=document.getElementById('titEstatus').value;
+  const clasif=document.getElementById('titClasif')?document.getElementById('titClasif').value:'';
   let rows=TIT_ALL.filter(t=>{
     if(estatus==='activos' && !t.ACTIVO) return false;
     else if(estatus==='inactivos' && t.ACTIVO) return false;
@@ -2140,6 +2150,7 @@ function applyTitFilters(){
     if(mun && t.MUNICIPIO!==mun) return false;
     if(ges==='__none__'){ if(t.ID_GESTOR) return false; } else if(ges){ if(t.ID_GESTOR!==ges) return false; }
     if(soloUrg && !t.URGENTE) return false;
+    if(clasif==='__sin__'){ if(t.CLASIFICACION) return false; } else if(clasif){ if(t.CLASIFICACION!==clasif) return false; }
     if(q && !((t.NOMBRE+' '+t.ID_TITULAR+' '+t.DIRECCION).toLowerCase().includes(q))) return false;
     return true;
   });
@@ -2171,8 +2182,23 @@ function updateFiltBadge(){
   if(document.getElementById('titGestorF').value) n++;
   if(document.getElementById('titEstatus').value!=='activos') n++;
   if(document.getElementById('titUrg').checked) n++;
+  if(document.getElementById('titClasif') && document.getElementById('titClasif').value) n++;
   const b=document.getElementById('titFiltBadge');
   if(b){ b.style.display=n?'inline-flex':'none'; b.textContent=n; }
+}
+const CLASIF_BADGE={ exacta:{c:'#5FB98E',t:'🟢 Exacta'}, aproximada:{c:'#E0A04A',t:'🟡 Aproximada'}, nula:{c:'#E05A5A',t:'🔴 Nula'} };
+function geoBadgeHTML(t){
+  const cl=CLASIF_BADGE[t.CLASIFICACION];
+  if(!cl) return '';
+  const motivo=esc(t.MOTIVO||'');
+  let links='';
+  if(t.LATITUD && t.LONGITUD){
+    const gmaps=`https://www.google.com/maps/search/?api=1&query=${t.LATITUD},${t.LONGITUD}`;
+    const waze=`https://waze.com/ul?ll=${t.LATITUD},${t.LONGITUD}&navigate=yes`;
+    links=` <a href="${gmaps}" target="_blank" rel="noopener" title="Abrir en Google Maps" onclick="event.stopPropagation()" style="color:${cl.c}">🗺️</a>`+
+          `<a href="${waze}" target="_blank" rel="noopener" title="Abrir en Waze" onclick="event.stopPropagation()" style="color:${cl.c}">🧭</a>`;
+  }
+  return `<span title="${motivo}" style="color:${cl.c};font-size:11px;white-space:nowrap">${cl.t}</span>${links}`;
 }
 function renderTit(rows){
   document.getElementById('titCount').textContent=`${rows.length} de ${TIT_ALL.length}`;
@@ -2193,7 +2219,7 @@ function renderTit(rows){
     cap.map(t=>`<tr class="${t.ACTIVO?'':'is-inactive'} ${TIT_SEL.has(t.ID_TITULAR)?'is-sel':''}">
       <td class="tit-chkcol"><input type="checkbox" class="tit-cbx" ${TIT_SEL.has(t.ID_TITULAR)?'checked':''} onclick="toggleSel('${t.ID_TITULAR}',this.checked)"></td>
       <td class="tit-id-col">${t.ID_TITULAR}</td>
-      <td><div class="tit-name">${t.NOMBRE||'—'}${t.URGENTE?' <span class="urg-tag">URGENTE</span>':''}</div><div class="tit-loc" style="color:var(--text-faint)">${t.DIRECCION||''}${(t.LATITUD&&t.LONGITUD)?'<span class="tit-geo">● geo</span>':'<span class="tit-no-geo">○ sin geo</span>'}</div></td>
+      <td><div class="tit-name">${t.NOMBRE||'—'}${t.URGENTE?' <span class="urg-tag">URGENTE</span>':''}</div><div class="tit-loc" style="color:var(--text-faint)">${t.DIRECCION||''}${(t.LATITUD&&t.LONGITUD)?'<span class="tit-geo">● geo</span>':'<span class="tit-no-geo">○ sin geo</span>'} ${geoBadgeHTML(t)}</div></td>
       <td><span class="st-badge st-${titEstado(t)}" style="margin-left:0">${TIT_ESTADO_LABEL[titEstado(t)]}</span></td>
       <td>${t.MUNICIPIO||'—'}</td>
       <td>${t.ESTADO||'—'}</td>
@@ -2256,35 +2282,126 @@ async function toggleAct(id,val){
 /* ──── Geocodificación (Mapbox) ──── */
 const _sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function countSinGeo(){ return TIT_ALL.filter(t=>!(t.LATITUD&&t.LONGITUD)&&t.DIRECCION).length; }
-function updateGeoPending(){ const n=countSinGeo(); const el=document.getElementById('geoPend'); if(el)el.textContent=n; const b=document.getElementById('btnGeo'); if(b)b.disabled=(n===0); }
+function countNulas(){ return TIT_ALL.filter(t=>t.CLASIFICACION==='nula').length; }
+function updateGeoPending(){
+  const n=countSinGeo(); const el=document.getElementById('geoPend'); if(el)el.textContent=n;
+  const b=document.getElementById('btnGeo'); if(b)b.disabled=(n===0);
+  const nn=countNulas(); const eln=document.getElementById('geoNulasPend'); if(eln)eln.textContent=nn;
+  const bn=document.getElementById('btnGeoNulas'); if(bn)bn.disabled=(nn===0||!CFG.GOOGLE_GEOCODING_KEY);
+}
 
-async function geocodeOne(t){
+// ── Higienización y clasificación de domicilios (Exacta/Aproximada/Nula) ──
+// Misma lógica que el piloto manual: cruzar el resultado del geocodificador contra
+// los 3 datos duros (estado/municipio/CP) — si no coinciden, Nula sin importar lo demás.
+function _normGeo(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
+// null = dato duro vacío (no evaluable) · true = coincide · false = no coincide
+function _matchGeo(datoDuro, textoEncontrado){
+  const a=_normGeo(datoDuro); if(!a) return null;
+  return _normGeo(textoEncontrado).includes(a);
+}
+
+async function geocodeMapbox(t){
   const q=encodeURIComponent([t.DIRECCION,t.MUNICIPIO,t.ESTADO,'México'].filter(Boolean).join(', '));
   const url=`https://api.mapbox.com/geocoding/v5/mapbox.places/${q}.json?country=mx&limit=1&language=es&access_token=${CFG.MAPBOX_TOKEN}`;
   try{
     const r=await fetch(url); if(!r.ok) return null;
     const f=((await r.json()).features||[])[0];
     if(!f||!f.center) return null;
-    return { lng:+(+f.center[0]).toFixed(6), lat:+(+f.center[1]).toFixed(6) };
+    const ctx=f.context||[];
+    const regionTxt=(ctx.find(c=>c.id&&c.id.startsWith('region'))||{}).text||'';
+    const placeTxt=(ctx.find(c=>c.id&&(c.id.startsWith('place')||c.id.startsWith('locality')))||{}).text||'';
+    const cpTxt=(ctx.find(c=>c.id&&c.id.startsWith('postcode'))||{}).text||'';
+    const tieneNumero=!!(f.address||(f.place_type||[]).includes('address'));
+    return {
+      engine:'mapbox',
+      lat:+(+f.center[1]).toFixed(6), lng:+(+f.center[0]).toFixed(6),
+      direccion_encontrada:f.place_name||'',
+      estadoMatch:_matchGeo(t.ESTADO, regionTxt||f.place_name),
+      municipioMatch:_matchGeo(t.MUNICIPIO, placeTxt||f.place_name),
+      cpMatch:_matchGeo(t.CP, cpTxt||f.place_name),
+      tieneNumero
+    };
   }catch(e){ return null; }
 }
-async function geocodificarExistentes(){
-  const targets=TIT_ALL.filter(t=>!(t.LATITUD&&t.LONGITUD)&&t.DIRECCION);
-  if(!targets.length){ toast('No hay titulares sin coordenadas'); return; }
-  if(!confirm(`Se geocodificarán ${targets.length} titulares con Mapbox. ¿Continuar?`)) return;
+
+async function geocodeGoogle(t){
+  if(!CFG.GOOGLE_GEOCODING_KEY) return null;
+  const dir=[t.DIRECCION,t.MUNICIPIO,t.ESTADO,'México'].filter(Boolean).join(', ');
+  const url=`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(dir)}&region=mx&key=${CFG.GOOGLE_GEOCODING_KEY}`;
+  try{
+    const r=await fetch(url); if(!r.ok) return null;
+    const f=((await r.json()).results||[])[0];
+    if(!f||!f.geometry||!f.geometry.location) return null;
+    const comps=f.address_components||[];
+    const byType=(type)=>(comps.find(c=>c.types.includes(type))||{}).long_name||'';
+    return {
+      engine:'google',
+      lat:+(+f.geometry.location.lat).toFixed(6), lng:+(+f.geometry.location.lng).toFixed(6),
+      direccion_encontrada:f.formatted_address||'',
+      estadoMatch:_matchGeo(t.ESTADO, byType('administrative_area_level_1')),
+      municipioMatch:_matchGeo(t.MUNICIPIO, byType('locality')||byType('administrative_area_level_2')||byType('sublocality')),
+      cpMatch:_matchGeo(t.CP, byType('postal_code')),
+      locType:(f.geometry.location_type||'')
+    };
+  }catch(e){ return null; }
+}
+
+// Clasifica un resultado ya obtenido (independiente del motor) según la regla del piloto:
+// mismatch de estado o municipio contra el dato duro -> Nula, sin importar lo demás.
+function clasificarGeo(res){
+  if(!res) return { clasificacion:'nula', motivo:'Sin resultado del geocodificador' };
+  if(res.estadoMatch===false) return { clasificacion:'nula', motivo:'El estado del resultado no coincide con el dato duro' };
+  if(res.municipioMatch===false) return { clasificacion:'nula', motivo:'El municipio del resultado no coincide con el dato duro' };
+  if(res.engine==='google'){
+    if(res.locType==='ROOFTOP'||res.locType==='RANGE_INTERPOLATED') return { clasificacion:'exacta', motivo:`Google (${res.locType}): calle y número localizados` };
+    if(res.locType==='GEOMETRIC_CENTER'||res.locType==='APPROXIMATE')  return { clasificacion:'aproximada', motivo:`Google (${res.locType}): zona localizada, sin número exacto` };
+    return { clasificacion:'aproximada', motivo:'Google: resultado sin nivel de precisión explícito' };
+  }
+  // Mapbox
+  if(res.tieneNumero && res.estadoMatch!==false && res.municipioMatch!==false) return { clasificacion:'exacta', motivo:'Mapbox: calle y número dentro de municipio/estado correctos' };
+  if(res.estadoMatch||res.municipioMatch||res.cpMatch) return { clasificacion:'aproximada', motivo:'Mapbox: coincide la zona pero no el número exacto' };
+  return { clasificacion:'nula', motivo:'Mapbox: sin coincidencia confiable de zona' };
+}
+
+// Orquesta Mapbox → Google (solo si Mapbox salió Nula y hay API key configurada).
+// forzarGoogle=true salta Mapbox (para reprocesar en lote lo que ya quedó en Nula).
+async function geocodeHibrido(t, forzarGoogle){
+  let elegido=null, cls=null;
+  if(!forzarGoogle){
+    elegido=await geocodeMapbox(t);
+    cls=clasificarGeo(elegido);
+  }
+  if((!elegido||cls.clasificacion==='nula') && CFG.GOOGLE_GEOCODING_KEY){
+    const g=await geocodeGoogle(t);
+    if(g){ elegido=g; cls=clasificarGeo(g); }
+  }
+  if(!elegido) return { lat:null, lng:null, clasificacion:'nula', motivo:'Sin resultado en ningún motor', direccion_encontrada:'', engine:null };
+  return { lat:elegido.lat, lng:elegido.lng, clasificacion:cls.clasificacion, motivo:cls.motivo, direccion_encontrada:elegido.direccion_encontrada, engine:elegido.engine };
+}
+async function geocodificarExistentes(soloNulas){
+  const targets = soloNulas
+    ? TIT_ALL.filter(t=>t.CLASIFICACION==='nula')
+    : TIT_ALL.filter(t=>!(t.LATITUD&&t.LONGITUD)&&t.DIRECCION);
+  if(!targets.length){ toast(soloNulas?'No hay titulares en Nula':'No hay titulares sin coordenadas'); return; }
+  if(soloNulas && !CFG.GOOGLE_GEOCODING_KEY){ toast('Falta configurar la API key de Google Geocoding'); return; }
+  const motorTxt = soloNulas ? 'Google (forzado)' : 'Mapbox, con Google para las Nulas si hay API key';
+  if(!confirm(`Se geocodificarán ${targets.length} titulares con ${motorTxt}. ¿Continuar?`)) return;
   openGeo(targets.length);
   let done=0, fail=0; const ok=[]; let idx=0; const CONC=5;
   async function worker(){
     while(idx<targets.length){
       const t=targets[idx++];
-      const res=await geocodeOne(t);
-      if(res){ t.LATITUD=res.lat; t.LONGITUD=res.lng; ok.push({id_titular:t.ID_TITULAR,lat:res.lat,lng:res.lng}); } else { fail++; }
+      const res=await geocodeHibrido(t, soloNulas);
+      if(res.lat!=null && res.lng!=null){ t.LATITUD=res.lat; t.LONGITUD=res.lng; }
+      t.CLASIFICACION=res.clasificacion; t.MOTIVO=res.motivo; t.DIRECCION_ENCONTRADA=res.direccion_encontrada; t.GEO_ENGINE=res.engine;
+      if(res.clasificacion==='nula') fail++;
+      ok.push({ id_titular:t.ID_TITULAR, lat:res.lat, lng:res.lng, cp:t.CP||'', clasificacion:res.clasificacion, motivo:res.motivo, direccion_encontrada:res.direccion_encontrada, geo_engine:res.engine });
       done++; updateGeo(done,targets.length,fail);
       await _sleep(120);
     }
   }
   await Promise.all(Array.from({length:CONC},()=>worker()));
-  setGeoTitle('Guardando coordenadas…','Escribiendo en la hoja');
+  setGeoTitle('Guardando coordenadas…','Escribiendo en la base de datos');
   let saved=0;
   for(let i=0;i<ok.length;i+=200){
     const lote=ok.slice(i,i+200);
@@ -2294,10 +2411,10 @@ async function geocodificarExistentes(){
   finishGeo(saved,fail);
   applyTitFilters(); updateGeoPending();
 }
-function openGeo(total){ document.getElementById('geoOverlay').classList.add('show'); document.getElementById('geoClose').style.display='none'; setGeoTitle('Geocodificando…','Consultando direcciones en Mapbox'); updateGeo(0,total,0); }
+function openGeo(total){ document.getElementById('geoOverlay').classList.add('show'); document.getElementById('geoClose').style.display='none'; setGeoTitle('Geocodificando…','Consultando direcciones y clasificando'); updateGeo(0,total,0); }
 function setGeoTitle(t,s){ document.getElementById('geoTitle').textContent=t; document.getElementById('geoSub').textContent=s; }
-function updateGeo(done,total,fail){ const pct=total?Math.round(done/total*100):0; document.getElementById('geoBarFill').style.width=pct+'%'; document.getElementById('geoStatDone').textContent=`${done} / ${total}`; document.getElementById('geoStatFail').textContent=`${fail} fallidas`; }
-function finishGeo(saved,fail){ setGeoTitle('Listo','Coordenadas guardadas en la hoja'); document.getElementById('geoBarFill').style.width='100%'; document.getElementById('geoStatDone').textContent=`${saved} guardadas`; document.getElementById('geoStatFail').textContent=`${fail} sin resultado`; document.getElementById('geoClose').style.display='block'; }
+function updateGeo(done,total,fail){ const pct=total?Math.round(done/total*100):0; document.getElementById('geoBarFill').style.width=pct+'%'; document.getElementById('geoStatDone').textContent=`${done} / ${total}`; document.getElementById('geoStatFail').textContent=`${fail} en Nula`; }
+function finishGeo(saved,fail){ setGeoTitle('Listo','Coordenadas y clasificación guardadas'); document.getElementById('geoBarFill').style.width='100%'; document.getElementById('geoStatDone').textContent=`${saved} guardadas`; document.getElementById('geoStatFail').textContent=`${fail} en Nula (revisión manual)`; document.getElementById('geoClose').style.display='block'; }
 function cerrarGeo(){ document.getElementById('geoOverlay').classList.remove('show'); }
 
 /* ──── Importar Excel ──── */
@@ -2309,6 +2426,7 @@ const IMP_ALIASES={
   DIRECCION:['DIRECCION','DOMICILIO','CALLE','DIRECCION_COMPLETA','DOM'],
   ESTADO:['ESTADO','ENTIDAD','ENTIDAD_FEDERATIVA'],
   MUNICIPIO:['MUNICIPIO','DELEGACION','ALCALDIA','CIUDAD'],
+  CP:['CP','CODIGO_POSTAL','COD_POSTAL','ZIP','ZIPCODE'],
   CARTERA:['CARTERA','PRODUCTO','CAMPANA','CAMPAÑA','CARTERA_TIPO'],
   ID_GESTOR:['ID_GESTOR','GESTOR','ASIGNADO','ID_GESTOR_ASIGNADO']
 };
@@ -2323,7 +2441,7 @@ function buildMapping(headers){
 }
 function mapRow(raw,mapping){
   const g=t=>{ const h=mapping[t]; return h!=null ? String(raw[h]??'').trim() : ''; };
-  return { ID_TITULAR:g('ID_TITULAR'), NOMBRE:g('NOMBRE'), DIRECCION:g('DIRECCION'), ESTADO:g('ESTADO'), MUNICIPIO:g('MUNICIPIO'), CARTERA:g('CARTERA'), ID_GESTOR:g('ID_GESTOR') };
+  return { ID_TITULAR:g('ID_TITULAR'), NOMBRE:g('NOMBRE'), DIRECCION:g('DIRECCION'), ESTADO:g('ESTADO'), MUNICIPIO:g('MUNICIPIO'), CP:g('CP'), CARTERA:g('CARTERA'), ID_GESTOR:g('ID_GESTOR') };
 }
 async function onImportFile(input){
   const file=input.files&&input.files[0]; input.value='';
@@ -2343,7 +2461,7 @@ async function onImportFile(input){
 function renderImpPreview(){
   document.getElementById('impOverlay').classList.add('show');
   document.getElementById('impFileName').textContent=`${IMP_FILE} · ${IMP_ROWS.length} filas`;
-  const req=['ID_TITULAR','NOMBRE','DIRECCION'], opt=['ESTADO','MUNICIPIO','CARTERA','ID_GESTOR'];
+  const req=['ID_TITULAR','NOMBRE','DIRECCION'], opt=['ESTADO','MUNICIPIO','CP','CARTERA','ID_GESTOR'];
   const mapLine=t=>{ const h=IMP_MAP[t], need=req.includes(t);
     return `<div class="imp-row"><b>${t}</b><span class="imp-map ${h?'imp-ok':(need?'imp-bad':'imp-warn')}">${h?('← '+h):(need?'NO ENCONTRADA':'opcional')}</span></div>`; };
   IMP_VALID=IMP_ROWS.filter(r=>r.ID_TITULAR&&r.NOMBRE&&r.DIRECCION);
@@ -2380,14 +2498,16 @@ async function confirmarImport(){
   async function worker(){
     while(idx<rows.length){
       const r=rows[idx++];
-      const res=await geocodeOne(r);
-      if(res){ r.LATITUD=res.lat; r.LONGITUD=res.lng; } else { r.LATITUD=''; r.LONGITUD=''; fail++; }
+      const res=await geocodeHibrido(r);
+      r.LATITUD=res.lat??''; r.LONGITUD=res.lng??'';
+      r.CLASIFICACION=res.clasificacion; r.MOTIVO=res.motivo; r.DIRECCION_ENCONTRADA=res.direccion_encontrada; r.GEO_ENGINE=res.engine||'';
+      if(res.clasificacion==='nula') fail++;
       done++; updateGeo(done,rows.length,fail); await _sleep(120);
     }
   }
   await Promise.all(Array.from({length:CONC},()=>worker()));
-  setGeoTitle('Guardando en la hoja…','Importando titulares');
-  const payload=rows.map(r=>({ ID_TITULAR:r.ID_TITULAR, NOMBRE:r.NOMBRE, DIRECCION:r.DIRECCION, ESTADO:r.ESTADO, MUNICIPIO:r.MUNICIPIO, CARTERA:r.CARTERA, ID_GESTOR:r.ID_GESTOR, ACTIVO:'SI', URGENTE:'FALSE', LATITUD:r.LATITUD, LONGITUD:r.LONGITUD }));
+  setGeoTitle('Guardando en la base de datos…','Importando titulares');
+  const payload=rows.map(r=>({ ID_TITULAR:r.ID_TITULAR, NOMBRE:r.NOMBRE, DIRECCION:r.DIRECCION, ESTADO:r.ESTADO, MUNICIPIO:r.MUNICIPIO, CP:r.CP, CARTERA:r.CARTERA, ID_GESTOR:r.ID_GESTOR, ACTIVO:'SI', URGENTE:'FALSE', LATITUD:r.LATITUD, LONGITUD:r.LONGITUD, CLASIFICACION:r.CLASIFICACION, MOTIVO:r.MOTIVO, DIRECCION_ENCONTRADA:r.DIRECCION_ENCONTRADA, GEO_ENGINE:r.GEO_ENGINE }));
   let saved=0;
   for(let i=0;i<payload.length;i+=150){
     const body={rows:payload.slice(i,i+150)};
@@ -2398,8 +2518,8 @@ async function confirmarImport(){
   setGeoTitle('Importación lista','Titulares guardados');
   document.getElementById('geoBarFill').style.width='100%';
   document.getElementById('geoStatDone').textContent=`${saved} importados`;
-  document.getElementById('geoStatFail').textContent=`${fail} sin geo`;
-  logBitacora('import', `Importación: ${saved} cuenta(s)` + (fail?` · ${fail} sin geo`:''));
+  document.getElementById('geoStatFail').textContent=`${fail} en Nula`;
+  logBitacora('import', `Importación: ${saved} cuenta(s)` + (fail?` · ${fail} en Nula (revisión manual)`:''));
   document.getElementById('geoClose').style.display='block';
   await loadTitulares(true);
 }
@@ -2437,8 +2557,12 @@ function initTitMap(){
     });
     TIT_MAP.on('click','tit-pts',e=>{
       const p=e.features[0].properties, c=e.features[0].geometry.coordinates.slice();
+      const cl=CLASIF_BADGE[p.clasif];
+      const geoLine = cl ? `<br><span style="font-size:11px;color:${cl.c}" title="${esc(p.motivo||'')}">${cl.t}</span>`+
+        ` <a href="https://www.google.com/maps/search/?api=1&query=${c[1]},${c[0]}" target="_blank" rel="noopener" style="color:${cl.c}">🗺️</a>`+
+        `<a href="https://waze.com/ul?ll=${c[1]},${c[0]}&navigate=yes" target="_blank" rel="noopener" style="color:${cl.c}">🧭</a>` : '';
       new mapboxgl.Popup({offset:12,closeButton:false}).setLngLat(c).setHTML(
-        `<div style="font-family:Outfit,sans-serif;max-width:230px"><b>${p.nombre}</b>${p.urg==='true'||p.urg===true?' <span style="color:#E0A04A;font-size:11px">⚑ URGENTE</span>':''}<br><span style="font-size:11px;color:${p.col}">${p.sym} ${p.est}</span><br><span style="font-family:JetBrains Mono,monospace;font-size:10px;color:#93A6B3">${p.id}</span><br><span style="font-size:12px;color:#B9C6D0">${p.dir||''}</span><br><span style="font-size:11px;color:#7A8A98">Gestor: ${p.gestor||'Sin asignar'}</span></div>`
+        `<div style="font-family:Outfit,sans-serif;max-width:230px"><b>${p.nombre}</b>${p.urg==='true'||p.urg===true?' <span style="color:#E0A04A;font-size:11px">⚑ URGENTE</span>':''}<br><span style="font-size:11px;color:${p.col}">${p.sym} ${p.est}</span><br><span style="font-family:JetBrains Mono,monospace;font-size:10px;color:#93A6B3">${p.id}</span><br><span style="font-size:12px;color:#B9C6D0">${p.dir||''}</span><br><span style="font-size:11px;color:#7A8A98">Gestor: ${p.gestor||'Sin asignar'}</span>${geoLine}</div>`
       ).addTo(TIT_MAP);
     });
     TIT_MAP.on('mouseenter','tit-pts',()=>TIT_MAP.getCanvas().style.cursor='pointer');
@@ -2458,7 +2582,7 @@ function paintTitMap(){
     else if(t.ACTIVO){ ico='tit-pendiente'; est='Pendiente'; sym='●'; col='#2BC4BE'; }
     else { ico='tit-sinasignar'; est='Inactivo / sin asignar'; sym='○'; col='#7A8A98'; }
     feats.push({ type:'Feature', geometry:{type:'Point',coordinates:[lon,lat]},
-      properties:{ nombre:t.NOMBRE||'—', id:t.ID_TITULAR, dir:t.DIRECCION||'', gestor:t.NOMBRE_GESTOR||'', urg:!!t.URGENTE, act:!!t.ACTIVO, ico, est, sym, col } });
+      properties:{ nombre:t.NOMBRE||'—', id:t.ID_TITULAR, dir:t.DIRECCION||'', gestor:t.NOMBRE_GESTOR||'', urg:!!t.URGENTE, act:!!t.ACTIVO, ico, est, sym, col, clasif:t.CLASIFICACION||'', motivo:t.MOTIVO||'' } });
     bounds.extend([lon,lat]); n++;
   }
   TIT_MAP.getSource('tit').setData({type:'FeatureCollection',features:feats});
