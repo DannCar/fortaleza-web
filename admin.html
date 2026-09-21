@@ -1179,6 +1179,21 @@ input{font-family:inherit}
             </div>
             <div id="cfgEndpoints" class="cfg-eps"></div>
           </div>
+          <div class="card cfg-card cfg-wide">
+            <div class="cfg-head">
+              <div><div class="cfg-title">Automatizaciones</div><div class="cfg-sub">Ejecuta manualmente procesos que normalmente corren solos</div></div>
+            </div>
+            <div class="cfg-param"><span class="k">Llenado de Sheets + aviso a gestores</span><span class="v">Automático 8:30pm</span></div>
+            <div class="cfg-pw" style="margin:10px 0">
+              <label style="font-size:12px;color:var(--muted,#8892a6)">Rango de fechas (opcional — déjalo vacío para usar el día de hoy)</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                <input type="date" id="ejecFechaIni" class="adm-input" style="max-width:170px">
+                <input type="date" id="ejecFechaFin" class="adm-input" style="max-width:170px">
+              </div>
+            </div>
+            <button class="ges-new" id="btnEjecutarSheets" onclick="ejecutarSheetsAhora()">▶ Ejecutar ahora</button>
+            <div class="cfg-note">Cruza las visitas completadas del rango elegido (o de hoy, si lo dejas vacío) contra la hoja de cálculo y reenvía el resumen por Telegram a los gestores. Úsalo si se cargaron visitas manuales en otra fecha. Tarda 1–2 minutos; no hace falta esperar en esta pantalla.</div>
+          </div>
           <div class="card cfg-card">
             <div class="cfg-title">Parámetros del sistema</div>
             <div class="cfg-param"><span class="k">Servidor N8N</span><span class="v" id="cfgN8n">—</span></div>
@@ -1959,6 +1974,32 @@ async function apiCall(endpoint,method='GET',body=null){
   }catch(e){ console.warn('API error:',endpoint,e.message); return null; }
 }
 
+async function ejecutarSheetsAhora(){
+  const btn=document.getElementById('btnEjecutarSheets');
+  if(!btn || btn.disabled) return;
+  const fi=(document.getElementById('ejecFechaIni').value||'').trim();
+  const ff=(document.getElementById('ejecFechaFin').value||'').trim();
+  if((fi && !ff) || (!fi && ff)){ toast('Completa ambas fechas del rango, o deja las dos vacías.'); return; }
+  if(fi && ff && ff<fi){ toast('La fecha final no puede ser anterior a la inicial.'); return; }
+  const rangoTxt = (fi && ff) ? (fi===ff ? `del ${fi}` : `del ${fi} al ${ff}`) : 'de hoy';
+  if(!confirm(`¿Ejecutar ahora el llenado de Sheets y el aviso por Telegram a los gestores, con las visitas ${rangoTxt}?\n\nEsto puede tardar 1-2 minutos.`)) return;
+  btn.disabled=true; const orig=btn.textContent; btn.textContent='Ejecutando…';
+  try{
+    const body = (fi && ff) ? {fecha_inicio:fi, fecha_fin:ff} : {};
+    const r=await apiCall('admin-ejecutar-sheets','POST',body);
+    if(r && r.success){
+      toast(r.message||'Ejecución iniciada. Revisa Telegram en unos minutos.');
+      logBitacora('sheets_manual',`Ejecutó manualmente el llenado de Sheets (${rangoTxt})`);
+    } else {
+      toast((r&&r.message)||'No se pudo iniciar la ejecución. Revisa la sesión.');
+    }
+  }catch(e){
+    toast('Error al ejecutar.');
+  } finally {
+    btn.disabled=false; btn.textContent=orig;
+  }
+}
+
 /* ════════ DASHBOARD ════════ */
 async function loadDashboard(){
   const fecha=STATE.selectedDate;
@@ -2507,6 +2548,7 @@ function renderGestores(){
       <div class="ges-actions">
         <button class="ges-btn" onclick="editarGestor('${g.ID_GESTOR}')">✎ Editar</button>
         <button class="ges-btn ${g.ACTIVO?'on':'off'}" onclick="toggleGestor('${g.ID_GESTOR}',${!g.ACTIVO})">${g.ACTIVO?'◉ Activo':'○ Inactivo'}</button>
+        <button class="ges-btn ${g.EVALUACION_ACTIVA?'on':'off'}" onclick="toggleGestorEvaluacion('${g.ID_GESTOR}',${!g.EVALUACION_ACTIVA})" title="Evaluación automática de visitas con IA">${g.EVALUACION_ACTIVA?'★ Evaluación ON':'☆ Evaluación OFF'}</button>
       </div>
     </div>`).join('');
 }
@@ -2784,6 +2826,11 @@ async function toggleGestor(id,val){
   const g=GES_ALL.find(x=>x.ID_GESTOR===id); if(!g) return; g.ACTIVO=val; renderGestores();
   const r=await apiCall('admin-gestores-v2','POST',{action:'toggle_activo',id_gestor:id,activo:val});
   if(r&&r.success){ toast(val?'Gestor activado':'Gestor desactivado'); if(!val) logBitacora('gestor_baja', `Gestor desactivado: ${g.NOMBRE||id}`); } else { g.ACTIVO=!val; renderGestores(); toast('No se pudo actualizar'); }
+}
+async function toggleGestorEvaluacion(id,val){
+  const g=GES_ALL.find(x=>x.ID_GESTOR===id); if(!g) return; g.EVALUACION_ACTIVA=val; renderGestores();
+  const r=await apiCall('admin-gestores-v2','POST',{action:'toggle_evaluacion',id_gestor:id,evaluacion_activa:val});
+  if(r&&r.success){ toast(val?'Evaluación de IA activada':'Evaluación de IA desactivada'); } else { g.EVALUACION_ACTIVA=!val; renderGestores(); toast('No se pudo actualizar'); }
 }
 
 /* ════════ VISITAS (Fase 3) ════════ */
