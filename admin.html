@@ -1184,8 +1184,15 @@ input{font-family:inherit}
               <div><div class="cfg-title">Automatizaciones</div><div class="cfg-sub">Ejecuta manualmente procesos que normalmente corren solos</div></div>
             </div>
             <div class="cfg-param"><span class="k">Llenado de Sheets + aviso a gestores</span><span class="v">Automático 8:30pm</span></div>
+            <div class="cfg-pw" style="margin:10px 0">
+              <label style="font-size:12px;color:var(--muted,#8892a6)">Rango de fechas (opcional — déjalo vacío para usar el día de hoy)</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                <input type="date" id="ejecFechaIni" class="adm-input" style="max-width:170px">
+                <input type="date" id="ejecFechaFin" class="adm-input" style="max-width:170px">
+              </div>
+            </div>
             <button class="ges-new" id="btnEjecutarSheets" onclick="ejecutarSheetsAhora()">▶ Ejecutar ahora</button>
-            <div class="cfg-note">Vuelve a cruzar las visitas completadas de hoy contra la hoja de cálculo y reenvía el resumen por Telegram a los gestores. Tarda 1–2 minutos; no hace falta esperar en esta pantalla.</div>
+            <div class="cfg-note">Cruza las visitas completadas del rango elegido (o de hoy, si lo dejas vacío) contra la hoja de cálculo y reenvía el resumen por Telegram a los gestores. Úsalo si se cargaron visitas manuales en otra fecha. Tarda 1–2 minutos; no hace falta esperar en esta pantalla.</div>
           </div>
           <div class="card cfg-card">
             <div class="cfg-title">Parámetros del sistema</div>
@@ -1970,13 +1977,19 @@ async function apiCall(endpoint,method='GET',body=null){
 async function ejecutarSheetsAhora(){
   const btn=document.getElementById('btnEjecutarSheets');
   if(!btn || btn.disabled) return;
-  if(!confirm('¿Ejecutar ahora el llenado de Sheets y el aviso por Telegram a los gestores?\n\nEsto puede tardar 1-2 minutos.')) return;
+  const fi=(document.getElementById('ejecFechaIni').value||'').trim();
+  const ff=(document.getElementById('ejecFechaFin').value||'').trim();
+  if((fi && !ff) || (!fi && ff)){ toast('Completa ambas fechas del rango, o deja las dos vacías.'); return; }
+  if(fi && ff && ff<fi){ toast('La fecha final no puede ser anterior a la inicial.'); return; }
+  const rangoTxt = (fi && ff) ? (fi===ff ? `del ${fi}` : `del ${fi} al ${ff}`) : 'de hoy';
+  if(!confirm(`¿Ejecutar ahora el llenado de Sheets y el aviso por Telegram a los gestores, con las visitas ${rangoTxt}?\n\nEsto puede tardar 1-2 minutos.`)) return;
   btn.disabled=true; const orig=btn.textContent; btn.textContent='Ejecutando…';
   try{
-    const r=await apiCall('admin-ejecutar-sheets','POST',{});
+    const body = (fi && ff) ? {fecha_inicio:fi, fecha_fin:ff} : {};
+    const r=await apiCall('admin-ejecutar-sheets','POST',body);
     if(r && r.success){
       toast(r.message||'Ejecución iniciada. Revisa Telegram en unos minutos.');
-      logBitacora('sheets_manual','Ejecutó manualmente el llenado de Sheets');
+      logBitacora('sheets_manual',`Ejecutó manualmente el llenado de Sheets (${rangoTxt})`);
     } else {
       toast((r&&r.message)||'No se pudo iniciar la ejecución. Revisa la sesión.');
     }
