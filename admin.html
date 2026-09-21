@@ -1179,6 +1179,14 @@ input{font-family:inherit}
             </div>
             <div id="cfgEndpoints" class="cfg-eps"></div>
           </div>
+          <div class="card cfg-card cfg-wide">
+            <div class="cfg-head">
+              <div><div class="cfg-title">Automatizaciones</div><div class="cfg-sub">Ejecuta manualmente procesos que normalmente corren solos</div></div>
+            </div>
+            <div class="cfg-param"><span class="k">Llenado de Sheets + aviso a gestores</span><span class="v">Automático 8:30pm</span></div>
+            <button class="ges-new" id="btnEjecutarSheets" onclick="ejecutarSheetsAhora()">▶ Ejecutar ahora</button>
+            <div class="cfg-note">Vuelve a cruzar las visitas completadas de hoy contra la hoja de cálculo y reenvía el resumen por Telegram a los gestores. Tarda 1–2 minutos; no hace falta esperar en esta pantalla.</div>
+          </div>
           <div class="card cfg-card">
             <div class="cfg-title">Parámetros del sistema</div>
             <div class="cfg-param"><span class="k">Servidor N8N</span><span class="v" id="cfgN8n">—</span></div>
@@ -1957,6 +1965,26 @@ async function apiCall(endpoint,method='GET',body=null){
     if(res.status===401){ doLogout(); return null; }
     return await res.json();
   }catch(e){ console.warn('API error:',endpoint,e.message); return null; }
+}
+
+async function ejecutarSheetsAhora(){
+  const btn=document.getElementById('btnEjecutarSheets');
+  if(!btn || btn.disabled) return;
+  if(!confirm('¿Ejecutar ahora el llenado de Sheets y el aviso por Telegram a los gestores?\n\nEsto puede tardar 1-2 minutos.')) return;
+  btn.disabled=true; const orig=btn.textContent; btn.textContent='Ejecutando…';
+  try{
+    const r=await apiCall('admin-ejecutar-sheets','POST',{});
+    if(r && r.success){
+      toast(r.message||'Ejecución iniciada. Revisa Telegram en unos minutos.');
+      logBitacora('sheets_manual','Ejecutó manualmente el llenado de Sheets');
+    } else {
+      toast((r&&r.message)||'No se pudo iniciar la ejecución. Revisa la sesión.');
+    }
+  }catch(e){
+    toast('Error al ejecutar.');
+  } finally {
+    btn.disabled=false; btn.textContent=orig;
+  }
 }
 
 /* ════════ DASHBOARD ════════ */
